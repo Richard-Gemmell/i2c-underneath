@@ -17,7 +17,7 @@ class BusMonitor {
     // The current state of the bus
     bus_monitor::BusState get_state();
 
-    // Register a callback to be called when the bus becomes stuck.
+    // Register a callback to be called if the bus gets stuck.
     // 'callback': the function that will be called when the bus is stuck
     // 'sda_stuck': true if SDA is stuck LOW
     // 'scl_stuck': true if SCL is stuck LOW

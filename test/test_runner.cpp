@@ -1,16 +1,30 @@
 #include <unity.h>
 #include <Arduino.h>
 #include "utils/test_suite.h"
+
+// Unit Tests
 #include "example/example.h"
 #include "test_two/test_two.h"
+
+// Full Stack Tests
+#include "common/hardware/ArduinoPinTest.h"
 
 TestSuite* test_suite;
 void test(TestSuite* suite);
 
 void process() {
     // Run each test suite in succession.
-    test(new ExampleTestSuite());
-    test(new TestSuiteTwo());
+
+//    Serial.println("Run Unit Tests");
+//    Serial.println("--------------");
+//    test(new ExampleTestSuite());
+//    test(new TestSuiteTwo());
+
+    // Full Stack Tests
+    // These tests require working hardware
+    Serial.println("Run Full Stack Tests");
+    Serial.println("--------------------");
+    test(new common::hardware::ArduinoPinTest());
 }
 
 void test(TestSuite* suite) {
