@@ -1,29 +1,47 @@
+#ifndef I2C_UNDERNEATH_TEST_EXAMPLE_TEST_SUITE_H
+#define I2C_UNDERNEATH_TEST_EXAMPLE_TEST_SUITE_H
+
 #include <unity.h>
 #include <Arduino.h>
+#include "../utils/test_suite.h"
 
-void setUpExample() {
-    // set stuff up here
-    Serial.println("Setup Example");
-}
+class ExampleTestSuite : public TestSuite {
+    // We can't access the 'this' pointer in the test methods
+    // so all test data has to be static.
+    static int value;
 
-void tearDownExample() {
-    // clean stuff up here
-}
+public:
+    void setUp() final {
+        Serial.println("Set Up Example");
+        value = 5;
+    }
 
-void test_example_one() {
-    TEST_ASSERT_EQUAL(5, 5);
-}
+    void tearDown() final {
+        Serial.println();
+        Serial.println("Tear Down Example");
+        value = 0;
+    }
 
-void test_example_two() {
-    TEST_ASSERT_EQUAL(10, 1);
-}
+    static void test_example_one() {
+        TEST_ASSERT_EQUAL(5, value);
+    }
 
-// Include all the tests here
-void test_example() {
-    UNITY_BEGIN();
+    static void test_example_two() {
+        TEST_ASSERT_EQUAL(10, 1);
+    }
 
-    RUN_TEST(test_example_one);
-    RUN_TEST(test_example_two);
+    // Include all the tests here
+    void test() final {
+        UNITY_BEGIN();
 
-    UNITY_END();
-}
+        RUN_TEST(test_example_one);
+        RUN_TEST(test_example_two);
+
+        UNITY_END();
+    }
+};
+
+// Define statics
+int ExampleTestSuite::value;
+
+#endif  //I2C_UNDERNEATH_TEST_EXAMPLE_TEST_SUITE_H

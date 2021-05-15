@@ -1,32 +1,32 @@
 #include <unity.h>
-#include <unity_internals.h>
+#include <Arduino.h>
+#include "utils/test_suite.h"
 #include "example/example.h"
 #include "test_two/test_two.h"
 
-enum TestSuite {
-    Example,
-    Two
-};
-TestSuite test_suite;
+TestSuite* test_suite;
+void test(TestSuite* suite);
+
+void process() {
+    // Run each test suite in succession.
+    test(new ExampleTestSuite());
+    test(new TestSuiteTwo());
+}
+
+void test(TestSuite* suite) {
+    test_suite = suite;
+    test_suite->test();
+    delete(test_suite);
+}
 
 // Called before each test.
 void setUp(void) {
-    if(test_suite == TestSuite::Example) {
-        setUpExample();
-    }
-    if(test_suite == TestSuite::Two) {
-        setUpTwo();
-    }
+    test_suite->setUp();
 }
 
 // Called after each test.
 void tearDown(void) {
-    if(test_suite == TestSuite::Example) {
-        tearDownExample();
-    }
-    if(test_suite == TestSuite::Two) {
-        tearDownTwo();
-    }
+    test_suite->tearDown();
 }
 
 // Blink the LED to make sure the Teensy hasn't hung
@@ -34,16 +34,6 @@ IntervalTimer blink_timer;
 volatile bool led_high = false;
 void blink_isr();
 
-void process() {
-    // Run each test suite in succession.
-    test_suite = TestSuite::Example;
-    test_example();
-
-    test_suite = TestSuite::Two;
-    test_two();
-}
-
-#include <Arduino.h>
 void setup() {
     // Blink the LED to show we're still alive
     blink_timer.begin(blink_isr, 300'000);
