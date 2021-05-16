@@ -11,10 +11,12 @@ namespace hardware {
 
 class ArduinoPin : public common::hardware::Pin {
     uint8_t pin_;
-    bool on_edge_callback_registered = false;
+    bool on_edge_callback_registered_ = false;
+    void(*on_edge_isr_)() = nullptr;
+    std::function<void(bool rising)> on_edge_callback;
 
 public:
-    // Assumes pin is configured as INPUT_PULLUP or equivalent
+    // Assumes 'pin' is configured as INPUT_PULLUP or equivalent
     explicit ArduinoPin(uint8_t pin);
 
     ~ArduinoPin() override;
@@ -23,7 +25,16 @@ public:
 
     bool read_line() override;
 
-    void on_edge(void (*callback)()) override;
+    // You must call 'set_on_edge_isr' before calling this
+    // otherwise this call will be ignored.
+    void on_edge(const std::function<void(bool rising)>& callback) override;
+
+    // 'on_edge_isr' must call 'raise_on_edge'. This is necessary
+    // because Interrupt Service Routines must be static
+    void set_on_edge_isr(void(*on_edge_isr)());
+
+    // Fires the callback registered with 'on_edge'.
+    void raise_on_edge();
 };
 
 }

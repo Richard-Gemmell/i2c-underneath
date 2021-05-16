@@ -9,7 +9,7 @@ common::hardware::ArduinoPin::ArduinoPin(uint8_t pin)
 }
 
 common::hardware::ArduinoPin::~ArduinoPin() {
-    if (on_edge_callback_registered) {
+    if (on_edge_callback_registered_) {
         detachInterrupt(digitalPinToInterrupt(pin_));
     }
 }
@@ -22,7 +22,18 @@ bool common::hardware::ArduinoPin::read_line() {
     return digitalReadFast(pin_);
 }
 
-void common::hardware::ArduinoPin::on_edge(void (*callback)()) {
-    attachInterrupt(digitalPinToInterrupt(pin_), callback, CHANGE);
-    on_edge_callback_registered = true;
+void common::hardware::ArduinoPin::on_edge(const std::function<void(bool rising)>& callback) {
+    if(this->on_edge_isr_) {
+        on_edge_callback = callback;
+        attachInterrupt(digitalPinToInterrupt(pin_), this->on_edge_isr_, CHANGE);
+        on_edge_callback_registered_ = true;
+    }
+}
+
+void common::hardware::ArduinoPin::set_on_edge_isr(void (* on_edge_isr)()) {
+    on_edge_isr_ = on_edge_isr;
+}
+
+void common::hardware::ArduinoPin::raise_on_edge() {
+    on_edge_callback(read_line());
 }

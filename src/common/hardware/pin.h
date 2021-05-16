@@ -3,6 +3,9 @@
 
 #ifndef I2C_UNDERNEATH_COMMON_HARDWARE_PIN_H
 #define I2C_UNDERNEATH_COMMON_HARDWARE_PIN_H
+
+#include <functional>
+
 namespace common {
 namespace hardware {
 
@@ -30,7 +33,8 @@ public:
 //    virtual bool read_pin() = 0;
 
     // Registers a callback that will be called when the line changes value.
-    virtual void on_edge(void (*callback)())  = 0;
+    // 'rising' is true if the line moved from LOW to HIGH and false otherwise
+    virtual void on_edge(const std::function<void(bool rising)>& callback) = 0;
 };
 
 }

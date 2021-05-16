@@ -26,6 +26,10 @@ public:
         callback_value = false;
     }
 
+    static void on_edge_isr() {
+        the_pin->raise_on_edge();
+    }
+
     static void read_line() {
         common::hardware::ArduinoPin pin = ArduinoPin(TEST_PIN);
 
@@ -39,7 +43,7 @@ public:
     }
 
     static void write_pin() {
-        common::hardware::ArduinoPin pin = common::hardware::ArduinoPin(TEST_PIN);
+        common::hardware::ArduinoPin pin = ArduinoPin(TEST_PIN);
 
         pin.write_pin(false);
         delayMicroseconds(10);
@@ -50,17 +54,16 @@ public:
         TEST_ASSERT_TRUE(digitalReadFast(TEST_PIN));
     }
 
-    static void callback() {
+    static void on_edge(bool rising) {
         called_back = true;
-        if (the_pin) {
-            callback_value = the_pin->read_line();
-        }
+        callback_value = rising;
     }
 
     static void on_edge_registers_callback() {
-        common::hardware::ArduinoPin pin = common::hardware::ArduinoPin(TEST_PIN);
+        common::hardware::ArduinoPin pin = ArduinoPin(TEST_PIN);
         the_pin = &pin;
-        pin.on_edge(callback);
+        pin.set_on_edge_isr(on_edge_isr);
+        pin.on_edge(on_edge);
 
         pin.write_pin(false);
         delayMicroseconds(10);
@@ -76,9 +79,10 @@ public:
 
     static void destructor_releases_callback() {
         // GIVEN I've called on_edge on a pin
-        auto* pin = new common::hardware::ArduinoPin(TEST_PIN);
+        auto* pin = new ArduinoPin(TEST_PIN);
         the_pin = pin;
-        pin->on_edge(callback);
+        pin->set_on_edge_isr(on_edge_isr);
+        pin->on_edge(on_edge);
 
         // WHEN I destroy the pin
         delete(pin);
@@ -89,10 +93,17 @@ public:
         TEST_ASSERT_FALSE(called_back);
     }
 
+    static void callback() {
+        called_back = true;
+        if (the_pin) {
+            callback_value = the_pin->read_line();
+        }
+    }
+
     static void destructor_does_not_detach_interrupt_if_it_was_never_attached() {
         // GIVEN something else has attached an interrupt handler to this pin
         attachInterrupt(digitalPinToInterrupt(TEST_PIN), callback, CHANGE);
-        auto* pin = new common::hardware::ArduinoPin(TEST_PIN);
+        auto* pin = new ArduinoPin(TEST_PIN);
 
         // WHEN I destroy the pin
         delete(pin);
