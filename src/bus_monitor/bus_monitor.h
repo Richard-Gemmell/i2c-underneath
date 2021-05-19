@@ -6,13 +6,28 @@
 
 #include <functional>
 #include <common/hardware/pin.h>
+#include <common/hardware/timer.h>
+#include <common/specifications.h>
 #include "bus_state.h"
 
 namespace bus_monitor {
 
 // Watches a bus and reports problems.
 class BusMonitor {
-    BusMonitor(common::hardware::Pin& sda, common::hardware::Pin& scl);
+public:
+    BusMonitor(common::hardware::Pin& sda,
+               common::hardware::Pin& scl,
+               common::hardware::Timer& timer,
+               uint32_t bus_busy_timeout_ns = common::StandardMode.times.min_bus_free_time * 1.1,
+               uint32_t bus_stuck_timeout_micros = (SMBUS_TIMEOUT_MILLIS + 1UL) * 1000UL);
+
+    ~BusMonitor();
+
+    // Start monitoring the bus
+    void begin();
+
+    // Stop monitoring the bus
+    void end();
 
     // The current state of the bus
     bus_monitor::BusState get_state();
@@ -21,7 +36,15 @@ class BusMonitor {
     // 'callback': the function that will be called when the bus is stuck
     // 'sda_stuck': true if SDA is stuck LOW
     // 'scl_stuck': true if SCL is stuck LOW
-    void on_stuck(std::function<void(bool sda_stuck, bool scl_stuck)> callback);
+    void on_stuck(const std::function<void(bool sda_stuck, bool scl_stuck)>& callback);
+
+private:
+    common::hardware::Pin& sda;
+    common::hardware::Pin& scl;
+    common::hardware::Timer& timer;
+    uint32_t bus_busy_timeout_ns;
+    uint32_t bus_stuck_timeout_micros;
+    std::function<void(bool, bool)> callback;
 };
 
 }

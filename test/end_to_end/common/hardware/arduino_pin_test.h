@@ -1,12 +1,13 @@
 // Copyright © 2021 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_COMMON_HARDWARE_ARDUINO_PINT_EST_H
-#define I2C_UNDERNEATH_COMMON_HARDWARE_ARDUINO_PINT_EST_H
+#ifndef I2C_UNDERNEATH_COMMON_HARDWARE_ARDUINO_PIN_TEST_H
+#define I2C_UNDERNEATH_COMMON_HARDWARE_ARDUINO_PIN_TEST_H
 
+#include <unity.h>
 #include <Arduino.h>
-#include "../../utils/test_suite.h"
-#include "common/hardware/ArduinoPin.h"
+#include <common/hardware/arduino_pin.h>
+#include "../../../utils/test_suite.h"
 
 namespace common {
 namespace hardware {
@@ -116,16 +117,14 @@ public:
 
     // Include all the tests here
     void test() final {
-        UNITY_BEGIN();
-
         RUN_TEST(read_line);
         RUN_TEST(write_pin);
         RUN_TEST(on_edge_registers_callback);
         RUN_TEST(destructor_releases_callback);
         RUN_TEST(destructor_does_not_detach_interrupt_if_it_was_never_attached);
-
-        UNITY_END();
     }
+
+    ArduinoPinTest() : TestSuite(__FILE__) {};
 };
 
 common::hardware::ArduinoPin* ArduinoPinTest::the_pin;
@@ -134,4 +133,4 @@ bool ArduinoPinTest::callback_value;
 
 }
 }
-#endif //I2C_UNDERNEATH_COMMON_HARDWARE_ARDUINO_PINT_EST_H
+#endif //I2C_UNDERNEATH_COMMON_HARDWARE_ARDUINO_PIN_TEST_H

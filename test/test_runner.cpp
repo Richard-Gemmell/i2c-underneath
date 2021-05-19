@@ -6,8 +6,9 @@
 #include "example/example.h"
 #include "test_two/test_two.h"
 
-// Full Stack Tests
-#include "common/hardware/ArduinoPinTest.h"
+// End to End Tests
+#include "end_to_end/common/hardware/arduino_pin_test.h"
+#include "end_to_end/common/hardware/teensy_timer_test.h"
 
 TestSuite* test_suite;
 void test(TestSuite* suite);
@@ -25,12 +26,17 @@ void process() {
     Serial.println("Run Full Stack Tests");
     Serial.println("--------------------");
     test(new common::hardware::ArduinoPinTest());
+    test(new common::hardware::TeensyTimerTest());
 }
 
 void test(TestSuite* suite) {
+    UNITY_BEGIN();
     test_suite = suite;
+    UnitySetTestFile(test_suite->get_file_name());
     test_suite->test();
     delete(test_suite);
+    UNITY_END();
+    Serial.println("");
 }
 
 // Called before each test.

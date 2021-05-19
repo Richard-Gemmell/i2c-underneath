@@ -10,7 +10,7 @@
 
 #include <Arduino.h>
 #include <functional>
-#include "common/hardware/ArduinoPin.h"
+#include "common/hardware/arduino_pin.h"
 
 IntervalTimer blink_timer;
 void blink();

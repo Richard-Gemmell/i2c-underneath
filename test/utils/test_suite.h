@@ -6,6 +6,10 @@
 
 class TestSuite {
 public:
+    explicit TestSuite(const char* test_file_name)
+        : test_file_name(test_file_name) {
+    }
+
     virtual ~TestSuite() = default;
 
     // Called before each test
@@ -14,8 +18,16 @@ public:
     // Called after each test
     virtual void tearDown() {};
 
+    // Return the name of the test file
+    const char* get_file_name() {
+        return test_file_name;
+    };
+
     // Executes the tests in the suite
     virtual void test() = 0;
+
+private:
+    const char* test_file_name;
 };
 
 #endif //I2C_UNDERNEATH_TEST_TEST_SUITE_H

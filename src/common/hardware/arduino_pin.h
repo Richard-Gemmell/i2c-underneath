@@ -13,7 +13,7 @@ class ArduinoPin : public common::hardware::Pin {
     uint8_t pin_;
     bool on_edge_callback_registered_ = false;
     void(*on_edge_isr_)() = nullptr;
-    std::function<void(bool rising)> on_edge_callback;
+    std::function<void(bool rising)> on_edge_callback_;
 
 public:
     // Assumes 'pin' is configured as INPUT_PULLUP or equivalent
