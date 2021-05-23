@@ -7,12 +7,15 @@
 namespace bus_monitor {
 
 // Indicates the state of an I2C bus.
-enum class BusState {
+enum class BusState : uint8_t {
+    // We don't know anything about the bus
+    unknown = 0,
+
     // There aren't any transactions in progress. A master is able to start
     // a new transaction.
     // Requires that both bus lines are HIGH and have been for longer than
     // the bus_busy_timeout.
-    idle = 0,
+    idle,
 
     // Either a transaction's in progress or it's just finished.
     // Requires that one of the bus lines changed recently.

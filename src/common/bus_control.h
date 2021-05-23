@@ -10,7 +10,7 @@
 
 namespace common {
 
-enum BusActionTrigger : uint8_t {
+enum class BusActionTrigger : uint8_t {
     TraceStarted,   // Started recording the trace
     SDA_Rose,
     SDA_Fell,
@@ -18,7 +18,7 @@ enum BusActionTrigger : uint8_t {
     SCL_Fell
 };
 
-enum BusAction : uint8_t {
+enum class BusAction : uint8_t {
     None = 0,
     SDA_High,
     SDA_Low,

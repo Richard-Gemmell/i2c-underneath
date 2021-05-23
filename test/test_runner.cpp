@@ -3,8 +3,8 @@
 #include "utils/test_suite.h"
 
 // Unit Tests
-#include "example/example.h"
-#include "test_two/test_two.h"
+//#include "example/example.h"
+#include "unit_tests/bus_monitor/bus_monitor_test.h"
 
 // End to End Tests
 #include "end_to_end/common/hardware/arduino_pin_test.h"
@@ -12,21 +12,26 @@
 
 TestSuite* test_suite;
 void test(TestSuite* suite);
+void report_overall_results();
+UNITY_COUNTER_TYPE total_tests = 0;
+UNITY_COUNTER_TYPE total_ignores = 0;
+UNITY_COUNTER_TYPE total_failures = 0;
 
-void process() {
+void run_tests() {
     // Run each test suite in succession.
 
-//    Serial.println("Run Unit Tests");
-//    Serial.println("--------------");
+    // Unit tests run an any board layout
+    Serial.println("Run Unit Tests");
+    Serial.println("--------------");
 //    test(new ExampleTestSuite());
-//    test(new TestSuiteTwo());
+    test(new bus_monitor::BusMonitorTest());
 
     // Full Stack Tests
     // These tests require working hardware
-    Serial.println("Run Full Stack Tests");
-    Serial.println("--------------------");
-    test(new common::hardware::ArduinoPinTest());
-    test(new common::hardware::TeensyTimerTest());
+//    Serial.println("Run Full Stack Tests");
+//    Serial.println("--------------------");
+//    test(new common::hardware::ArduinoPinTest());
+//    test(new common::hardware::TeensyTimerTest());
 }
 
 void test(TestSuite* suite) {
@@ -35,6 +40,9 @@ void test(TestSuite* suite) {
     UnitySetTestFile(test_suite->get_file_name());
     test_suite->test();
     delete(test_suite);
+    total_tests += Unity.NumberOfTests;
+    total_failures += Unity.TestFailures;
+    total_ignores += Unity.TestIgnores;
     UNITY_END();
     Serial.println("");
 }
@@ -61,7 +69,8 @@ void setup() {
     // You must connect the Serial Monitor before this delay times out
     // otherwise the test output gets truncated in a weird way.
     delay(2000);
-    process();
+    run_tests();
+    report_overall_results();
 }
 
 int max_pokes = 10;
@@ -72,6 +81,28 @@ void loop() {
         // to refresh in case the user didn't connect the monitor in time.
         Serial.print(" ");
     }
+}
+
+void report_overall_results()
+{
+    Serial.println("================");
+    Serial.println("Combined Results");
+    Serial.println("----------------");
+    UnityPrintNumber((UNITY_INT)(total_tests));
+    Serial.print(" Tests ");
+    UnityPrintNumber((UNITY_INT)(total_failures));
+    Serial.print(" Failures ");
+    UnityPrintNumber((UNITY_INT)(total_ignores));
+    Serial.println(" Ignored ");
+    if (total_failures == 0U)
+    {
+        Serial.println("OK");
+    }
+    else
+    {
+        Serial.println("FAIL");
+    }
+    Serial.println();
 }
 
 void blink_isr() {

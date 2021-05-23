@@ -39,6 +39,8 @@ public:
 
         UNITY_END();
     }
+
+    ExampleTestSuite() : TestSuite(__FILE__) {};
 };
 
 // Define statics

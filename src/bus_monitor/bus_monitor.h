@@ -15,11 +15,19 @@ namespace bus_monitor {
 // Watches a bus and reports problems.
 class BusMonitor {
 public:
+    // 'sda' and 'scl' must be connected to the data and clock lines respectively.
+    // If this device is also a bus Master or Slave then you can use the actual
+    // I2C pins unless your I2C driver needs to register callbacks on these pins.
+    // In this case, let the I2C driver configure the pins. If you're using other
+    // pins then they must be configured as open drain inputs.
+    // 'bus_busy_timeout_ns' is a time in nanosecond. The bus is deemed to be busy
+    // for this amount of time after the most recent I2C transfers.
+    // 'bus_stuck_timeout_ns' is a time in nanoseconds. The bus state changes
+    // to 'stuck' if either 'sda' or 'scl' remains low for this amount of time.
     BusMonitor(common::hardware::Pin& sda,
                common::hardware::Pin& scl,
-               common::hardware::Timer& timer,
-               uint32_t bus_busy_timeout_ns = common::StandardMode.times.min_bus_free_time * 1.1,
-               uint32_t bus_stuck_timeout_micros = (SMBUS_TIMEOUT_MILLIS + 1UL) * 1000UL);
+               uint32_t bus_busy_timeout_ns = uint32_t(common::StandardMode.times.min_bus_free_time * 1.1),
+               uint32_t bus_stuck_timeout_ns = SMBUS_TIMEOUT_MILLIS * 1'000'000UL);
 
     ~BusMonitor();
 
@@ -29,22 +37,22 @@ public:
     // Stop monitoring the bus
     void end();
 
-    // The current state of the bus
+    // The current state of the bus. Idle, busy or stuck.
     bus_monitor::BusState get_state();
 
     // Register a callback to be called if the bus gets stuck.
     // 'callback': the function that will be called when the bus is stuck
     // 'sda_stuck': true if SDA is stuck LOW
     // 'scl_stuck': true if SCL is stuck LOW
-    void on_stuck(const std::function<void(bool sda_stuck, bool scl_stuck)>& callback);
+//    void on_stuck(const std::function<void(bool sda_stuck, bool scl_stuck)>& callback);
 
 private:
-    common::hardware::Pin& sda;
-    common::hardware::Pin& scl;
-    common::hardware::Timer& timer;
-    uint32_t bus_busy_timeout_ns;
-    uint32_t bus_stuck_timeout_micros;
-    std::function<void(bool, bool)> callback;
+    common::hardware::Pin& sda_;
+    common::hardware::Pin& scl_;
+    uint32_t bus_busy_timeout_ns_;
+    uint32_t bus_stuck_timeout_ns_;
+    BusState bus_state_ = BusState::unknown;
+    void on_line_changed(bool line_level);
 };
 
 }

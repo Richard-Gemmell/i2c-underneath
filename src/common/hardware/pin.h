@@ -34,6 +34,7 @@ public:
 
     // Registers a callback that will be called when the line changes value.
     // 'rising' is true if the line moved from LOW to HIGH and false otherwise
+    // Call with 'nullptr' to remove the previously registered callback
     virtual void on_edge(const std::function<void(bool rising)>& callback) = 0;
 };
 

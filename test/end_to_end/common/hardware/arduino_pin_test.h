@@ -78,8 +78,24 @@ public:
         TEST_ASSERT_TRUE(callback_value);
     }
 
+    static void calling_on_edge_with_nullptr_removes_callback() {
+        // GIVEN we've registered a callback
+        common::hardware::ArduinoPin pin = ArduinoPin(TEST_PIN);
+        the_pin = &pin;
+        pin.set_on_edge_isr(on_edge_isr);
+        pin.on_edge(on_edge);
+
+        // WHEN we call on_edge with nullptr
+        pin.on_edge(nullptr);
+
+        // THEN the interrupt handler is removed
+        digitalWrite(TEST_PIN, LOW);
+        delayMicroseconds(10);
+        TEST_ASSERT_FALSE(called_back);
+    }
+
     static void destructor_releases_callback() {
-        // GIVEN I've called on_edge on a pin
+        // GIVEN We've called on_edge on a pin
         auto* pin = new ArduinoPin(TEST_PIN);
         the_pin = pin;
         pin->set_on_edge_isr(on_edge_isr);
@@ -120,6 +136,7 @@ public:
         RUN_TEST(read_line);
         RUN_TEST(write_pin);
         RUN_TEST(on_edge_registers_callback);
+        RUN_TEST(calling_on_edge_with_nullptr_removes_callback);
         RUN_TEST(destructor_releases_callback);
         RUN_TEST(destructor_does_not_detach_interrupt_if_it_was_never_attached);
     }

@@ -41,7 +41,7 @@ uint8_t TEST_PIN = 14;
 // function to act as an interrupt service routing.
 // This is annoying but unavoidable due because attachInterrupt()
 // requires a static callback.
-common::hardware::ArduinoPin pin = common::hardware::ArduinoPin(TEST_PIN);
+common::hardware::ArduinoPin pin(TEST_PIN);
 static void on_edge_isr() {
     pin.raise_on_edge();
 }
