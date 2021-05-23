@@ -15,8 +15,8 @@
 #ifndef UNIT_TEST
 #include <Arduino.h>
 //#include <functional>
-#include "common/hardware/arduino_pin.h"
-#include "common/hardware/teensy_timer.h"
+#include "common/hal/arduino/arduino_pin.h"
+#include "common/hal/teensy/teensy_timer.h"
 #include "bus_monitor/bus_monitor.h"
 #include "bus_monitor/bus_state.h"
 
@@ -24,16 +24,16 @@
 IntervalTimer blink_timer;
 void blink();
 
-common::hardware::ArduinoPin sda(SDA);
+common::hal::ArduinoPin sda(SDA);
 static void sda_on_edge_isr() {
     sda.raise_on_edge();
 }
-common::hardware::ArduinoPin scl(SCL);
+common::hal::ArduinoPin scl(SCL);
 static void scl_on_edge_isr() {
     scl.raise_on_edge();
 }
 
-//common::hardware::TeensyTimer bus_timer;
+//common::hal::TeensyTimer bus_timer;
 //static void timer_isr() {
 //    bus_timer.raise_timer_event();
 //}

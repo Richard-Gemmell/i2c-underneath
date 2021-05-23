@@ -1,16 +1,16 @@
 // Copyright © 2021 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_COMMON_HARDWARE_ARDUINO_PIN_TEST_H
-#define I2C_UNDERNEATH_COMMON_HARDWARE_ARDUINO_PIN_TEST_H
+#ifndef I2C_UNDERNEATH_COMMON_HAL_ARDUINO_ARDUINO_PIN_TEST_H
+#define I2C_UNDERNEATH_COMMON_HAL_ARDUINO_ARDUINO_PIN_TEST_H
 
 #include <unity.h>
 #include <Arduino.h>
-#include <common/hardware/arduino_pin.h>
-#include "../../../utils/test_suite.h"
+#include <common/hal/arduino/arduino_pin.h>
+#include "../../../../utils/test_suite.h"
 
 namespace common {
-namespace hardware {
+namespace hal {
 
 #define TEST_PIN 14
 
@@ -18,7 +18,7 @@ class ArduinoPinTest : public TestSuite {
 public:
     static bool called_back;
     static bool callback_value;
-    static common::hardware::ArduinoPin* the_pin;
+    static common::hal::ArduinoPin* the_pin;
 
     void setUp() final {
         pinMode(TEST_PIN, INPUT_PULLUP);
@@ -32,7 +32,7 @@ public:
     }
 
     static void read_line() {
-        common::hardware::ArduinoPin pin = ArduinoPin(TEST_PIN);
+        common::hal::ArduinoPin pin = ArduinoPin(TEST_PIN);
 
         digitalWrite(TEST_PIN, LOW);
         delayMicroseconds(10);
@@ -44,7 +44,7 @@ public:
     }
 
     static void write_pin() {
-        common::hardware::ArduinoPin pin = ArduinoPin(TEST_PIN);
+        common::hal::ArduinoPin pin = ArduinoPin(TEST_PIN);
 
         pin.write_pin(false);
         delayMicroseconds(10);
@@ -61,7 +61,7 @@ public:
     }
 
     static void on_edge_registers_callback() {
-        common::hardware::ArduinoPin pin = ArduinoPin(TEST_PIN);
+        common::hal::ArduinoPin pin = ArduinoPin(TEST_PIN);
         the_pin = &pin;
         pin.set_on_edge_isr(on_edge_isr);
         pin.on_edge(on_edge);
@@ -80,7 +80,7 @@ public:
 
     static void calling_on_edge_with_nullptr_removes_callback() {
         // GIVEN we've registered a callback
-        common::hardware::ArduinoPin pin = ArduinoPin(TEST_PIN);
+        common::hal::ArduinoPin pin = ArduinoPin(TEST_PIN);
         the_pin = &pin;
         pin.set_on_edge_isr(on_edge_isr);
         pin.on_edge(on_edge);
@@ -144,10 +144,10 @@ public:
     ArduinoPinTest() : TestSuite(__FILE__) {};
 };
 
-common::hardware::ArduinoPin* ArduinoPinTest::the_pin;
+common::hal::ArduinoPin* ArduinoPinTest::the_pin;
 bool ArduinoPinTest::called_back;
 bool ArduinoPinTest::callback_value;
 
 }
 }
-#endif //I2C_UNDERNEATH_COMMON_HARDWARE_ARDUINO_PIN_TEST_H
+#endif //I2C_UNDERNEATH_COMMON_HAL_ARDUINO_ARDUINO_PIN_TEST_H

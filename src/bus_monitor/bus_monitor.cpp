@@ -2,8 +2,8 @@
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 #include "bus_monitor.h"
 
-bus_monitor::BusMonitor::BusMonitor(common::hardware::Pin& sda,
-                                    common::hardware::Pin& scl,
+bus_monitor::BusMonitor::BusMonitor(common::hal::Pin& sda,
+                                    common::hal::Pin& scl,
                                     uint32_t bus_busy_timeout_ns,
                                     uint32_t bus_stuck_timeout_micros) :
         sda_(sda),

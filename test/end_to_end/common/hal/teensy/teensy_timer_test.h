@@ -1,20 +1,20 @@
 // Copyright © 2021 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_COMMON_HARDWARE_TEENSY_TIMER_TEST_H
-#define I2C_UNDERNEATH_COMMON_HARDWARE_TEENSY_TIMER_TEST_H
+#ifndef I2C_UNDERNEATH_COMMON_HAL_TEENSY_TEENSY_TIMER_TEST_H
+#define I2C_UNDERNEATH_COMMON_HAL_TEENSY_TEENSY_TIMER_TEST_H
 
 #include <unity.h>
 #include <Arduino.h>
-#include <common/hardware/teensy_timer.h>
-#include "../../../utils/test_suite.h"
+#include <common/hal/teensy/teensy_timer.h>
+#include "../../../../utils/test_suite.h"
 
 namespace common {
-namespace hardware {
+namespace hal {
 
 class TeensyTimerTest : public TestSuite {
 public:
-    static common::hardware::TeensyTimer* the_timer;
+    static common::hal::TeensyTimer* the_timer;
 
     static void timer_isr() {
         the_timer->raise_timer_event();
@@ -22,7 +22,7 @@ public:
 
     static void begin_triggers_callbacks() {
         // GIVEN a timer
-        common::hardware::TeensyTimer timer = TeensyTimer();
+        common::hal::TeensyTimer timer = TeensyTimer();
         the_timer = &timer;
         uint32_t before = ARM_DWT_CYCCNT;
         uint32_t after = before;
@@ -42,7 +42,7 @@ public:
 
     static void end_stops_timer() {
         // GIVEN a timer
-        common::hardware::TeensyTimer timer = TeensyTimer();
+        common::hal::TeensyTimer timer = TeensyTimer();
         the_timer = &timer;
         uint32_t callback_count = 0;
         auto callback = [&callback_count]() {
@@ -84,7 +84,7 @@ public:
 
     static void restart_timer() {
         // GIVEN a timer
-        common::hardware::TeensyTimer timer = TeensyTimer();
+        common::hal::TeensyTimer timer = TeensyTimer();
         the_timer = &timer;
         uint32_t callback_count = 0;
         auto callback = [&callback_count]() {
@@ -114,8 +114,8 @@ public:
     TeensyTimerTest() : TestSuite(__FILE__) {};
 };
 
-common::hardware::TeensyTimer* TeensyTimerTest::the_timer;
+common::hal::TeensyTimer* TeensyTimerTest::the_timer;
 
 }
 }
-#endif //I2C_UNDERNEATH_COMMON_HARDWARE_TEENSY_TIMER_TEST_H
+#endif //I2C_UNDERNEATH_COMMON_HAL_TEENSY_TEENSY_TIMER_TEST_H

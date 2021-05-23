@@ -4,23 +4,23 @@
 #include <Arduino.h>
 #include "arduino_pin.h"
 
-common::hardware::ArduinoPin::ArduinoPin(uint8_t pin)
+common::hal::ArduinoPin::ArduinoPin(uint8_t pin)
     : pin_(pin) {
 }
 
-common::hardware::ArduinoPin::~ArduinoPin() {
+common::hal::ArduinoPin::~ArduinoPin() {
     remove_callback();
 }
 
-void common::hardware::ArduinoPin::write_pin(bool float_high) {
+void common::hal::ArduinoPin::write_pin(bool float_high) {
     digitalWrite(pin_, float_high);
 }
 
-bool common::hardware::ArduinoPin::read_line() {
+bool common::hal::ArduinoPin::read_line() {
     return digitalReadFast(pin_);
 }
 
-void common::hardware::ArduinoPin::on_edge(const std::function<void(bool)>& callback) {
+void common::hal::ArduinoPin::on_edge(const std::function<void(bool)>& callback) {
     if(on_edge_isr_) {
         if (callback) {
             on_edge_callback_ = callback;
@@ -34,15 +34,15 @@ void common::hardware::ArduinoPin::on_edge(const std::function<void(bool)>& call
     }
 }
 
-void common::hardware::ArduinoPin::set_on_edge_isr(void (* on_edge_isr)()) {
+void common::hal::ArduinoPin::set_on_edge_isr(void (* on_edge_isr)()) {
     on_edge_isr_ = on_edge_isr;
 }
 
-void common::hardware::ArduinoPin::raise_on_edge() {
+void common::hal::ArduinoPin::raise_on_edge() {
     on_edge_callback_(read_line());
 }
 
-void common::hardware::ArduinoPin::remove_callback() {
+void common::hal::ArduinoPin::remove_callback() {
     if (on_edge_callback_registered_) {
         detachInterrupt(digitalPinToInterrupt(pin_));
         on_edge_callback_ = nullptr;

@@ -3,19 +3,19 @@
 
 #include "teensy_timer.h"
 
-common::hardware::TeensyTimer::~TeensyTimer() {
+common::hal::TeensyTimer::~TeensyTimer() {
     timer_.end();
 }
 
-void common::hardware::TeensyTimer::set_timer_isr(void (* isr)()) {
+void common::hal::TeensyTimer::set_timer_isr(void (* isr)()) {
     timer_isr_ = isr;
 }
 
-void common::hardware::TeensyTimer::raise_timer_event() {
+void common::hal::TeensyTimer::raise_timer_event() {
     timer_callback_();
 }
 
-void common::hardware::TeensyTimer::begin_micros(const std::function<void()>& callback, uint32_t period) {
+void common::hal::TeensyTimer::begin_micros(const std::function<void()>& callback, uint32_t period) {
     if (timer_isr_) {
         period_ = period;
         timer_callback_ = callback;
@@ -25,11 +25,11 @@ void common::hardware::TeensyTimer::begin_micros(const std::function<void()>& ca
     }
 }
 
-void common::hardware::TeensyTimer::restart() {
+void common::hal::TeensyTimer::restart() {
     timer_.begin(timer_isr_, period_);
 }
 
-void common::hardware::TeensyTimer::end() {
+void common::hal::TeensyTimer::end() {
     timer_.end();
 }
 

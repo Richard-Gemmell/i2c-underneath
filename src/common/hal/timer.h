@@ -1,14 +1,14 @@
 // Copyright © 2021 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_HARDWARE_COMMON_TIMER_H
-#define I2C_UNDERNEATH_HARDWARE_COMMON_TIMER_H
+#ifndef I2C_UNDERNEATH_COMMON_HAL_TIMER_H
+#define I2C_UNDERNEATH_COMMON_HAL_TIMER_H
 
 #include <cstdint>
 #include <functional>
 
 namespace common {
-namespace hardware {
+namespace hal {
 
 class Timer {
 public:
@@ -28,4 +28,4 @@ public:
 
 }
 }
-#endif //I2C_UNDERNEATH_HARDWARE_COMMON_TIMER_H
+#endif //I2C_UNDERNEATH_COMMON_HAL_TIMER_H

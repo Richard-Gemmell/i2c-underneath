@@ -5,8 +5,7 @@
 #define I2C_UNDERNEATH_BUS_MONITOR_H
 
 #include <functional>
-#include <common/hardware/pin.h>
-#include <common/hardware/timer.h>
+#include <common/hal/pin.h>
 #include <common/specifications.h>
 #include "bus_state.h"
 
@@ -24,8 +23,8 @@ public:
     // for this amount of time after the most recent I2C transfers.
     // 'bus_stuck_timeout_ns' is a time in nanoseconds. The bus state changes
     // to 'stuck' if either 'sda' or 'scl' remains low for this amount of time.
-    BusMonitor(common::hardware::Pin& sda,
-               common::hardware::Pin& scl,
+    BusMonitor(common::hal::Pin& sda,
+               common::hal::Pin& scl,
                uint32_t bus_busy_timeout_ns = uint32_t(common::StandardMode.times.min_bus_free_time * 1.1),
                uint32_t bus_stuck_timeout_ns = SMBUS_TIMEOUT_MILLIS * 1'000'000UL);
 
@@ -47,8 +46,8 @@ public:
 //    void on_stuck(const std::function<void(bool sda_stuck, bool scl_stuck)>& callback);
 
 private:
-    common::hardware::Pin& sda_;
-    common::hardware::Pin& scl_;
+    common::hal::Pin& sda_;
+    common::hal::Pin& scl_;
     uint32_t bus_busy_timeout_ns_;
     uint32_t bus_stuck_timeout_ns_;
     BusState bus_state_ = BusState::unknown;

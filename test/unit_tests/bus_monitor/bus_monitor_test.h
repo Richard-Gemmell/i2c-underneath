@@ -7,17 +7,17 @@
 #include <unity.h>
 #include <Arduino.h>
 #include "../../utils/test_suite.h"
-#include <common/hardware/pin.h>
+#include <common/hal/pin.h>
 #include <bus_monitor/bus_monitor.h>
 #include <bus_monitor/bus_state.h>
-#include "../../fakes/common/hardware/fake_pin.h"
+#include "../../fakes/common/hal/fake_pin.h"
 
 namespace bus_monitor {
 
 class BusMonitorTest : public TestSuite {
 public:
-    static common::hardware::FakePin* scl;
-    static common::hardware::FakePin* sda;
+    static common::hal::FakePin* scl;
+    static common::hal::FakePin* sda;
 
     static void bus_state_is_unknown_on_construction() {
         // WHEN we create a monitor
@@ -186,8 +186,8 @@ public:
     }
 
     void setUp() override {
-        scl = new common::hardware::FakePin();
-        sda = new common::hardware::FakePin();
+        scl = new common::hal::FakePin();
+        sda = new common::hal::FakePin();
     }
 
     void tearDown() override {
@@ -201,8 +201,8 @@ public:
 };
 
 // Define statics
-common::hardware::FakePin* BusMonitorTest::scl;
-common::hardware::FakePin* BusMonitorTest::sda;
+common::hal::FakePin* BusMonitorTest::scl;
+common::hal::FakePin* BusMonitorTest::sda;
 
 }
 

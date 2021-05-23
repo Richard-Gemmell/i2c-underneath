@@ -10,7 +10,7 @@
 
 #include <Arduino.h>
 #include <functional>
-#include "common/hardware/arduino_pin.h"
+#include "common/hal/arduino/arduino_pin.h"
 
 IntervalTimer blink_timer;
 void blink();
@@ -41,7 +41,7 @@ uint8_t TEST_PIN = 14;
 // function to act as an interrupt service routing.
 // This is annoying but unavoidable due because attachInterrupt()
 // requires a static callback.
-common::hardware::ArduinoPin pin(TEST_PIN);
+common::hal::ArduinoPin pin(TEST_PIN);
 static void on_edge_isr() {
     pin.raise_on_edge();
 }

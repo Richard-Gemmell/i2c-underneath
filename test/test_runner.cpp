@@ -7,8 +7,8 @@
 #include "unit_tests/bus_monitor/bus_monitor_test.h"
 
 // End to End Tests
-#include "end_to_end/common/hardware/arduino_pin_test.h"
-#include "end_to_end/common/hardware/teensy_timer_test.h"
+#include "end_to_end/common/hal/arduino/arduino_pin_test.h"
+#include "end_to_end/common/hal/teensy/teensy_timer_test.h"
 
 TestSuite* test_suite;
 void test(TestSuite* suite);
@@ -28,10 +28,10 @@ void run_tests() {
 
     // Full Stack Tests
     // These tests require working hardware
-//    Serial.println("Run Full Stack Tests");
-//    Serial.println("--------------------");
-//    test(new common::hardware::ArduinoPinTest());
-//    test(new common::hardware::TeensyTimerTest());
+    Serial.println("Run Full Stack Tests");
+    Serial.println("--------------------");
+    test(new common::hal::ArduinoPinTest());
+    test(new common::hal::TeensyTimerTest());
 }
 
 void test(TestSuite* suite) {

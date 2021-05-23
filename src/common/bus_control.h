@@ -6,7 +6,7 @@
 
 #include <cstdint>
 #include <functional>
-#include "../common/hardware/pin.h"
+#include "common/hal/pin.h"
 
 namespace common {
 
@@ -87,7 +87,7 @@ class BusMessagePrototype {
 //      - in which case setup and hold times should possibly be related to baud rate
 class BusControl {
 public:
-    BusControl(common::hardware::Pin& data_pin, common::hardware::Pin& clock_pin, uint32_t baud_rate);
+    BusControl(common::hal::Pin& data_pin, common::hal::Pin& clock_pin, uint32_t baud_rate);
 
     // 'set_up_nanos': data set-up time (tSU;STA)
     void start(uint32_t set_up_nanos, uint32_t hold_nanos);

@@ -1,15 +1,15 @@
 // Copyright © 2021 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_FAKES_COMMON_HARDWARE_FAKE_PIN_H
-#define I2C_UNDERNEATH_FAKES_COMMON_HARDWARE_FAKE_PIN_H
+#ifndef I2C_UNDERNEATH_FAKES_COMMON_HAL_FAKE_PIN_H
+#define I2C_UNDERNEATH_FAKES_COMMON_HAL_FAKE_PIN_H
 
-#include <common/hardware/pin.h>
+#include <common/hal/pin.h>
 
 namespace common {
-namespace hardware {
+namespace hal {
 
-class FakePin : public common::hardware::Pin {
+class FakePin : public common::hal::Pin {
 public:
     ~FakePin() override {
         on_edge_callback_ = nullptr;
@@ -37,4 +37,4 @@ private:
 
 }
 }
-#endif //I2C_UNDERNEATH_FAKES_COMMON_HARDWARE_FAKE_PIN_H
+#endif //I2C_UNDERNEATH_FAKES_COMMON_HAL_FAKE_PIN_H

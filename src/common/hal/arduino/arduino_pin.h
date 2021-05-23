@@ -1,15 +1,16 @@
 // Copyright © 2021 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_HARDWARE_ARDUINO_PIN_H
-#define I2C_UNDERNEATH_HARDWARE_ARDUINO_PIN_H
+#ifndef I2C_UNDERNEATH_COMMON_HAL_ARDUINO_ARDUINO_PIN_H
+#define I2C_UNDERNEATH_COMMON_HAL_ARDUINO_ARDUINO_PIN_H
 
 #include <cstdint>
-#include "pin.h"
-namespace common {
-namespace hardware {
+#include "common/hal/pin.h"
 
-class ArduinoPin : public common::hardware::Pin {
+namespace common {
+namespace hal {
+
+class ArduinoPin : public common::hal::Pin {
     uint8_t pin_;
     bool on_edge_callback_registered_ = false;
     void(*on_edge_isr_)() = nullptr;
@@ -41,4 +42,4 @@ public:
 }
 }
 
-#endif //I2C_UNDERNEATH_HARDWARE_ARDUINO_PIN_H
+#endif //I2C_UNDERNEATH_COMMON_HAL_ARDUINO_ARDUINO_PIN_H
