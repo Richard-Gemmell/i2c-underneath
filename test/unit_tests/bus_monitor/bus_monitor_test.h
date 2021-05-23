@@ -18,6 +18,7 @@ class BusMonitorTest : public TestSuite {
 public:
     static common::hal::FakePin* scl;
     static common::hal::FakePin* sda;
+//    static common::hal::Timeout* timeout;
 
     static void bus_state_is_unknown_on_construction() {
         // WHEN we create a monitor

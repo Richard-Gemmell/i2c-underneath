@@ -9,6 +9,7 @@
 // End to End Tests
 #include "end_to_end/common/hal/arduino/arduino_pin_test.h"
 #include "end_to_end/common/hal/teensy/teensy_timer_test.h"
+#include "end_to_end/common/hal/teensy/teensy_timestamp_test.h"
 
 TestSuite* test_suite;
 void test(TestSuite* suite);
@@ -24,7 +25,7 @@ void run_tests() {
     Serial.println("Run Unit Tests");
     Serial.println("--------------");
 //    test(new ExampleTestSuite());
-    test(new bus_monitor::BusMonitorTest());
+//    test(new bus_monitor::BusMonitorTest());
 
     // Full Stack Tests
     // These tests require working hardware
@@ -32,6 +33,7 @@ void run_tests() {
     Serial.println("--------------------");
     test(new common::hal::ArduinoPinTest());
     test(new common::hal::TeensyTimerTest());
+    test(new common::hal::TeensyTimestampTest());
 }
 
 void test(TestSuite* suite) {

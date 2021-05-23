@@ -4,12 +4,16 @@
 
 bus_monitor::BusMonitor::BusMonitor(common::hal::Pin& sda,
                                     common::hal::Pin& scl,
+//                                    common::hal::Timestamp& timestamp,
                                     uint32_t bus_busy_timeout_ns,
                                     uint32_t bus_stuck_timeout_micros) :
         sda_(sda),
         scl_(scl),
         bus_busy_timeout_ns_(bus_busy_timeout_ns),
-        bus_stuck_timeout_ns_(bus_stuck_timeout_micros) {
+        bus_stuck_timeout_ns_(bus_stuck_timeout_micros)
+        //,
+//        last_edge_(timestamp)
+        {
 }
 
 bus_monitor::BusMonitor::~BusMonitor() {
@@ -40,13 +44,11 @@ bus_monitor::BusState bus_monitor::BusMonitor::get_state() {
     bool sda = sda_.read_line();
     if (bus_state_ == BusState::busy) {
         if (scl && sda) {
-            bool bus_busy_timed_out = false;
-            if (bus_busy_timed_out) {
+            if (last_edge_.timed_out_nanos(bus_busy_timeout_ns_)) {
                 bus_state_ = BusState::idle;
             }
         } else {
-            bool stuck_timed_out = false;
-            if (stuck_timed_out) {
+            if (last_edge_.timed_out_nanos(bus_stuck_timeout_ns_)) {
                 bus_state_ = BusState::stuck;
             }
         }
@@ -55,5 +57,6 @@ bus_monitor::BusState bus_monitor::BusMonitor::get_state() {
 }
 
 void bus_monitor::BusMonitor::on_line_changed(bool line_level) {
+//    last_edge_.mark();
     bus_state_ = BusState::busy;
 }
