@@ -25,7 +25,7 @@ void run_tests() {
     Serial.println("Run Unit Tests");
     Serial.println("--------------");
 //    test(new ExampleTestSuite());
-//    test(new bus_monitor::BusMonitorTest());
+    test(new bus_monitor::BusMonitorTest());
 
     // Full Stack Tests
     // These tests require working hardware

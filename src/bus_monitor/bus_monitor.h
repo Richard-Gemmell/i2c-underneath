@@ -27,7 +27,7 @@ public:
     // to 'stuck' if either 'sda' or 'scl' remains low for this amount of time.
     BusMonitor(common::hal::Pin& sda,
                common::hal::Pin& scl,
-//               common::hal::Timestamp& timestamp,
+               common::hal::Timestamp& timestamp,
                uint32_t bus_busy_timeout_ns = uint32_t(common::StandardMode.times.min_bus_free_time * 1.1),
                uint32_t bus_stuck_timeout_ns = SMBUS_TIMEOUT_MILLIS * 1'000'000UL);
 
@@ -56,6 +56,7 @@ private:
     common::hal::Timestamp& last_edge_;
     BusState bus_state_ = BusState::unknown;
     void on_line_changed(bool line_level);
+    bool running_;
 };
 
 }

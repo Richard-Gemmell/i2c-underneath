@@ -23,15 +23,18 @@ public:
     }
 
     bool read_line() override {
+        read_line_called = true;
         return line_high_;
     }
 
     void on_edge(const std::function<void(bool)>& callback) override {
+        on_edge_called = true;
         on_edge_callback_ = callback;
     }
 
-private:
     bool line_high_ = true;
+    bool on_edge_called = false;
+    bool read_line_called = false;
     std::function<void(bool rising)> on_edge_callback_ = nullptr;
 };
 
