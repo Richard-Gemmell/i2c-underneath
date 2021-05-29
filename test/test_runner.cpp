@@ -4,19 +4,20 @@
 
 // Unit Tests
 //#include "example/example.h"
-#include "unit_tests/bus_monitor/bus_monitor_test.h"
+#include "unit/bus_monitor/bus_monitor_test.h"
 
 // End to End Tests
-#include "end_to_end/common/hal/arduino/arduino_pin_test.h"
-#include "end_to_end/common/hal/teensy/teensy_timer_test.h"
-#include "end_to_end/common/hal/teensy/teensy_timestamp_test.h"
+#include "e2e/common/hal/arduino/arduino_pin_test.h"
+#include "e2e/common/hal/teensy/teensy_timer_test.h"
+#include "e2e/common/hal/teensy/teensy_timestamp_test.h"
 
 TestSuite* test_suite;
 void test(TestSuite* suite);
+void report_test_results();
 void report_overall_results();
-UNITY_COUNTER_TYPE total_tests = 0;
-UNITY_COUNTER_TYPE total_ignores = 0;
-UNITY_COUNTER_TYPE total_failures = 0;
+UNITY_COUNTER_TYPE tests_run = 0;
+UNITY_COUNTER_TYPE tests_ignored = 0;
+UNITY_COUNTER_TYPE tests_failed = 0;
 
 void run_tests() {
     // Run each test suite in succession.
@@ -37,15 +38,14 @@ void run_tests() {
 }
 
 void test(TestSuite* suite) {
-    UNITY_BEGIN();
     test_suite = suite;
     UnitySetTestFile(test_suite->get_file_name());
     test_suite->test();
     delete(test_suite);
-    total_tests += Unity.NumberOfTests;
-    total_failures += Unity.TestFailures;
-    total_ignores += Unity.TestIgnores;
-    UNITY_END();
+    tests_run = Unity.NumberOfTests - tests_run;
+    tests_failed = Unity.TestFailures - tests_failed;
+    tests_ignored = Unity.TestIgnores - tests_ignored;
+    report_test_results();
     Serial.println("");
 }
 
@@ -70,9 +70,10 @@ void setup() {
 
     // You must connect the Serial Monitor before this delay times out
     // otherwise the test output gets truncated in a weird way.
-    delay(2000);
+    delay(1000);
+    UNITY_BEGIN();
     run_tests();
-    report_overall_results();
+    UNITY_END();
 }
 
 int max_pokes = 10;
@@ -85,26 +86,21 @@ void loop() {
     }
 }
 
-void report_overall_results()
-{
-    Serial.println("================");
-    Serial.println("Combined Results");
-    Serial.println("----------------");
-    UnityPrintNumber((UNITY_INT)(total_tests));
-    Serial.print(" Tests ");
-    UnityPrintNumber((UNITY_INT)(total_failures));
+// Equivalent to UNITY_END() except it doesn't halt the test runner.
+void report_test_results() {
+    Serial.println("----------------------");
+    Serial.print(tests_run);
+    Serial.print(" Executed "); // DON'T say "Tests" here. It'll stop the test suite running.
+    Serial.print(tests_failed);
     Serial.print(" Failures ");
-    UnityPrintNumber((UNITY_INT)(total_ignores));
+    Serial.print(tests_ignored);
     Serial.println(" Ignored ");
-    if (total_failures == 0U)
-    {
+    if (tests_failed == 0U) {
         Serial.println("OK");
-    }
-    else
-    {
+    } else {
         Serial.println("FAIL");
     }
-    Serial.println();
+    Serial.println(".");
 }
 
 void blink_isr() {
