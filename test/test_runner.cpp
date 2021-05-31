@@ -14,7 +14,6 @@
 TestSuite* test_suite;
 void test(TestSuite* suite);
 void report_test_results();
-void report_overall_results();
 UNITY_COUNTER_TYPE tests_run = 0;
 UNITY_COUNTER_TYPE tests_ignored = 0;
 UNITY_COUNTER_TYPE tests_failed = 0;
