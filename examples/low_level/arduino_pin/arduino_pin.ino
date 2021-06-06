@@ -10,6 +10,7 @@
 
 #include <Arduino.h>
 #include <functional>
+#include "i2c-underneath.h"
 #include "common/hal/arduino/arduino_pin.h"
 
 IntervalTimer blink_timer;
@@ -46,9 +47,9 @@ static void on_edge_isr() {
     pin.raise_on_edge();
 }
 
-static void static_event_handler(bool rising) {
-    Serial.print("Static handler called. Line level is ");Serial.println(rising);
-}
+//static void static_event_handler(bool rising) {
+//    Serial.print("Static handler called. Line level is ");Serial.println(rising);
+//}
 
 void setup() {
     // Blink the LED to show we're alive

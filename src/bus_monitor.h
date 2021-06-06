@@ -5,10 +5,10 @@
 #define I2C_UNDERNEATH_BUS_MONITOR_H
 
 #include <functional>
-#include <common/hal/pin.h>
-#include <common/hal/timestamp.h>
-#include <common/specifications.h>
-#include "bus_state.h"
+#include "common/hal/pin.h"
+#include "common/hal/timestamp.h"
+#include "common/specifications.h"
+#include "bus_monitor/bus_state.h"
 
 namespace bus_monitor {
 

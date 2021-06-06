@@ -21,10 +21,10 @@
 #ifndef UNIT_TEST
 #include <Arduino.h>
 #include <i2c_driver.h>
-#include "imx_rt1060/imx_rt1060_i2c_driver.h"
+#include <imx_rt1060/imx_rt1060_i2c_driver.h>
+#include "bus_monitor.h"
 #include "common/hal/arduino/arduino_pin.h"
 #include "common/hal/teensy/teensy_timestamp.h"
-#include "bus_monitor/bus_monitor.h"
 
 I2CMaster& master = Master;
 void finish(bool report_timeout);

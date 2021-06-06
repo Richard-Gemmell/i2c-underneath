@@ -8,7 +8,7 @@
 #include <Arduino.h>
 #include "../../utils/test_suite.h"
 #include <common/hal/pin.h>
-#include <bus_monitor/bus_monitor.h>
+#include <bus_monitor.h>
 #include <bus_monitor/bus_state.h>
 #include "../../fakes/common/hal/fake_pin.h"
 #include "../../fakes/common/hal/fake_timestamp.h"

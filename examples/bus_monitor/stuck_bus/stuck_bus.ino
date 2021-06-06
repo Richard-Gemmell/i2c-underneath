@@ -14,9 +14,9 @@
 
 #ifndef UNIT_TEST
 #include <Arduino.h>
+#include "bus_monitor.h"
 #include "common/hal/arduino/arduino_pin.h"
 #include "common/hal/teensy/teensy_timestamp.h"
-#include "bus_monitor/bus_monitor.h"
 
 
 IntervalTimer blink_timer;
