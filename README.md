@@ -14,6 +14,15 @@ I haven't made any attempt to make this project friendly to use. You'll
 need to download or clone the code and install it in a way that suits
 your IDE.
 
+# Installation
+* [Arduino Instructions](documentation/installation/arduino_installation.md)
+* [PlatformIO Instructions](documentation/installation/platformio_installation.md)
+
+## GitHub Help
+If you're wondering how to get code out of GitHub then you're not alone!
+Here are some [instructions for downloading or cloning](documentation/installation/github_help.md)
+this library. The page also explains how to download a different branch.
+
 # Tools
 ## Bus Monitor
 The BusMonitor watches an I2C bus and reports whether it's idle, busy
