@@ -13,7 +13,7 @@ common::hal::ArduinoPin::~ArduinoPin() {
 }
 
 void common::hal::ArduinoPin::write_pin(bool float_high) {
-    digitalWriteFast(pin_, float_high);
+    digitalWrite(pin_, float_high);
 }
 
 bool common::hal::ArduinoPin::read_line() {

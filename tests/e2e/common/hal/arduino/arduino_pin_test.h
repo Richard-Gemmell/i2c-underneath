@@ -22,7 +22,7 @@ public:
 
     void setUp() final {
         pinMode(TEST_PIN, INPUT_PULLUP);
-        digitalWriteFast(TEST_PIN, HIGH);
+        digitalWrite(TEST_PIN, HIGH);
         called_back = false;
         callback_value = false;
     }

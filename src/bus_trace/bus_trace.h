@@ -46,7 +46,7 @@ public:
     // Calculates the maximum number of 'BusEvent' objects required
     // to describe an I2C message.
     // Set 'include_pin_events' to true if the system is driving the bus
-    // pins. Set it false if the the system is just sniffing a bus.
+    // pins. Set it false if the system is just sniffing a bus.
     static size_t max_events_required(uint32_t bytes_per_message, bool include_pin_events) {
         size_t events_per_bit = 2 * 2; // 2 for SCL. 0-2 for SDA
         if (include_pin_events) {
