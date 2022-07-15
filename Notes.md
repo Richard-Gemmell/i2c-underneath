@@ -23,7 +23,8 @@ LOW. It's the pull-up resistors that actually raise the voltage.
 
 (The spec does allow a master device to use a push-pull driver on the clock line
 (SCL) but this is risky. It causes a short circuit if any slave on the bus tries
-to stretch the clock. See sections 3.1.1 and 3.1.9 of the I2C I2CParameters.)
+to stretch the clock. See sections 3.1.1 and 3.1.9 of the 
+[I2C Specification](https://www.nxp.com/docs/en/user-guide/UM10204.pdf).)
 
 ### Consequences
 * If any device pulls a line LOW and keeps it there then nothing can use the
@@ -39,7 +40,7 @@ decide which one should continue if they try to use the bus at the same time.
 See sections 3.1.7 and 3.1.8 of the I2C specification.
 
 Master devices are not required to support multi-master configurations.
-(from section 3.1 of the I2C I2CParameters)
+(from section 3.1 of the [I2C Specification](https://www.nxp.com/docs/en/user-guide/UM10204.pdf))
 
 ### Consequences
 * a device which supports multi-master configurations may report
@@ -67,8 +68,33 @@ Devices are not required to support clock stretching.
   the master will keep thinking that the bus is stuck.
 
 # I2C Faults
+## Electrical Problems
+Section 6 of the [I2C Specification](https://www.nxp.com/docs/en/user-guide/UM10204.pdf)
+defines the electrical requirements for I2C. An application's electrical design
+can break I2C quite easily. These are the most common cause of I2C errors.
+
+### Incorrect Logic Levels
+* lack of a common GND
+* excessive voltage change along the common GND due to resistance 
+* incompatible V<sub>DD</sub> voltages (e.g. 5V and 2.5V)
+* pins set to trigger at incorrect voltages (should be 0.3 V<sub>DD</sub>
+  and 0.7 V<sub>DD</sub>)
+
+### Rounded Pulses
+* slow rise time
+* slow fall time
+
+You may need to use an oscilloscope to check the rise and fall times. 
+
+#### Fixes
+* reduce the resistance of the pull up resistors if the rise time for a line is too slow
+* increase the resistance of the pull-up resistors if the fall time is too slow
+  (Need confirmation for this. RJG May 2021)
+* reduce the capacitance of the bus if the rise or fall times are too slow
+* reduce the master clock speed as lower speeds are more forgiving
+
 ## Timeouts
-TODO
+**TODO**
 
 * slave stretches the clock for too long
 * ?? slave is waiting for master to pulse SCL but the master isn't responding
@@ -92,13 +118,19 @@ A master may think the bus is stuck when it isn't. This can happen if:
 A device cannot break the bus by setting a line HIGH and then failing because
 this won't stop other devices from changing the line level.
 
-See section 3.1.16 of the I2C I2CParameters for more information.
+See section 3.1.16 of the 
+[I2C Specification](https://www.nxp.com/docs/en/user-guide/UM10204.pdf)
+for more information.
 
 ## Bit Errors
 A device reports a bit error of some kind when it tries to write a 1
 to the bus but, the data line (SDA) remains LOW. Note that line can
 never be unexpectedly HIGH because a device can always pull the line
 LOW whenever it wants.
+
+Bit errors may be caused by:
+* electrical issues
+* another device holding a line LOW
 
 ### Arbitration Lost
 The master will abort a transaction if it tries to send a 1, but the bus reads 0.
@@ -109,38 +141,58 @@ to continue. This is normal and correct behaviour in a multi-master setup.
 If there's only one master on the bus then "Arbitration Lost" is just a
 bit error with a confusing error message.
 
-See section 3.1.8 of the I2C I2CParameters for a complete description of arbitration.
+See section 3.1.8 of the 
+[I2C Specification](https://www.nxp.com/docs/en/user-guide/UM10204.pdf)
+for a complete description of arbitration.
 
 ## Timing Problems
+### Slow Interrupt Service Routines and Event Handlers
+The Teensy 4 and other programmable I2C devices can run into problems
+if they spend too much time executing an interrupt service routine (ISR).
+Although the Teensy has hardware support for I2C it still has to do
+a lot of I2C work in an interrupt service routine. This includes
+calling application event handlers. If an event handler is too slow or
+some other ISR takes too long then it won't handle I2C correctly.
+
+#### Fixes
+* don't perform *any* IO operations in ISRs and I2C event handlers
+* offload all possible work from ISRs and event handlers to the
+  main application loop
+* 
+
 ### Missed Start
-If a device needs to poll the bus then it may miss a START condition.
+If a slave device needs to poll the bus then it may miss a START condition.
 This shouldn't happen if the device has hardware support but can be a
-problem if it bit-bangs I2C. See section 3.1.15 of the I2C I2CParameters.
+problem if it bit-bangs I2C. See section 3.1.15 of the
+[I2C Specification](https://www.nxp.com/docs/en/user-guide/UM10204.pdf).
 
 #### Fixes
 * configure the master to send a **START byte** instead of a normal start.
   This gives the slave more time to notice the transfer.
 
-### Incorrect Timing
-Section 6 of the I2C I2CParameters defines various timing parameters that
-determine how long the lines are held high or low, how quickly they must
-change level and when changes are allowed.
+### Incorrect Timing Logic
+Section 6 of the [I2C Specification](https://www.nxp.com/docs/en/user-guide/UM10204.pdf)
+defines various timing parameters that determine how long the lines are held high
+or low and when changes are allowed.
 
 An I2C transfer is likely to fail in odd ways if a device gets the timing
-wrong. Issues can include
+wrong.
 
-### Fixes
-* add or increase the strength of the pull up resistors if the rise time
-  for a line is too slow
-* reduce the strength of the pull-up resistors if the fall time is too slow
-  (Need confirmation for this. RJG May 2021)
-* reduce the capacitance of the bus if the rise or fall times are too slow
+The timing logic is determined by the device's hardware or software design.
+Application developers cannot affect the timing unless:
+* the device executes application code
+* the device has configuration settings that change the timing
+* there's a bug in the device's I2C implementation
 
-## Electrical Problems
+Application code can break timing if it keeps a processor busy when it needs
+to respond to an I2C event. This is mainly a problem for bit-banging
+implementations. Devices that have I2C hardware support are more likely to
+miss messages instead. (See below)
 
-### Incorrect Logic Levels
-* lack of common GND
-* GND varies too much due to resistance between devices
-* incompatible V<sub>DD</sub> voltages (e.g. 5V and 2.5V)
-* pins set to trigger at incorrect voltages (should be 0.3 V<sub>DD</sub>
-  and 0.7 V<sub>DD</sub>)
+Note that this is the opposite to electrical problems. It's very easy to break
+the electrical design by accident. (See below)
+
+#### Fixes
+* check that application code either cannot affect timing or is fast enough that it doesn't matter
+* minimise code in interrupt service routines (See below)
+* check for any device configuration settings that affect timing
