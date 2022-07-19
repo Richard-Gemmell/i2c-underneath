@@ -3,8 +3,11 @@
 #include "utils/test_suite.h"
 
 // Unit Tests
-//#include "example/example.h"
+#include "example/example.h"
 #include "unit/bus_monitor/bus_monitor_test.h"
+#include "unit/bus_trace/bus_event_flags_test.h"
+#include "unit/bus_trace/bus_event_test.h"
+#include "unit/bus_trace/bus_trace_test.h"
 
 // End to End Tests
 #include "e2e/common/hal/arduino/arduino_pin_test.h"
@@ -26,6 +29,9 @@ void run_tests() {
     Serial.println("--------------");
 //    test(new ExampleTestSuite());
     test(new bus_monitor::BusMonitorTest());
+    test(new bus_trace::BusEventFlagsTest());
+    test(new bus_trace::BusEventTest());
+    test(new bus_trace::BusTraceTest());
 
     // Full Stack Tests
     // These tests require working hardware
@@ -60,7 +66,6 @@ void tearDown(void) {
 
 // Blink the LED to make sure the Teensy hasn't hung
 IntervalTimer blink_timer;
-volatile bool led_high = false;
 void blink_isr();
 
 void setup() {
@@ -103,6 +108,5 @@ void report_test_results() {
 }
 
 void blink_isr() {
-    led_high = !led_high;
-    digitalWrite(LED_BUILTIN, led_high);
+    digitalToggle(LED_BUILTIN);
 }

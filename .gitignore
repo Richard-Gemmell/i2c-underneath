@@ -4,3 +4,4 @@ cmake-build-*/
 .idea
 tmp_pio_test_transport.cpp
 lib
+src/main.cpp*

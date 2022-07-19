@@ -32,12 +32,8 @@ public:
 
     // Include all the tests here
     void test() final {
-        UNITY_BEGIN();
-
         RUN_TEST(test_example_one);
         RUN_TEST(test_example_two);
-
-        UNITY_END();
     }
 
     ExampleTestSuite() : TestSuite(__FILE__) {};
