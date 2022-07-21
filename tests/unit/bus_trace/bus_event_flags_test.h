@@ -14,10 +14,11 @@ namespace bus_trace {
 class BusEventFlagsTest : public TestSuite {
 public:
     static void test_values() {
-        TEST_ASSERT_EQUAL(0x80, BusEventFlags::SDA_PIN_CHANGED);
-        TEST_ASSERT_EQUAL(0x40, BusEventFlags::SCL_PIN_CHANGED);
-        TEST_ASSERT_EQUAL(0x20, BusEventFlags::SDA_PIN_STATE);
-        TEST_ASSERT_EQUAL(0x10, BusEventFlags::SCL_PIN_STATE);
+        // Pins states are not supported at this time
+//        TEST_ASSERT_EQUAL(0x80, BusEventFlags::SDA_PIN_CHANGED);
+//        TEST_ASSERT_EQUAL(0x40, BusEventFlags::SCL_PIN_CHANGED);
+//        TEST_ASSERT_EQUAL(0x20, BusEventFlags::SDA_PIN_STATE);
+//        TEST_ASSERT_EQUAL(0x10, BusEventFlags::SCL_PIN_STATE);
         TEST_ASSERT_EQUAL(0x08, BusEventFlags::SDA_LINE_CHANGED);
         TEST_ASSERT_EQUAL(0x04, BusEventFlags::SCL_LINE_CHANGED);
         TEST_ASSERT_EQUAL(0x02, BusEventFlags::SDA_LINE_STATE);

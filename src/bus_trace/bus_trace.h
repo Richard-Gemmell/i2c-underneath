@@ -9,6 +9,8 @@
 #include <array>
 #include <bus_trace/bus_event.h>
 #include <bus_trace/bus_event_flags.h>
+#include <common/hal/clock.h>
+#include "common/hal/teensy/teensy_clock.h"
 
 namespace bus_trace {
 
@@ -21,44 +23,38 @@ public:
     // Set 'include_pin_events' to true if the system is driving the bus
     // pins. Set it to false if the system is watching a bus without
     // driving it.
-    // RAM required is 30 to 60 bytes per byte of I2C message
+    // Multiply by sizeof(BusEvent) to get RAM required
     static size_t max_events_required(uint32_t bytes_per_message, bool include_pin_events);
-//    static size_t max_events_required(uint32_t bytes_per_message, bool include_pin_events) {
-//        size_t events_per_bit = 2 * 2; // 2 for SCL. 0-2 for SDA
-//        if (include_pin_events) {
-//            events_per_bit *= 2;    // If we're driving the pins then there's an extra event per edge.
-//        }
-//        const size_t events_per_byte = 9 * events_per_bit;  // 8 bits + the ACK
-//        return (2 * events_per_bit) +  // Allow for START and STOP bits
-//               (events_per_byte * (bytes_per_message + 1)); // Allow for address byte
-//    }
 
-    // max_events: maximum number of bus events that can be stored in this trace.
+    // events: an array of BusEvents that will be populated by the trace
+    // max_event_count: maximum number of bus events that can be stored in this trace.
+    // clock: provides system time. Can be faked for unit tests.
     // Additional events are dropped. Must be less than SIZE_MAX.
-    BusTrace(size_t max_events);
+    BusTrace(BusEvent* events, size_t max_event_count, const common::hal::Clock& clock);
+
+    // The number of events we've recorded.
+    size_t event_count() const;
+
+    // Returns a recorded event or nullptr if index is out of range.
+    const BusEvent* event(size_t index) const;
 
     // Adds an event to the trace as long as there is space for it.
     // Discards the event if there's no more space
     void record_event(const BusEventFlags& event);
 
-    // TODO: How to compare traces?
-    // Do you compare times as well as edges?
-    // Do we compare pin changes
     // Returns the index of the first BusEvent that doesn't match
     // or SIZE_MAX if the traces are equivalent.
-    size_t compare_to(const BusTrace& other);
-
-    // Overload to make it possible to compare a Trace to an expected Trace.
-    size_t compare_to(const BusEvent* other);
+    // Only line states and transitions matter. Pin changes and timings
+    // are ignored.
+    size_t compare_to(const BusEvent* other, size_t other_event_count);
 
 private:
-    uint32_t start_millis;  // Absolute time that the trace started
-    uint32_t start_ticks;   // Tick count at start
+    const common::hal::Clock& clock;    // Provides system time
+    uint32_t ticks_at_latest_event = 0;
 
-    // The events. Max 4 events per I2C data bit
-    // TODO: Maybe we should pass this array to the constructor so it can be a compile time object
-    // Alternatively we may need to 'new' it.
-    BusEvent events[];
+    BusEvent* events;               // Array of events
+    size_t max_event_count;         // Maximum number of items in 'events'
+    size_t current_event_count = 0; // Current event count
 };
 
 // Records the electrical activity on I2C bus.

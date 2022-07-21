@@ -3,7 +3,7 @@
 #include "utils/test_suite.h"
 
 // Unit Tests
-#include "example/example.h"
+//#include "example/example.h"
 #include "unit/bus_monitor/bus_monitor_test.h"
 #include "unit/bus_trace/bus_event_flags_test.h"
 #include "unit/bus_trace/bus_event_test.h"
@@ -13,17 +13,20 @@
 #include "e2e/common/hal/arduino/arduino_pin_test.h"
 #include "e2e/common/hal/teensy/teensy_timer_test.h"
 #include "e2e/common/hal/teensy/teensy_timestamp_test.h"
+#include "e2e/common/hal/teensy/teensy_clock_test.h"
 
-TestSuite* test_suite;
 void test(TestSuite* suite);
-void report_test_results();
-UNITY_COUNTER_TYPE tests_run = 0;
-UNITY_COUNTER_TYPE tests_ignored = 0;
-UNITY_COUNTER_TYPE tests_failed = 0;
 
-void run_tests() {
-    // Run each test suite in succession.
+// Runs a limited number of test suites.
+// Return true to run all tests afterwards.
+bool run_subset() {
+    return true;
+//    test(new bus_trace::BusTraceTest());
+//    return false;
+}
 
+// Runs every test suite in succession.
+void run_all_tests() {
     // Unit tests run an any board layout
     Serial.println("Run Unit Tests");
     Serial.println("--------------");
@@ -38,9 +41,16 @@ void run_tests() {
     Serial.println("Run Full Stack Tests");
     Serial.println("--------------------");
     test(new common::hal::ArduinoPinTest());
+    test(new common::hal::TeensyClockTest());
     test(new common::hal::TeensyTimerTest());
     test(new common::hal::TeensyTimestampTest());
 }
+
+TestSuite* test_suite;
+void report_test_results();
+UNITY_COUNTER_TYPE tests_run = 0;
+UNITY_COUNTER_TYPE tests_ignored = 0;
+UNITY_COUNTER_TYPE tests_failed = 0;
 
 void test(TestSuite* suite) {
     test_suite = suite;
@@ -55,12 +65,12 @@ void test(TestSuite* suite) {
 }
 
 // Called before each test.
-void setUp(void) {
+__attribute__((unused)) void setUp(void) {
     test_suite->setUp();
 }
 
 // Called after each test.
-void tearDown(void) {
+__attribute__((unused)) void tearDown(void) {
     test_suite->tearDown();
 }
 
@@ -68,7 +78,7 @@ void tearDown(void) {
 IntervalTimer blink_timer;
 void blink_isr();
 
-void setup() {
+__attribute__((unused)) void setup() {
     // Blink the LED to show we're still alive
     blink_timer.begin(blink_isr, 300'000);
 
@@ -76,12 +86,15 @@ void setup() {
     // otherwise the test output gets truncated in a weird way.
     delay(1000);
     UNITY_BEGIN();
-    run_tests();
+    if(run_subset()) {
+        run_all_tests();
+    }
     UNITY_END();
 }
 
 int max_pokes = 10;
-void loop() {
+
+__attribute__((unused)) void loop() {
     delay(1000);
     if (max_pokes-- > 0) {
         // Print a character from time to time to force the serial monitor

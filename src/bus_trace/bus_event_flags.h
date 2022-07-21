@@ -16,10 +16,11 @@ namespace bus_trace {
 // Pin values and changes are not recorded if we're just spying on the
 // bus.
 enum class BusEventFlags : uint8_t {
-    SDA_PIN_CHANGED = 1 << 7,
-    SCL_PIN_CHANGED = 1 << 6,
-    SDA_PIN_STATE = 1 << 5,
-    SCL_PIN_STATE = 1 << 4,
+// PIN states are not supported as they're not likely to be useful.
+//    SDA_PIN_CHANGED = 1 << 7,
+//    SCL_PIN_CHANGED = 1 << 6,
+//    SDA_PIN_STATE = 1 << 5,
+//    SCL_PIN_STATE = 1 << 4,
     SDA_LINE_CHANGED = 1 << 3,
     SCL_LINE_CHANGED = 1 << 2,
     SDA_LINE_STATE = 1 << 1,

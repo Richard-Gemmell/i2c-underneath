@@ -20,8 +20,16 @@ public:
         TEST_ASSERT_EQUAL(123, event.delta_t_in_ticks);
     }
 
+    static void test_copy() {
+        BusEvent event(123, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE);
+        BusEvent actual = event;
+        TEST_ASSERT_EQUAL(BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE, actual.flags);
+        TEST_ASSERT_EQUAL(123, actual.delta_t_in_ticks);
+    }
+
     void test() final {
         RUN_TEST(test_create_bus_event);
+        RUN_TEST(test_copy);
     }
 
     BusEventTest() : TestSuite(__FILE__) {};

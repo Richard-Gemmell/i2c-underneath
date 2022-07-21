@@ -13,6 +13,8 @@ namespace bus_trace {
 // Records a change to the state of the bus.
 class BusEvent {
 public:
+    BusEvent() = default;
+
     BusEvent(uint16_t delta_t_in_ticks, BusEventFlags flags)
         : delta_t_in_ticks(delta_t_in_ticks),
           flags(flags) {
