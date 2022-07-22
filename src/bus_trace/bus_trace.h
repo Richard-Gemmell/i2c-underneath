@@ -57,22 +57,5 @@ private:
     size_t current_event_count = 0; // Current event count
 };
 
-// Records the electrical activity on I2C bus.
-// A trace cannot last longer than 2^32 processor cycles.
-// The trace is driven by interrupts so it will continue
-// recording while the processor performs other work.
-class BusRecorder {
-    // Stops any recording that's in progress and then
-    // starts recording. Bus events are added to 'trace'.
-    // The recording stops automatically when the trace is full.
-    void start(BusTrace& trace);
-
-    // Stops recording
-    void stop();
-
-    // Returns true if we're recording
-    bool is_recording();
-};
-
 }
 #endif //I2C_UNDERNEATH_BUS_TRACE_H

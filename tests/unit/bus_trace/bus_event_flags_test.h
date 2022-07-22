@@ -23,6 +23,7 @@ public:
         TEST_ASSERT_EQUAL(0x04, BusEventFlags::SCL_LINE_CHANGED);
         TEST_ASSERT_EQUAL(0x02, BusEventFlags::SDA_LINE_STATE);
         TEST_ASSERT_EQUAL(0x01, BusEventFlags::SCL_LINE_STATE);
+        TEST_ASSERT_EQUAL(0x00, BusEventFlags::BOTH_LOW_AND_UNCHANGED);
     }
 
     static void test_operator_or() {

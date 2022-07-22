@@ -25,6 +25,7 @@ enum class BusEventFlags : uint8_t {
     SCL_LINE_CHANGED = 1 << 2,
     SDA_LINE_STATE = 1 << 1,
     SCL_LINE_STATE = 1 << 0,
+    BOTH_LOW_AND_UNCHANGED = 0
 };
 
 BusEventFlags operator|(BusEventFlags lhs, BusEventFlags rhs);
