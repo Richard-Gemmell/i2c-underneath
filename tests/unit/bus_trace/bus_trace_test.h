@@ -8,11 +8,12 @@
 #include <Arduino.h>
 #include "utils/test_suite.h"
 #include "fakes/common/hal/fake_clock.h"
+#include "fakes/fake_serial.h"
 #include <bus_trace/bus_trace.h>
 
 namespace bus_trace {
 
-#define NUM_EVENTS 3
+#define MAX_EVENTS 20
 
 class BusTraceTest : public TestSuite {
     static common::hal::FakeClock clock;
@@ -33,14 +34,14 @@ public:
     }
 
     static void new_trace_is_empty() {
-        BusEvent events[NUM_EVENTS];
-        BusTrace trace(events, NUM_EVENTS, clock);
+        BusEvent events[MAX_EVENTS];
+        BusTrace trace(events, MAX_EVENTS, clock);
         TEST_ASSERT_EQUAL_UINT32(0, trace.event_count());
     }
 
     static void cannot_get_event_that_has_not_been_recorded() {
-        BusEvent events[NUM_EVENTS];
-        BusTrace trace(events, NUM_EVENTS, clock);
+        BusEvent events[MAX_EVENTS];
+        BusTrace trace(events, MAX_EVENTS, clock);
 
         // WHEN we try to get the first event before it's been added
         // THEN we get nullptr
@@ -58,8 +59,8 @@ public:
     }
 
     static void first_call_to_record_event_creates_correct_event() {
-        BusEvent events[NUM_EVENTS];
-        BusTrace trace(events, NUM_EVENTS, clock);
+        BusEvent events[MAX_EVENTS];
+        BusTrace trace(events, MAX_EVENTS, clock);
 
         // WHEN we record an event
         auto flags = BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SCL_LINE_STATE;
@@ -76,8 +77,8 @@ public:
 
     static void second_call_to_record_event_creates_event_with_correct_delta() {
         // GIVEN a trace containing a single event
-        BusEvent events[NUM_EVENTS];
-        BusTrace trace(events, NUM_EVENTS, clock);
+        BusEvent events[MAX_EVENTS];
+        BusTrace trace(events, MAX_EVENTS, clock);
         trace.record_event(BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SCL_LINE_STATE);
         clock.system_tick = clock.system_tick + 999;
 
@@ -96,8 +97,8 @@ public:
 
     static void later_events_have_correct_delta() {
         // GIVEN a trace containing 2 events
-        BusEvent events[NUM_EVENTS];
-        BusTrace trace(events, NUM_EVENTS, clock);
+        BusEvent events[MAX_EVENTS];
+        BusTrace trace(events, MAX_EVENTS, clock);
         trace.record_event(BusEventFlags::SDA_LINE_STATE);
         clock.system_tick = clock.system_tick + 300;
         trace.record_event(BusEventFlags::SDA_LINE_CHANGED);
@@ -118,8 +119,8 @@ public:
 
     static void delta_is_calculated_correctly_when_tick_count_wraps() {
         // GIVEN we've recorded an event just before the system tick count hits its maximum value
-        BusEvent events[NUM_EVENTS];
-        BusTrace trace(events, NUM_EVENTS, clock);
+        BusEvent events[MAX_EVENTS];
+        BusTrace trace(events, MAX_EVENTS, clock);
         clock.system_tick = UINT32_MAX - 100;   // A very large tick count
         trace.record_event(BusEventFlags::SCL_LINE_CHANGED);
 
@@ -152,8 +153,8 @@ public:
 
     static void new_trace_compares_to_an_empty_trace() {
         // GIVEN 2 traces
-        BusEvent events1[NUM_EVENTS];
-        BusTrace trace1(events1, NUM_EVENTS, clock);
+        BusEvent events1[MAX_EVENTS];
+        BusTrace trace1(events1, MAX_EVENTS, clock);
         BusEvent trace2[0];
         TEST_ASSERT_NOT_NULL(trace2)
 
@@ -176,10 +177,10 @@ public:
         // GIVEN 2 traces with
         //   - the same level edges and states
         //   - different timings
-        BusEvent events1[NUM_EVENTS*2];
-        BusTrace trace1(events1, NUM_EVENTS*2, clock);
+        BusEvent events1[MAX_EVENTS];
+        BusTrace trace1(events1, MAX_EVENTS, clock);
         record_start_condition(trace1);
-        BusEvent trace2[NUM_EVENTS];
+        BusEvent trace2[MAX_EVENTS];
         trace2[0].flags = BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE;
         trace2[0].delta_t_in_ticks = 0;
         trace2[1].flags = BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED;
@@ -188,7 +189,7 @@ public:
         trace2[2].delta_t_in_ticks = 50;
 
         // WHEN we compare the traces
-        auto equivalent = trace1.compare_to(trace2, NUM_EVENTS);
+        auto equivalent = trace1.compare_to(trace2, 3);
 
         // THEN they are equivalent if the levels edges occur
         // in the same order. The deltas are ignored.
@@ -199,8 +200,8 @@ public:
         // GIVEN 2 traces with
         //   - the same level edges and states
         //   - different timings
-        BusEvent events1[NUM_EVENTS];
-        BusTrace trace1(events1, NUM_EVENTS, clock);
+        BusEvent events1[MAX_EVENTS];
+        BusTrace trace1(events1, MAX_EVENTS, clock);
         record_start_condition(trace1);
         BusEvent trace2[1];
         trace2[0].flags = BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE;
@@ -216,10 +217,10 @@ public:
 
     static void compare_to_returns_index_of_first_difference() {
         // GIVEN 2 traces with different level edges
-        BusEvent events1[NUM_EVENTS*2];
-        BusTrace trace1(events1, NUM_EVENTS*2, clock);
+        BusEvent events1[MAX_EVENTS * 2];
+        BusTrace trace1(events1, MAX_EVENTS * 2, clock);
         record_start_condition(trace1);
-        BusEvent trace2[NUM_EVENTS];
+        BusEvent trace2[MAX_EVENTS];
         trace2[0].flags = BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE;
         trace2[0].delta_t_in_ticks = 0;
         trace2[1].flags = BusEventFlags::SDA_LINE_CHANGED;
@@ -228,10 +229,42 @@ public:
         trace2[2].delta_t_in_ticks = 50;
 
         // WHEN we compare the traces
-        auto first_difference = trace1.compare_to(trace2, NUM_EVENTS);
+        auto first_difference = trace1.compare_to(trace2, MAX_EVENTS);
 
         // THEN compare_to returns the index of the first difference
         TEST_ASSERT_EQUAL_UINT32(1, first_difference);
+    }
+
+    static void print_trace() {
+        // GIVEN a trace containing all event types
+        BusEvent events[MAX_EVENTS];
+        BusTrace trace(events, MAX_EVENTS, clock);
+        trace.record_event(BusEventFlags::BOTH_LOW_AND_UNCHANGED);
+        clock.system_tick += 10;
+        trace.record_event(BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE);
+        clock.system_tick += 11;
+        trace.record_event(BusEventFlags::SDA_LINE_CHANGED);
+        clock.system_tick += 12;
+        trace.record_event(BusEventFlags::SDA_LINE_STATE);
+        clock.system_tick += 13;
+        trace.record_event(BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SCL_LINE_STATE);
+        clock.system_tick += 20;
+        trace.record_event(BusEventFlags::SCL_LINE_CHANGED);
+        clock.system_tick += 21;
+        trace.record_event(BusEventFlags::SCL_LINE_STATE);
+        clock.system_tick += 22;
+
+        // WHEN we print the trace
+        FakeSerial serial;
+        size_t bytes_printed = trace.printTo(serial);
+//        Serial.print(trace);
+
+        // THEN the output is correct
+        String expected = "SDA _/\\'___\r\n";
+        expected       += "SCL ____/\\'\r\n";
+//        Serial.print(expected);
+        TEST_ASSERT_EQUAL(0, serial.strcmp(expected));
+        TEST_ASSERT_EQUAL_UINT32(expected.length(), bytes_printed);
     }
 
     // Include all the tests here
@@ -249,6 +282,7 @@ public:
         RUN_TEST(traces_are_comparable_if_lines_match);
         RUN_TEST(traces_are_not_comparable_if_one_is_longer_than_the_other);
         RUN_TEST(compare_to_returns_index_of_first_difference);
+        RUN_TEST(print_trace);
     }
 
     BusTraceTest() : TestSuite(__FILE__) {};

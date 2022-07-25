@@ -16,7 +16,7 @@ namespace bus_trace {
 
 // A list of BusEvents. Used to record all activity on an I2C bus.
 // See also BusEvent
-class BusTrace {
+class BusTrace : public Printable {
 public:
     // Calculates the maximum number of 'BusEvent' objects required
     // to describe an I2C message.
@@ -48,6 +48,9 @@ public:
     // are ignored.
     size_t compare_to(const BusEvent* other, size_t other_event_count);
 
+    // Prints the trace
+    size_t printTo(Print& p) const override;
+
 private:
     const common::hal::Clock& clock;    // Provides system time
     uint32_t ticks_at_latest_event = 0;
@@ -55,6 +58,8 @@ private:
     BusEvent* events;               // Array of events
     size_t max_event_count;         // Maximum number of items in 'events'
     size_t current_event_count = 0; // Current event count
+
+    static void append_event_symbol(String& string, bool sda, BusEventFlags flags);
 };
 
 }
