@@ -4,13 +4,12 @@
 #ifndef I2C_UNDERNEATH_BUS_TRACE_H
 #define I2C_UNDERNEATH_BUS_TRACE_H
 
+#include <Arduino.h>
 #include <cstdint>
 #include <cstddef>
 #include <array>
 #include <bus_trace/bus_event.h>
 #include <bus_trace/bus_event_flags.h>
-#include <common/hal/clock.h>
-#include "common/hal/teensy/teensy_clock.h"
 
 namespace bus_trace {
 
@@ -30,7 +29,7 @@ public:
     // max_event_count: maximum number of bus events that can be stored in this trace.
     // clock: provides system time. Can be faked for unit tests.
     // Additional events are dropped. Must be less than SIZE_MAX.
-    BusTrace(BusEvent* events, size_t max_event_count, const common::hal::Clock& clock);
+    BusTrace(BusEvent* events, size_t max_event_count);
 
     // The number of events we've recorded.
     size_t event_count() const;
@@ -40,7 +39,7 @@ public:
 
     // Adds an event to the trace as long as there is space for it.
     // Discards the event if there's no more space
-    void record_event(const BusEventFlags& event);
+    void add_event(const BusEvent& event);
 
     // Returns the index of the first BusEvent that doesn't match
     // or SIZE_MAX if the traces are equivalent.
@@ -52,9 +51,6 @@ public:
     size_t printTo(Print& p) const override;
 
 private:
-    const common::hal::Clock& clock;    // Provides system time
-    uint32_t ticks_at_latest_event = 0;
-
     BusEvent* events;               // Array of events
     size_t max_event_count;         // Maximum number of items in 'events'
     size_t current_event_count = 0; // Current event count

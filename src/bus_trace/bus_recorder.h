@@ -5,7 +5,8 @@
 #define I2C_UNDERNEATH_BUS_RECORDER_H
 
 #include "bus_trace.h"
-#include "common/hal/pin.h"
+#include <common/hal/pin.h>
+#include <common/hal/clock.h>
 
 namespace bus_trace {
 
@@ -15,7 +16,7 @@ namespace bus_trace {
 // recording while the processor performs other work.
 class BusRecorder {
 public:
-    BusRecorder(common::hal::Pin& sda, common::hal::Pin& scl);
+    BusRecorder(common::hal::Pin& sda, common::hal::Pin& scl, const common::hal::Clock& clock);
 
     // Stops any recording that's in progress and then
     // starts recording. Bus events are added to 'trace'.
@@ -31,14 +32,15 @@ public:
 private:
     common::hal::Pin& sda;
     common::hal::Pin& scl;
+    const common::hal::Clock& clock;    // Provides system time
+    uint32_t ticks_at_latest_event = 0;
     BusTrace* current_trace = nullptr;
-    bool recording = false;
     bool sda_high = false;
     bool scl_high = false;
 
     void on_sda_changed(bool line_level);
     void on_scl_changed(bool line_level);
-    void on_change(bool sda_changed, bool scl_changed) const;
+    void on_change(bool sda_changed, bool scl_changed);
 };
 
 } // bus_trace

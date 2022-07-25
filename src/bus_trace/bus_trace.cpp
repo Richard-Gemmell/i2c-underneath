@@ -18,8 +18,8 @@ size_t BusTrace::max_events_required(uint32_t bytes_per_message, bool include_pi
            (events_per_byte * (bytes_per_message + 1)); // Allow for address byte
 }
 
-BusTrace::BusTrace(BusEvent* events, size_t max_event_count, const common::hal::Clock& clock)
-    : clock(clock), events(events), max_event_count(max_event_count) {
+BusTrace::BusTrace(BusEvent* events, size_t max_event_count)
+    : events(events), max_event_count(max_event_count) {
 }
 
 size_t BusTrace::event_count() const {
@@ -33,18 +33,12 @@ const BusEvent* BusTrace::event(size_t index) const {
     return nullptr;
 }
 
-void BusTrace::record_event(const BusEventFlags& event) {
+void BusTrace::add_event(const BusEvent& event) {
     if(current_event_count == max_event_count) {
         // We can't take another event. Discard it.
         return;
     }
-    uint32_t system_ticks = clock.GetSystemTick();
-    uint32_t delta_t_in_ticks = 0;
-    if(current_event_count > 0) {
-        delta_t_in_ticks = system_ticks - ticks_at_latest_event;
-    }
-    events[current_event_count] = BusEvent(delta_t_in_ticks, event);
-    ticks_at_latest_event = system_ticks;
+    events[current_event_count] = BusEvent(event.delta_t_in_ticks, event.flags);
     current_event_count++;
 }
 

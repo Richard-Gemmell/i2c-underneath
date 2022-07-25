@@ -2,10 +2,11 @@
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 #include "bus_recorder.h"
+#include "bus_event.h"
 
 namespace bus_trace {
-BusRecorder::BusRecorder(common::hal::Pin& sda, common::hal::Pin& scl)
-    : sda(sda), scl(scl) {
+BusRecorder::BusRecorder(common::hal::Pin& sda, common::hal::Pin& scl, const common::hal::Clock& clock)
+    : sda(sda), scl(scl), clock(clock) {
 }
 
 void BusRecorder::start(BusTrace& trace) {
@@ -41,7 +42,7 @@ void BusRecorder::on_scl_changed(bool line_level) {
     on_change(false, true);
 }
 
-void BusRecorder::on_change(bool sda_changed, bool scl_changed) const {
+void BusRecorder::on_change(bool sda_changed, bool scl_changed) {
     BusEventFlags flags = BusEventFlags::BOTH_LOW_AND_UNCHANGED;
     if(sda_changed) {
         flags = flags | BusEventFlags::SDA_LINE_CHANGED;
@@ -55,6 +56,15 @@ void BusRecorder::on_change(bool sda_changed, bool scl_changed) const {
     if(scl_high) {
         flags = flags | BusEventFlags::SCL_LINE_STATE;
     }
-    current_trace->record_event(flags);
+
+    // Calculate time since last event
+    uint32_t system_ticks = clock.GetSystemTick();
+    uint32_t delta_t_in_ticks = 0;
+    if(current_trace->event_count() > 0) {
+        delta_t_in_ticks = system_ticks - ticks_at_latest_event;
+    }
+    ticks_at_latest_event = system_ticks;
+
+    current_trace->add_event(BusEvent(delta_t_in_ticks, flags));
 }
 } // bus_trace
