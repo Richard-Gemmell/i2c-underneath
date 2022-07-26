@@ -61,7 +61,8 @@ public:
         size_t max_event_count = 1;
         BusEvent events[max_event_count];
         BusTrace trace(events, max_event_count);
-        trace.add_event(BusEvent(123, BusEventFlags::SCL_LINE_CHANGED));
+        BusEvent event(123, BusEventFlags::SCL_LINE_CHANGED);
+        trace.add_event(event);
         TEST_ASSERT_EQUAL_UINT32(1, trace.event_count());
 
         // WHEN we attempt to record another event
@@ -70,7 +71,7 @@ public:
         // THEN the event is ignored
         TEST_ASSERT_EQUAL_UINT32(1, trace.event_count());
         TEST_ASSERT_NULL(trace.event(1))
-        TEST_ASSERT_EQUAL(BusEventFlags::SCL_LINE_CHANGED, trace.event(0)->flags);
+        TEST_ASSERT_TRUE(event == *trace.event(0));
     }
 
     static void new_trace_compares_to_an_empty_trace() {

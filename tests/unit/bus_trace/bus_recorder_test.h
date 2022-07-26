@@ -118,14 +118,11 @@ public:
                 BusEvent(20, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED),
                 BusEvent(22, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE | BusEventFlags::SCL_LINE_CHANGED),
         };
-        size_t equivalent = trace.compare_to(expected_trace, 5);
-        TEST_ASSERT_EQUAL(SIZE_MAX, equivalent);
-        // AND the deltas are correct
-        TEST_ASSERT_EQUAL(0, trace.event(0)->delta_t_in_ticks);
-        TEST_ASSERT_EQUAL(10, trace.event(1)->delta_t_in_ticks);
-        TEST_ASSERT_EQUAL(11, trace.event(2)->delta_t_in_ticks);
-        TEST_ASSERT_EQUAL(20, trace.event(3)->delta_t_in_ticks);
-        TEST_ASSERT_EQUAL(22, trace.event(4)->delta_t_in_ticks);
+        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(0))
+        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(1))
+        TEST_ASSERT_TRUE(expected_trace[2] == *trace.event(2))
+        TEST_ASSERT_TRUE(expected_trace[3] == *trace.event(3))
+        TEST_ASSERT_TRUE(expected_trace[4] == *trace.event(4))
     }
 
     static void delta_is_calculated_correctly_when_tick_count_wraps() {
@@ -164,16 +161,13 @@ public:
         recorder.stop();
 
         // THEN the events and deltas are recorded correctly
-        TEST_ASSERT_EQUAL(2, trace2.event_count());
-        BusEvent expected_trace[5] = {
+        BusEvent expected_trace[2] = {
                 BusEvent(0, BusEventFlags::SCL_LINE_STATE),
                 BusEvent(9, BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED),
         };
-        size_t equivalent = trace2.compare_to(expected_trace, 2);
-        TEST_ASSERT_EQUAL(SIZE_MAX, equivalent);
-        // AND the deltas are correct
-        TEST_ASSERT_EQUAL(0, trace2.event(0)->delta_t_in_ticks);
-        TEST_ASSERT_EQUAL(9, trace2.event(1)->delta_t_in_ticks);
+        TEST_ASSERT_EQUAL(2, trace2.event_count());
+        TEST_ASSERT_TRUE(expected_trace[0] == *trace2.event(0))
+        TEST_ASSERT_TRUE(expected_trace[1] == *trace2.event(1))
     }
 
     // Include all the tests here

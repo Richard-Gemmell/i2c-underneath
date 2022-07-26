@@ -32,5 +32,11 @@ public:
 //    uint8_t unused; // Pack byte.
 };
 
+inline bool operator==(const BusEvent& lhs, const BusEvent& rhs) {
+    return lhs.flags == rhs.flags &&
+        lhs.delta_t_in_ticks == rhs.delta_t_in_ticks;
+}
+inline bool operator!=(const BusEvent& lhs, const BusEvent& rhs) { return !(lhs == rhs); }
+
 }
 #endif //I2C_UNDERNEATH_BUS_EVENTS_H
