@@ -7,7 +7,7 @@
 #include <functional>
 #include "common/hal/pin.h"
 #include "common/hal/timestamp.h"
-#include "common/specifications.h"
+#include "common/specifications/i2c_specification.h"
 #include "bus_monitor/bus_state.h"
 
 namespace bus_monitor {
@@ -28,7 +28,7 @@ public:
     BusMonitor(common::hal::Pin& sda,
                common::hal::Pin& scl,
                common::hal::Timestamp& timestamp,
-               uint32_t bus_busy_timeout_ns = uint32_t(common::StandardMode.times.min_bus_free_time * 1.1),
+               uint32_t bus_busy_timeout_ns = uint32_t(common::i2c_specification::StandardMode.times.bus_free_time.min * 1.1),
                uint32_t bus_stuck_timeout_ns = SMBUS_TIMEOUT_MILLIS * 1'000'000UL);
 
     ~BusMonitor();

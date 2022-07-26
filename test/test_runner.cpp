@@ -8,6 +8,7 @@
 #include "unit/bus_trace/bus_event_flags_test.h"
 #include "unit/bus_trace/bus_event_test.h"
 #include "unit/bus_trace/bus_recorder_test.h"
+#include "unit/bus_trace/bus_trace_builder_test.h"
 #include "unit/bus_trace/bus_trace_test.h"
 
 // End to End Tests
@@ -22,7 +23,7 @@ void test(TestSuite* suite);
 // Return true to run all tests afterwards.
 bool run_subset() {
     return true;
-    test(new bus_trace::BusRecorderTest());
+//    test(new bus_trace::BusTraceBuilderTest());
 //    return false;
 }
 
@@ -36,6 +37,7 @@ void run_all_tests() {
     test(new bus_trace::BusEventFlagsTest());
     test(new bus_trace::BusEventTest());
     test(new bus_trace::BusRecorderTest());
+    test(new bus_trace::BusTraceBuilderTest());
     test(new bus_trace::BusTraceTest());
 
     // Full Stack Tests
