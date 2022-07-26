@@ -58,13 +58,13 @@ void BusRecorder::on_change(bool sda_changed, bool scl_changed) {
     }
 
     // Calculate time since last event
-    uint32_t system_ticks = clock.GetSystemTick();
-    uint32_t delta_t_in_ticks = 0;
+    uint32_t system_ticks = clock.get_system_tick();
+    uint32_t delta_t_in_nanos = 0;
     if(current_trace->event_count() > 0) {
-        delta_t_in_ticks = system_ticks - ticks_at_latest_event;
+        delta_t_in_nanos = clock.nanos_between(ticks_at_latest_event, system_ticks);
     }
     ticks_at_latest_event = system_ticks;
 
-    current_trace->add_event(BusEvent(delta_t_in_ticks, flags));
+    current_trace->add_event(BusEvent(delta_t_in_nanos, flags));
 }
 } // bus_trace

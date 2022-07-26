@@ -38,7 +38,7 @@ void BusTrace::add_event(const BusEvent& event) {
         // We can't take another event. Discard it.
         return;
     }
-    events[current_event_count] = BusEvent(event.delta_t_in_ticks, event.flags);
+    events[current_event_count] = BusEvent(event.delta_t_nanos, event.flags);
     current_event_count++;
 }
 

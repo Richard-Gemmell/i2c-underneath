@@ -17,7 +17,7 @@ public:
         TeensyClock clock = TeensyClock();
 
         uint32_t beforeActual = ARM_DWT_CYCCNT;
-        uint32_t actual = clock.GetSystemTick();
+        uint32_t actual = clock.get_system_tick();
         uint32_t afterActual = ARM_DWT_CYCCNT;
 
         TEST_ASSERT_GREATER_OR_EQUAL(beforeActual, actual);
@@ -37,7 +37,7 @@ public:
         uint32_t beforeActual = ARM_DWT_CYCCNT;
         uint32_t actualTotal = 0; // Hack to stop compiler optimising away the critical call which is does sometimes but not always.
         for (int i = 0; i < 100; ++i) {
-            actualTotal += clock.GetSystemTick();
+            actualTotal += clock.get_system_tick();
         }
         uint32_t actualDelta = ARM_DWT_CYCCNT - beforeActual;
 
@@ -51,11 +51,19 @@ public:
         TeensyClock clock = TeensyClock();
 
         uint32_t beforeActual = millis();
-        uint32_t actual = clock.GetSystemMills();
+        uint32_t actual = clock.get_system_mills();
         uint32_t afterActual = millis();
 
         TEST_ASSERT_GREATER_OR_EQUAL(beforeActual, actual);
         TEST_ASSERT_LESS_OR_EQUAL(afterActual, actual);
+    }
+
+    static void nanos_between() {
+        TeensyClock clock = TeensyClock();
+
+        // Only a quick test as the real work is done by TeensyTimestamp
+        TEST_ASSERT_EQUAL_UINT32(TeensyTimestamp::ticks_to_nanos(1000), clock.nanos_between(0, 1'000));
+        TEST_ASSERT_EQUAL_UINT32(1, TeensyTimestamp::nanos_between(UINT32_MAX, 0));
     }
 
     // Include all the tests here
@@ -63,6 +71,7 @@ public:
         RUN_TEST(get_system_tick);
         RUN_TEST(no_overhead_to_get_ticks);
         RUN_TEST(get_system_millis);
+        RUN_TEST(nanos_between);
     }
 
     TeensyClockTest() : TestSuite(__FILE__) {};

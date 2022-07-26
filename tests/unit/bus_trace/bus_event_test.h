@@ -17,14 +17,14 @@ public:
     static void test_create_bus_event() {
         BusEvent event(123, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE);
         TEST_ASSERT_EQUAL(BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE, event.flags);
-        TEST_ASSERT_EQUAL(123, event.delta_t_in_ticks);
+        TEST_ASSERT_EQUAL(123, event.delta_t_nanos);
     }
 
     static void test_copy() {
         BusEvent event(123, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE);
         BusEvent actual = event;
         TEST_ASSERT_EQUAL(BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE, actual.flags);
-        TEST_ASSERT_EQUAL(123, actual.delta_t_in_ticks);
+        TEST_ASSERT_EQUAL(123, actual.delta_t_nanos);
     }
 
     static void comparison_operators() {

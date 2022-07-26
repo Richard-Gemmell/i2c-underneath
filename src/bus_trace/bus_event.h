@@ -16,15 +16,15 @@ public:
     BusEvent() = default;
 
     BusEvent(uint16_t delta_t_in_ticks, BusEventFlags flags)
-        : delta_t_in_ticks(delta_t_in_ticks),
+        : delta_t_nanos(delta_t_in_ticks),
           flags(flags) {
     }
 
-    // Ticks since previous event.
+    // Nanoseconds since previous event.
     // Data type must be large enough to record the largest expected period between events.
-    // SMBus time out is 35 ms. Which is 35,000,000 nanos. A 3 byte uint gives 16,777,215 ticks which is 28,000,000 nanos.
-    // 2 bytes between events gives 65536 ticks which is 100,000 nanos. Enough for a 5 KHz baud rate. SMBus is minimum of 10 kHz
-    uint16_t delta_t_in_ticks;  // ticks since previous event
+    // SMBus time out is 35 ms which is 35,000,000 nanos. Would require a 4 byte type.
+    // 2 bytes between events gives 65536 nanos. Enough for a 9 KHz baud rate. SMBus is minimum of 10 kHz
+    uint16_t delta_t_nanos;
 
     // Describes the event that happened and the state of the bus lines.
     BusEventFlags flags;
@@ -34,7 +34,7 @@ public:
 
 inline bool operator==(const BusEvent& lhs, const BusEvent& rhs) {
     return lhs.flags == rhs.flags &&
-        lhs.delta_t_in_ticks == rhs.delta_t_in_ticks;
+           lhs.delta_t_nanos == rhs.delta_t_nanos;
 }
 inline bool operator!=(const BusEvent& lhs, const BusEvent& rhs) { return !(lhs == rhs); }
 

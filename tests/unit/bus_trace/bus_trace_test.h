@@ -103,11 +103,11 @@ public:
         add_start_condition(trace1);
         BusEvent trace2[MAX_EVENTS];
         trace2[0].flags = BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE;
-        trace2[0].delta_t_in_ticks = 0;
+        trace2[0].delta_t_nanos = 0;
         trace2[1].flags = BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED;
-        trace2[1].delta_t_in_ticks = 50;
+        trace2[1].delta_t_nanos = 50;
         trace2[2].flags = BusEventFlags::SCL_LINE_CHANGED;
-        trace2[2].delta_t_in_ticks = 50;
+        trace2[2].delta_t_nanos = 50;
 
         // WHEN we compare the traces
         auto equivalent = trace1.compare_to(trace2, 3);
@@ -126,7 +126,7 @@ public:
         add_start_condition(trace1);
         BusEvent trace2[1];
         trace2[0].flags = BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE;
-        trace2[0].delta_t_in_ticks = 0;
+        trace2[0].delta_t_nanos = 0;
 
         // WHEN we compare the traces
         auto equivalent = trace1.compare_to(trace2, 1);
@@ -143,11 +143,11 @@ public:
         add_start_condition(trace1);
         BusEvent trace2[MAX_EVENTS];
         trace2[0].flags = BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE;
-        trace2[0].delta_t_in_ticks = 0;
+        trace2[0].delta_t_nanos = 0;
         trace2[1].flags = BusEventFlags::SDA_LINE_CHANGED;
-        trace2[1].delta_t_in_ticks = 50;
+        trace2[1].delta_t_nanos = 50;
         trace2[2].flags = BusEventFlags::SCL_LINE_CHANGED;
-        trace2[2].delta_t_in_ticks = 50;
+        trace2[2].delta_t_nanos = 50;
 
         // WHEN we compare the traces
         auto first_difference = trace1.compare_to(trace2, MAX_EVENTS);

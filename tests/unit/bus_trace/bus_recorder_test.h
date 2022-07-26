@@ -66,7 +66,7 @@ public:
         TEST_ASSERT_EQUAL(1, trace.event_count());
         auto both_lines_high = BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_STATE;
         TEST_ASSERT_EQUAL(both_lines_high, trace.event(0)->flags);
-        TEST_ASSERT_EQUAL(0, trace.event(0)->delta_t_in_ticks);
+        TEST_ASSERT_EQUAL(0, trace.event(0)->delta_t_nanos);
     }
 
     static void ignores_edges_when_not_recording() {
@@ -113,10 +113,10 @@ public:
         TEST_ASSERT_EQUAL(5, trace.event_count());
         BusEvent expected_trace[5] = {
                 BusEvent(0, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE),
-                BusEvent(10, BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED),
-                BusEvent(11, BusEventFlags::SCL_LINE_CHANGED),
-                BusEvent(20, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED),
-                BusEvent(22, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE | BusEventFlags::SCL_LINE_CHANGED),
+                BusEvent(20, BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED),
+                BusEvent(22, BusEventFlags::SCL_LINE_CHANGED),
+                BusEvent(40, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED),
+                BusEvent(44, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE | BusEventFlags::SCL_LINE_CHANGED),
         };
         TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(0))
         TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(1))
@@ -141,7 +141,7 @@ public:
         TEST_ASSERT_EQUAL(2, trace.event_count());
         auto actualEvent = trace.event(1);
         TEST_ASSERT_NOT_NULL(actualEvent)
-        TEST_ASSERT_EQUAL_UINT32(251, actualEvent->delta_t_in_ticks);
+        TEST_ASSERT_EQUAL_UINT32(502, actualEvent->delta_t_nanos);
     }
 
     static void creates_another_recording_correctly() {
@@ -163,7 +163,7 @@ public:
         // THEN the events and deltas are recorded correctly
         BusEvent expected_trace[2] = {
                 BusEvent(0, BusEventFlags::SCL_LINE_STATE),
-                BusEvent(9, BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED),
+                BusEvent(18, BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED),
         };
         TEST_ASSERT_EQUAL(2, trace2.event_count());
         TEST_ASSERT_TRUE(expected_trace[0] == *trace2.event(0))

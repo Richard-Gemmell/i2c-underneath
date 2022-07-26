@@ -16,12 +16,16 @@ namespace hal {
 // specific functions directly.
 class TeensyClock : public Clock {
 public:
-    inline uint32_t GetSystemTick() const override {
+    inline uint32_t get_system_tick() const override {
         return ARM_DWT_CYCCNT;
     }
 
-    inline uint32_t GetSystemMills() const override {
+    inline uint32_t get_system_mills() const override {
         return millis();
+    }
+
+    uint32_t nanos_between(uint32_t ticks_start, uint32_t ticks_end) const override {
+        return TeensyTimestamp::nanos_between(ticks_start, ticks_end);
     }
 };
 

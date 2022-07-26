@@ -17,12 +17,16 @@ public:
     uint32_t system_tick = 1'000'000;
     uint32_t system_millis = 5'000;
 
-    inline uint32_t GetSystemTick() const override {
+    inline uint32_t get_system_tick() const override {
         return system_tick;
     }
 
-    inline uint32_t GetSystemMills() const override {
+    inline uint32_t get_system_mills() const override {
         return system_millis;
+    }
+
+    uint32_t nanos_between(uint32_t ticks_start, uint32_t ticks_end) const override {
+        return (ticks_end - ticks_start)*2;
     }
 };
 

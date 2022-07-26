@@ -16,9 +16,11 @@ class Clock {
 public:
     virtual ~Clock() = default;
 
-    virtual uint32_t GetSystemTick() const = 0;
+    virtual uint32_t get_system_tick() const = 0;
 
-    virtual uint32_t GetSystemMills() const = 0;
+    virtual uint32_t get_system_mills() const = 0;
+
+    virtual uint32_t nanos_between(uint32_t ticks_start, uint32_t ticks_end) const = 0;
 };
 
 }
