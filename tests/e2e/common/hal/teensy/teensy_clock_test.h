@@ -66,12 +66,23 @@ public:
         TEST_ASSERT_EQUAL_UINT32(1, TeensyTimestamp::nanos_between(UINT32_MAX, 0));
     }
 
+    static void nanos_since() {
+        TeensyClock clock = TeensyClock();
+
+        uint32_t start = clock.get_system_tick();
+        uint32_t copy_of_start = start;
+        delayNanoseconds(1500);
+        TEST_ASSERT_GREATER_OR_EQUAL_UINT32(1500, clock.nanos_since(start));
+        TEST_ASSERT_GREATER_OR_EQUAL_UINT32(900, start - copy_of_start);
+    }
+
     // Include all the tests here
     void test() final {
         RUN_TEST(get_system_tick);
         RUN_TEST(no_overhead_to_get_ticks);
         RUN_TEST(get_system_millis);
         RUN_TEST(nanos_between);
+        RUN_TEST(nanos_since);
     }
 
     TeensyClockTest() : TestSuite(__FILE__) {};

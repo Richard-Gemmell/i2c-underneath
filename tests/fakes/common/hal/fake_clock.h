@@ -28,6 +28,12 @@ public:
     uint32_t nanos_between(uint32_t ticks_start, uint32_t ticks_end) const override {
         return (ticks_end - ticks_start)*2;
     }
+
+    uint32_t nanos_since(uint32_t& ticks_start) const override {
+        uint32_t past = ticks_start;
+        ticks_start = system_tick;
+        return nanos_between(past, ticks_start);
+    }
 };
 
 }

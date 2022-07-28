@@ -28,6 +28,12 @@ public:
     inline uint32_t nanos_between(uint32_t ticks_start, uint32_t ticks_end) const override {
         return TeensyTimestamp::nanos_between(ticks_start, ticks_end);
     }
+
+    inline uint32_t nanos_since(uint32_t& ticks_start) const override {
+        uint32_t past = ticks_start;
+        ticks_start = ARM_DWT_CYCCNT;
+        return TeensyTimestamp::nanos_between(past, ticks_start);
+    }
 };
 
 } // common

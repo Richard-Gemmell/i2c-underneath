@@ -21,6 +21,8 @@ public:
     virtual uint32_t get_system_mills() const = 0;
 
     virtual uint32_t nanos_between(uint32_t ticks_start, uint32_t ticks_end) const = 0;
+
+    virtual uint32_t nanos_since(uint32_t& ticks_start) const = 0;
 };
 
 }

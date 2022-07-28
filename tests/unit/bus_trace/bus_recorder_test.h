@@ -9,6 +9,7 @@
 #include "utils/test_suite.h"
 #include "bus_trace/bus_recorder.h"
 #include "fakes/common/hal/fake_clock.h"
+#include "common/hal/teensy/teensy_clock.h"
 
 namespace bus_trace {
 
@@ -170,6 +171,30 @@ public:
         TEST_ASSERT_TRUE(expected_trace[1] == *trace2.event(1))
     }
 
+    static void interrupt_is_fast_enough() {
+        // This test measures the time to record an event
+        // It was used while optimising the code
+        common::hal::TeensyClock real_clock;
+        BusRecorder recorder(*sda, *scl, real_clock);
+        BusTrace trace(events, MAX_EVENTS);
+
+        // WHEN we toggle both pins
+        recorder.start(trace);
+        uint32_t start = real_clock.get_system_tick();
+        sda->write_pin(LOW);
+        scl->write_pin(LOW);
+        sda->write_pin(HIGH);
+        scl->write_pin(HIGH);
+        uint32_t stop = real_clock.get_system_tick();
+        recorder.stop();
+
+        // THEN the time to record all 4 transitions is reasonable
+        uint32_t average_duration = real_clock.nanos_between(start, stop) / 4;
+//        Serial.print("Average: ");Serial.println(average_duration);
+        TEST_ASSERT_EQUAL(5, trace.event_count());
+        TEST_ASSERT_LESS_OR_EQUAL_UINT32(175, average_duration);
+    }
+
     // Include all the tests here
     void test() final {
         RUN_TEST(fake_pins_start_high);
@@ -179,6 +204,7 @@ public:
         RUN_TEST(records_edges);
         RUN_TEST(delta_is_calculated_correctly_when_tick_count_wraps);
         RUN_TEST(creates_another_recording_correctly);
+        RUN_TEST(interrupt_is_fast_enough);
     }
 
     BusRecorderTest() : TestSuite(__FILE__) {};
