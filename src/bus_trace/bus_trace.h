@@ -40,6 +40,7 @@ public:
     // Adds an event to the trace as long as there is space for it.
     // Discards the event if there's no more space
     void add_event(const BusEvent& event);
+    void add_event(uint32_t delta_t_nanos, BusEventFlags flags);
 
     // Returns the index of the first BusEvent that doesn't match
     // or SIZE_MAX if the traces are equivalent.

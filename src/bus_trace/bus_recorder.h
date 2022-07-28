@@ -38,9 +38,7 @@ private:
     bool sda_high = false;
     bool scl_high = false;
 
-    void on_sda_changed(bool line_level);
-    void on_scl_changed(bool line_level);
-    void on_change(bool sda_changed, bool scl_changed);
+    void on_change(BusEventFlags edges);
 };
 
 } // bus_trace

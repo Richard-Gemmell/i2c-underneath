@@ -56,6 +56,18 @@ public:
         TEST_ASSERT_NULL(trace.event(1))
     }
 
+    static void add_event_override() {
+        BusEvent events[MAX_EVENTS];
+        BusTrace trace(events, MAX_EVENTS);
+
+        // WHEN we add an event with the override
+        trace.add_event(123, BusEventFlags::SDA_LINE_STATE);
+
+        // THEN we can retrieve the new event
+        auto actual = trace.event(0);
+        TEST_ASSERT_TRUE(*actual == BusEvent(123, BusEventFlags::SDA_LINE_STATE))
+    }
+
     static void add_event_drops_excess_events() {
         // GIVEN a trace which is full
         size_t max_event_count = 1;
@@ -187,6 +199,7 @@ public:
         RUN_TEST(max_events_required_with_pin_events);
         RUN_TEST(new_trace_is_empty);
         RUN_TEST(cannot_get_event_that_has_not_been_added);
+        RUN_TEST(add_event_override);
         RUN_TEST(add_event_drops_excess_events);
         RUN_TEST(new_trace_compares_to_an_empty_trace);
         RUN_TEST(traces_are_comparable_if_lines_match);

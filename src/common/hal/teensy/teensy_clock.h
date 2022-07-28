@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <imxrt.h>
 #include <common/hal/clock.h>
+#include <common/hal/teensy/teensy_timestamp.h>
 
 namespace common {
 namespace hal {
@@ -24,7 +25,7 @@ public:
         return millis();
     }
 
-    uint32_t nanos_between(uint32_t ticks_start, uint32_t ticks_end) const override {
+    inline uint32_t nanos_between(uint32_t ticks_start, uint32_t ticks_end) const override {
         return TeensyTimestamp::nanos_between(ticks_start, ticks_end);
     }
 };

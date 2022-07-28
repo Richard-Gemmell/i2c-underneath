@@ -38,8 +38,13 @@ void BusTrace::add_event(const BusEvent& event) {
         // We can't take another event. Discard it.
         return;
     }
-    events[current_event_count] = BusEvent(event.delta_t_nanos, event.flags);
+    events[current_event_count] = event;
     current_event_count++;
+}
+
+void BusTrace::add_event(uint32_t delta_t_nanos, BusEventFlags flags) {
+    // This looks crazy but it makes BusRecorder slightly faster
+    add_event(BusEvent(delta_t_nanos, flags));
 }
 
 size_t BusTrace::compare_to(const BusEvent* other, size_t other_event_count) {
