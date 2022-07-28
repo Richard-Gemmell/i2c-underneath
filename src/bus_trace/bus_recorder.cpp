@@ -16,10 +16,12 @@ void BusRecorder::start(BusTrace& trace) {
     // Record the initial line states
     on_change(false, false);
     // Start listening for line changes
-    auto on_sda_edge = std::bind(&BusRecorder::on_sda_changed, this, std::placeholders::_1);
-    sda.on_edge(on_sda_edge);
-    auto on_scl_edge = std::bind(&BusRecorder::on_scl_changed, this, std::placeholders::_1);
-    scl.on_edge(on_scl_edge);
+    sda.on_edge([this](bool rising) {
+        this->on_sda_changed(rising);
+    });
+    scl.on_edge([this](bool rising) {
+        this->on_scl_changed(rising);
+    });
 }
 
 void BusRecorder::stop() {
@@ -43,6 +45,15 @@ void BusRecorder::on_scl_changed(bool line_level) {
 }
 
 void BusRecorder::on_change(bool sda_changed, bool scl_changed) {
+    // Calculate time since last event
+    // Do this first to minimise the delay before getting the system tick
+    const uint32_t system_ticks = clock.get_system_tick();
+    uint32_t delta_t_in_nanos = 0;
+    if(current_trace->event_count() > 0) {
+        delta_t_in_nanos = clock.nanos_between(ticks_at_latest_event, system_ticks);
+    }
+    ticks_at_latest_event = system_ticks;
+
     BusEventFlags flags = BusEventFlags::BOTH_LOW_AND_UNCHANGED;
     if(sda_changed) {
         flags = flags | BusEventFlags::SDA_LINE_CHANGED;
@@ -56,14 +67,6 @@ void BusRecorder::on_change(bool sda_changed, bool scl_changed) {
     if(scl_high) {
         flags = flags | BusEventFlags::SCL_LINE_STATE;
     }
-
-    // Calculate time since last event
-    uint32_t system_ticks = clock.get_system_tick();
-    uint32_t delta_t_in_nanos = 0;
-    if(current_trace->event_count() > 0) {
-        delta_t_in_nanos = clock.nanos_between(ticks_at_latest_event, system_ticks);
-    }
-    ticks_at_latest_event = system_ticks;
 
     current_trace->add_event(BusEvent(delta_t_in_nanos, flags));
 }

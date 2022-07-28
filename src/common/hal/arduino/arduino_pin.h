@@ -11,7 +11,10 @@ namespace common {
 namespace hal {
 
 class ArduinoPin : public common::hal::Pin {
+private:
     uint8_t pin_;
+    bool first_interrupt = true;
+    bool high = false;
     bool on_edge_callback_registered_ = false;
     void(*on_edge_isr_)() = nullptr;
     std::function<void(bool rising)> on_edge_callback_;
@@ -36,7 +39,16 @@ public:
     void set_on_edge_isr(void(*on_edge_isr)());
 
     // Fires the callback registered with 'on_edge'.
-    void raise_on_edge();
+    inline void raise_on_edge() {
+        // Avoid calling digitalReadFast() for every interrupt as it's 20 nanos slower.
+        if(first_interrupt) {
+            high = digitalReadFast(pin_);
+            first_interrupt = false;
+        } else {
+            high = !high;
+        }
+        on_edge_callback_(high);
+    }
 };
 
 }

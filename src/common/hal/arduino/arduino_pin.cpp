@@ -20,11 +20,12 @@ bool common::hal::ArduinoPin::read_line() {
     return digitalReadFast(pin_);
 }
 
-void common::hal::ArduinoPin::on_edge(const std::function<void(bool)>& callback) {
+void common::hal::ArduinoPin::on_edge(const std::function<void(bool rising)>& callback) {
     if(on_edge_isr_) {
         if (callback) {
             on_edge_callback_ = callback;
             attachInterrupt(digitalPinToInterrupt(pin_), on_edge_isr_, CHANGE);
+            first_interrupt = true;
             on_edge_callback_registered_ = true;
         } else {
             remove_callback();
@@ -36,10 +37,6 @@ void common::hal::ArduinoPin::on_edge(const std::function<void(bool)>& callback)
 
 void common::hal::ArduinoPin::set_on_edge_isr(void (* on_edge_isr)()) {
     on_edge_isr_ = on_edge_isr;
-}
-
-void common::hal::ArduinoPin::raise_on_edge() {
-    on_edge_callback_(read_line());
 }
 
 void common::hal::ArduinoPin::remove_callback() {

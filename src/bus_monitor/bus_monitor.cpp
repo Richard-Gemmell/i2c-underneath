@@ -28,7 +28,9 @@ void bus_monitor::BusMonitor::begin() {
         bus_state_ = BusState::busy;
     }
 
-    auto on_edge_callback = std::bind(&bus_monitor::BusMonitor::on_line_changed, this, std::placeholders::_1);
+    auto on_edge_callback = [this](bool rising) {
+        this->on_line_changed(rising);
+    };
     sda_.on_edge(on_edge_callback);
     scl_.on_edge(on_edge_callback);
     running_ = true;

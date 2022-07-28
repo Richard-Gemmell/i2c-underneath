@@ -36,11 +36,11 @@ public:
 
         digitalWrite(TEST_PIN, LOW);
         delayMicroseconds(10);
-        TEST_ASSERT_FALSE(pin.read_line());
+        TEST_ASSERT_FALSE(pin.read_line())
 
         digitalWrite(TEST_PIN, HIGH);
         delayMicroseconds(10);
-        TEST_ASSERT_TRUE(pin.read_line());
+        TEST_ASSERT_TRUE(pin.read_line())
     }
 
     static void write_pin() {
@@ -48,11 +48,11 @@ public:
 
         pin.write_pin(false);
         delayMicroseconds(10);
-        TEST_ASSERT_FALSE(digitalReadFast(TEST_PIN));
+        TEST_ASSERT_FALSE(digitalReadFast(TEST_PIN))
 
         pin.write_pin(true);
         delayMicroseconds(10);
-        TEST_ASSERT_TRUE(digitalReadFast(TEST_PIN));
+        TEST_ASSERT_TRUE(digitalReadFast(TEST_PIN))
     }
 
     static void on_edge(bool rising) {
@@ -68,14 +68,14 @@ public:
 
         pin.write_pin(false);
         delayMicroseconds(10);
-        TEST_ASSERT_TRUE(called_back);
-        TEST_ASSERT_FALSE(callback_value);
+        TEST_ASSERT_TRUE(called_back)
+        TEST_ASSERT_FALSE(callback_value)
         called_back = false;
 
         pin.write_pin(true);
         delayMicroseconds(10);
-        TEST_ASSERT_TRUE(called_back);
-        TEST_ASSERT_TRUE(callback_value);
+        TEST_ASSERT_TRUE(called_back)
+        TEST_ASSERT_TRUE(callback_value)
     }
 
     static void calling_on_edge_with_nullptr_removes_callback() {
@@ -91,7 +91,7 @@ public:
         // THEN the interrupt handler is removed
         digitalWrite(TEST_PIN, LOW);
         delayMicroseconds(10);
-        TEST_ASSERT_FALSE(called_back);
+        TEST_ASSERT_FALSE(called_back)
     }
 
     static void destructor_releases_callback() {
@@ -107,7 +107,36 @@ public:
         // THEN the interrupt handler is removed
         digitalWrite(TEST_PIN, LOW);
         delayMicroseconds(10);
-        TEST_ASSERT_FALSE(called_back);
+        TEST_ASSERT_FALSE(called_back)
+    }
+
+    static void can_register_callback_again() {
+        // GIVEN we've used the pin once already
+        digitalWrite(TEST_PIN, LOW);
+        callback_value = true;
+        delayMicroseconds(10);
+        common::hal::ArduinoPin pin = ArduinoPin(TEST_PIN);
+        the_pin = &pin;
+        pin.set_on_edge_isr(on_edge_isr);
+        pin.on_edge(on_edge);
+        pin.write_pin(true);
+        delayMicroseconds(10);
+        TEST_ASSERT_TRUE(called_back)
+        TEST_ASSERT_TRUE(callback_value)
+        called_back = false;
+
+        // WHEN we disable the callback and then re-enable it
+        pin.on_edge(nullptr);
+        digitalWrite(TEST_PIN, LOW);
+        callback_value = true;
+        delayMicroseconds(10);
+        pin.on_edge(on_edge);
+
+        // THEN it reads the pin value correctly
+        pin.write_pin(true);
+        delayMicroseconds(10);
+        TEST_ASSERT_TRUE(called_back)
+        TEST_ASSERT_TRUE(callback_value)
     }
 
     static void callback() {
@@ -128,7 +157,7 @@ public:
         // THEN the interrupt handler is still registered
         digitalWrite(TEST_PIN, LOW);
         delayMicroseconds(10);
-        TEST_ASSERT_TRUE(called_back);
+        TEST_ASSERT_TRUE(called_back)
     }
 
     // Include all the tests here
@@ -139,6 +168,7 @@ public:
         RUN_TEST(calling_on_edge_with_nullptr_removes_callback);
         RUN_TEST(destructor_releases_callback);
         RUN_TEST(destructor_does_not_detach_interrupt_if_it_was_never_attached);
+        RUN_TEST(can_register_callback_again);
     }
 
     ArduinoPinTest() : TestSuite(__FILE__) {};
