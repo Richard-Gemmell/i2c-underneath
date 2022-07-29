@@ -8,18 +8,20 @@ BusTraceBuilder::BusTraceBuilder(BusTrace& trace, TimingStrategy timing_strategy
     : trace(trace), timing_strategy(timing_strategy), params(params) {
 }
 
-void BusTraceBuilder::bus_initially_idle() {
+BusTraceBuilder& BusTraceBuilder::bus_initially_idle() {
     trace.add_event(BusEvent(0, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE));
+    return *this;
 }
 
-void BusTraceBuilder::start_bit() {
+BusTraceBuilder& BusTraceBuilder::start_bit() {
     uint32_t tf = get_time(params.times.fall_time);
     trace.add_event(BusEvent(tf, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SCL_LINE_STATE));
     uint32_t tHD_STA = get_time(params.times.hold_time);
     trace.add_event(BusEvent(tHD_STA + tf, BusEventFlags::SCL_LINE_CHANGED));
+    return *this;
 }
 
-void BusTraceBuilder::stop_bit() {
+BusTraceBuilder& BusTraceBuilder::stop_bit() {
     // Assumes the previous event was an ACK or NACK
     uint32_t tr = get_time(params.times.rise_time);
     uint32_t tf = get_time(params.times.fall_time);
@@ -33,9 +35,10 @@ void BusTraceBuilder::stop_bit() {
     trace.add_event(BusEvent(tLOW + tr - dt, BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SCL_LINE_STATE));
     uint32_t tSU_STO = get_time(params.times.stop_setup_time);
     trace.add_event(BusEvent(tSU_STO + tr, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE));
+    return *this;
 }
 
-void BusTraceBuilder::data_bit(bool one) {
+BusTraceBuilder& BusTraceBuilder::data_bit(bool one) {
     // NB: We consider each bit to end when SCL goes LOW again
     // Set SDA if it's changing
     uint32_t tr = get_time(params.times.rise_time);
@@ -52,25 +55,29 @@ void BusTraceBuilder::data_bit(bool one) {
     trace.add_event(BusEvent(tLOW + tr - dt, BusEventFlags::SCL_LINE_CHANGED | sda_state | BusEventFlags::SCL_LINE_STATE));
     uint32_t tHIGH = get_time(params.times.scl_high_time);
     trace.add_event(BusEvent(tHIGH + tf, BusEventFlags::SCL_LINE_CHANGED | sda_state));
+    return *this;
 }
 
-void BusTraceBuilder::ack() {
+BusTraceBuilder& BusTraceBuilder::ack() {
     data_bit(false);
+    return *this;
 }
 
-void BusTraceBuilder::nack() {
+BusTraceBuilder& BusTraceBuilder::nack() {
     data_bit(true);
+    return *this;
 }
 
-void BusTraceBuilder::address_byte(uint8_t address, bool read) {
+BusTraceBuilder& BusTraceBuilder::address_byte(uint8_t address, bool read) {
     uint8_t value = address << 1;
     if(read) {
         value += 1;
     }
     data_byte(value);
+    return *this;
 }
 
-void BusTraceBuilder::data_byte(uint8_t value) {
+BusTraceBuilder& BusTraceBuilder::data_byte(uint8_t value) {
     data_bit(value & 0x80);
     data_bit(value & 0x40);
     data_bit(value & 0x20);
@@ -79,6 +86,7 @@ void BusTraceBuilder::data_byte(uint8_t value) {
     data_bit(value & 0x04);
     data_bit(value & 0x02);
     data_bit(value & 0x01);
+    return *this;
 }
 
 bool BusTraceBuilder::sda_was_high() const {

@@ -257,17 +257,17 @@ public:
         BusEvent expected_events[MAX_EVENTS];
         BusTrace expected_trace(expected_events, MAX_EVENTS);
         BusTraceBuilder builder2(expected_trace, BusTraceBuilder::TimingStrategy::Min, common::i2c_specification::StandardMode);
-        builder2.bus_initially_idle();
-        builder2.start_bit();
-        // value 0x53 == 0101 0011
-        builder2.data_bit(false);
-        builder2.data_bit(true);
-        builder2.data_bit(false);
-        builder2.data_bit(true);
-        builder2.data_bit(false);
-        builder2.data_bit(false);
-        builder2.data_bit(true);
-        builder2.data_bit(true);
+        builder2.bus_initially_idle()
+            .start_bit()
+            // value 0x53 == 0101 0011
+            .data_bit(false)
+            .data_bit(true)
+            .data_bit(false)
+            .data_bit(true)
+            .data_bit(false)
+            .data_bit(false)
+            .data_bit(true)
+            .data_bit(true);
         TEST_ASSERT_EQUAL_UINT32(expected_trace.event_count(), trace.event_count());
         TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, expected_trace.compare_to(events, trace.event_count()));
     }
@@ -286,10 +286,10 @@ public:
         BusEvent expected_events[MAX_EVENTS];
         BusTrace expected_trace(expected_events, MAX_EVENTS);
         BusTraceBuilder builder2(expected_trace, BusTraceBuilder::TimingStrategy::Min, common::i2c_specification::StandardMode);
-        builder2.bus_initially_idle();
-        builder2.start_bit();
-        // 0x53 left shifted + 1
-        builder2.data_byte(0xA7);
+        builder2.bus_initially_idle()
+            .start_bit()
+            // 0x53 left shifted + 1
+            .data_byte(0xA7);
         TEST_ASSERT_EQUAL_UINT32(expected_trace.event_count(), trace.event_count());
         TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, expected_trace.compare_to(events, trace.event_count()));
     }

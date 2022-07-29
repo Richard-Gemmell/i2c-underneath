@@ -19,21 +19,21 @@ public:
 
     BusTraceBuilder(BusTrace& trace, TimingStrategy timing_strategy, const common::i2c_specification::I2CParameters& params);
 
-    void bus_initially_idle();
+    BusTraceBuilder& bus_initially_idle();
 
-    void start_bit();
+    BusTraceBuilder& start_bit();
 
-    void stop_bit();
+    BusTraceBuilder& stop_bit();
 
-    void data_bit(bool one);
+    BusTraceBuilder& data_bit(bool one);
 
-    void ack();
+    BusTraceBuilder& ack();
 
-    void nack();
+    BusTraceBuilder& nack();
 
-    void address_byte(uint8_t address, bool read);
+    BusTraceBuilder& address_byte(uint8_t address, bool read);
 
-    void data_byte(uint8_t value);
+    BusTraceBuilder& data_byte(uint8_t value);
 
 private:
     BusTrace& trace;

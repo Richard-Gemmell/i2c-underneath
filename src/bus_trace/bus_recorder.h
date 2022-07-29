@@ -14,6 +14,18 @@ namespace bus_trace {
 // A trace cannot last longer than 2^32 processor cycles.
 // The trace is driven by interrupts so it will continue
 // recording while the processor performs other work.
+//
+// WARNING It takes the pin interrupt approximately 170 nanoseconds to
+// add an event to the trace. Only one interrupt can be handled
+// at once. This means that the recorder will not record the
+// correct time for edges that are less than 200 nanos apart.
+// They will appear as if one followed the other by 200 nanos.
+// In some cases, this can make events appear to have happened
+// in the wrong order. e.g. when SDA drops 5 ns after SCL. You can
+// solve this by swapping the pin assignments round.
+//
+// Other interrupts can also affect the results. It's best to avoid
+// having any when recording.
 class BusRecorder {
 public:
     BusRecorder(common::hal::Pin& sda, common::hal::Pin& scl, const common::hal::Clock& clock);
