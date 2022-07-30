@@ -14,7 +14,7 @@
 namespace bus_trace {
 
 class BusTraceTest : public TestSuite {
-    static const size_t MAX_EVENTS = 20;
+    static const size_t MAX_EVENTS = 100;
 
 public:
     static void max_events_required_without_pin_events() {
@@ -83,89 +83,256 @@ public:
         // THEN the event is ignored
         TEST_ASSERT_EQUAL_UINT32(1, trace.event_count());
         TEST_ASSERT_NULL(trace.event(1))
-        TEST_ASSERT_TRUE(event == *trace.event(0));
+        TEST_ASSERT_TRUE(event == *trace.event(0))
     }
 
-    static void new_trace_compares_to_an_empty_trace() {
+    static void destructor_does_not_deletes_supplied_array_of_events() {
+        BusEvent events[MAX_EVENTS];
+        auto trace = new BusTrace(events, MAX_EVENTS);
+        delete(trace);
+    }
+
+    static void destructor_deletes_internal_array_of_events_if_it_owns_them() {
+        auto trace = new BusTrace(MAX_EVENTS);
+        delete(trace);
+    }
+
+    static void empty_traces_are_edge_comparable() {
         // GIVEN 2 traces
         BusEvent events1[MAX_EVENTS];
         BusTrace trace1(events1, MAX_EVENTS);
-        BusEvent trace2[0];
-        TEST_ASSERT_NOT_NULL(trace2)
+        BusEvent events2[0];
+        BusTrace trace2(events2, 0);
 
         // WHEN we compare them
-        auto equivalent = trace1.compare_to(trace2, 0);
+        auto equivalent = trace1.compare_edges(trace2);
 
         // THEN they are equivalent
         TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, equivalent);
     }
 
-    static void add_start_condition(BusTrace& trace) {
-        trace.add_event(BusEvent(0, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE));   // Both HIGH
-        trace.add_event(BusEvent(100, BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED)); // SDA falls
-        trace.add_event(BusEvent(100, BusEventFlags::SCL_LINE_CHANGED)); // SCL falls
-    }
-
-    static void traces_are_comparable_if_lines_match() {
+    static void traces_are_edge_comparable_if_lines_and_edges_match() {
         // GIVEN 2 traces with
         //   - the same level edges and states
         //   - different timings
         BusEvent events1[MAX_EVENTS];
         BusTrace trace1(events1, MAX_EVENTS);
         add_start_condition(trace1);
-        BusEvent trace2[MAX_EVENTS];
-        trace2[0].flags = BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE;
-        trace2[0].delta_t_nanos = 0;
-        trace2[1].flags = BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED;
-        trace2[1].delta_t_nanos = 50;
-        trace2[2].flags = BusEventFlags::SCL_LINE_CHANGED;
-        trace2[2].delta_t_nanos = 50;
+        BusEvent events2[MAX_EVENTS];
+        BusTrace trace2(events2, MAX_EVENTS);
+        trace2.add_event(BusEvent(0, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE));
+        trace2.add_event(BusEvent(50, BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED));
+        trace2.add_event(BusEvent(50, BusEventFlags::SCL_LINE_CHANGED));
 
         // WHEN we compare the traces
-        auto equivalent = trace1.compare_to(trace2, 3);
+        auto equivalent = trace1.compare_edges(trace2);
 
-        // THEN they are equivalent if the levels edges occur
-        // in the same order. The deltas are ignored.
+        // THEN they are equivalent if the levels and edges occur
+        // in the same order. The deltas and any pin states are ignored.
         TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, equivalent);
     }
 
-    static void traces_are_not_comparable_if_one_is_longer_than_the_other() {
-        // GIVEN 2 traces with
-        //   - the same level edges and states
-        //   - different timings
+    static void traces_are_not_edge_comparable_if_one_is_longer_than_the_other() {
+        // GIVEN 2 traces where one trace has an extra edge
         BusEvent events1[MAX_EVENTS];
         BusTrace trace1(events1, MAX_EVENTS);
         add_start_condition(trace1);
-        BusEvent trace2[1];
-        trace2[0].flags = BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE;
-        trace2[0].delta_t_nanos = 0;
+        BusEvent events2[MAX_EVENTS];
+        BusTrace trace2(events2, MAX_EVENTS);
+        trace2.add_event(BusEvent(0, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE));
 
         // WHEN we compare the traces
-        auto equivalent = trace1.compare_to(trace2, 1);
+        auto equivalent = trace1.compare_edges(trace2);
 
-        // THEN they are equivalent if the levels edges occur
-        // in the same order. The deltas are ignored.
+        // THEN they are not edge equivalent
         TEST_ASSERT_EQUAL_UINT32(1, equivalent);
     }
 
-    static void compare_to_returns_index_of_first_difference() {
+    static void compare_edges_returns_index_of_first_difference() {
         // GIVEN 2 traces with different level edges
         BusEvent events1[MAX_EVENTS * 2];
         BusTrace trace1(events1, MAX_EVENTS * 2);
         add_start_condition(trace1);
-        BusEvent trace2[MAX_EVENTS];
-        trace2[0].flags = BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE;
-        trace2[0].delta_t_nanos = 0;
-        trace2[1].flags = BusEventFlags::SDA_LINE_CHANGED;
-        trace2[1].delta_t_nanos = 50;
-        trace2[2].flags = BusEventFlags::SCL_LINE_CHANGED;
-        trace2[2].delta_t_nanos = 50;
+        BusEvent events2[MAX_EVENTS];
+        BusTrace trace2(events2, MAX_EVENTS * 2);
+        trace2.add_event(BusEvent(0, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE));
+        trace2.add_event(BusEvent(50, BusEventFlags::SDA_LINE_CHANGED));
+        trace2.add_event(BusEvent(50, BusEventFlags::SCL_LINE_CHANGED));
 
         // WHEN we compare the traces
-        auto first_difference = trace1.compare_to(trace2, MAX_EVENTS);
+        auto first_difference = trace1.compare_edges(trace2);
 
         // THEN compare_to returns the index of the first difference
         TEST_ASSERT_EQUAL_UINT32(1, first_difference);
+    }
+
+    static void to_message_converts_empty_trace_to_empty_message() {
+        // GIVEN an empty trace
+        BusTrace trace(MAX_EVENTS);
+
+        // WHEN we convert it to a message
+        BusTrace message = trace.to_message();
+
+        // THEN we get an empty message
+        TEST_ASSERT_EQUAL_UINT32(0, message.event_count());
+    }
+
+    static void to_message_strips_out_spurious_SDA_changes() {
+        // GIVEN a trace containing spurious pulses
+        BusTrace trace(MAX_EVENTS);
+        BusTraceBuilder builder(trace, BusTraceBuilder::TimingStrategy::Min, common::i2c_specification::StandardMode);
+        builder.start_bit()
+                .address_byte(0xF0, false);
+        // Add a spurious SDA pulse in the ACK cycle
+        trace.add_event(50, bus_trace::BusEventFlags::SDA_LINE_CHANGED | bus_trace::BusEventFlags::SDA_LINE_STATE);
+        trace.add_event(50, bus_trace::BusEventFlags::SDA_LINE_CHANGED);
+        builder.ack()
+                .data_byte(0xFF)
+                .ack()
+                .stop_bit();
+
+        // WHEN we convert it to a message
+        BusTrace message = trace.to_message();
+
+        // THEN the spurious edges are removed
+        BusTrace expected(MAX_EVENTS);
+        add_simple_message(expected);
+        auto edge_comparable = expected.compare_edges(message);
+        TEST_ASSERT_EQUAL(SIZE_MAX, edge_comparable);
+    }
+
+    static void to_message_can_remove_last_event() {
+        // GIVEN a trace containing spurious pulses
+        BusTrace trace(MAX_EVENTS);
+        BusTraceBuilder builder(trace, BusTraceBuilder::TimingStrategy::Min, common::i2c_specification::StandardMode);
+        builder.start_bit()
+                .address_byte(0xF0, false);
+        // Add a spurious SDA pulse in the ACK cycle
+        trace.add_event(50, bus_trace::BusEventFlags::SDA_LINE_CHANGED | bus_trace::BusEventFlags::SDA_LINE_STATE);
+        trace.add_event(50, bus_trace::BusEventFlags::SDA_LINE_CHANGED);
+
+        // WHEN we convert it to a message
+        BusTrace message = trace.to_message();
+
+        // THEN the spurious edges are removed
+        BusTrace expected(MAX_EVENTS);
+        BusTraceBuilder builder2(expected, BusTraceBuilder::TimingStrategy::Min, common::i2c_specification::StandardMode);
+        builder2.start_bit()
+                .address_byte(0xF0, false);
+        auto edge_comparable = expected.compare_edges(message);
+        TEST_ASSERT_EQUAL(SIZE_MAX, edge_comparable);
+    }
+
+    static void empty_traces_are_message_comparable() {
+        // GIVEN 2 traces
+        BusEvent events1[MAX_EVENTS];
+        BusTrace trace1(events1, MAX_EVENTS);
+        BusEvent events2[0];
+        BusTrace trace2(events2, 0);
+
+        // WHEN we compare them
+        auto equivalent = trace1.compare_messages(trace2);
+
+        // THEN they are equivalent
+        TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, equivalent);
+    }
+
+    static void traces_are_message_comparable_if_they_are_edge_comparable() {
+        // GIVEN 2 traces which are edge comparable.
+        BusEvent events1[MAX_EVENTS];
+        BusTrace trace1(events1, MAX_EVENTS);
+        add_simple_message(trace1);
+        BusEvent events2[MAX_EVENTS];
+        BusTrace trace2(events2, MAX_EVENTS);
+        add_simple_message(trace2);
+
+        // WHEN we compare the traces
+        auto edge_comparable = trace1.compare_edges(trace2);
+        auto message_comparable = trace1.compare_messages(trace2);
+
+        // THEN they are both edge and message comparable.
+        TEST_ASSERT_EQUAL_UINT32(edge_comparable, message_comparable);
+        TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, message_comparable);
+    }
+
+    static void traces_are_message_comparable_even_if_spurious_SDA_changes_are_different() {
+        // GIVEN 2 traces which are edge comparable.
+        BusEvent events1[MAX_EVENTS];
+        BusTrace trace(events1, MAX_EVENTS);
+        BusTraceBuilder builder(trace, BusTraceBuilder::TimingStrategy::Min, common::i2c_specification::StandardMode);
+        builder.start_bit()
+                .address_byte(0xF0, false);
+        // Add a spurious SDA pulse in the ACK cycle
+        trace.add_event(50, bus_trace::BusEventFlags::SDA_LINE_CHANGED | bus_trace::BusEventFlags::SDA_LINE_STATE);
+        trace.add_event(50, bus_trace::BusEventFlags::SDA_LINE_CHANGED);
+        builder.ack()
+                .data_byte(0xFF)
+                .ack()
+                .stop_bit();
+
+        // WHEN we compare the traces
+        BusEvent events2[MAX_EVENTS];
+        BusTrace expected(events2, MAX_EVENTS);
+        add_simple_message(expected);
+        auto edge_comparable = trace.compare_edges(expected);
+        auto message_comparable = trace.compare_messages(expected);
+
+        // THEN they are message comparable but not edge comparable
+        TEST_ASSERT_NOT_EQUAL(SIZE_MAX, edge_comparable);
+        TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, message_comparable);
+    }
+
+    static void compare_messages_returns_index_of_first_difference() {
+        // GIVEN 2 traces where one trace has an extra edge
+        BusEvent events1[MAX_EVENTS];
+        BusTrace trace(events1, MAX_EVENTS);
+        BusTraceBuilder builder(trace, BusTraceBuilder::TimingStrategy::Min, common::i2c_specification::StandardMode);
+        builder.start_bit()
+                .address_byte(0xF0, false);
+        trace.add_event(BusEvent(0, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE));
+        trace.add_event(BusEvent(0, BusEventFlags::SDA_LINE_CHANGED));
+        builder.ack()
+                .data_byte(0xFF)
+                .nack() // NACK instead of ACK
+                .stop_bit();
+        BusEvent events2[MAX_EVENTS];
+
+        // WHEN we compare the traces
+        BusTrace expected(events2, MAX_EVENTS);
+        add_simple_message(expected);
+        auto equivalent = trace.compare_messages(expected);
+
+        // THEN they are not message equivalent
+        TEST_ASSERT_EQUAL_UINT32(39, equivalent);
+    }
+
+    static void message_comparable_does_not_ignore_SDA_changes_while_SCL_is_HIGH() {
+        // GIVEN 2 traces which are edge comparable.
+        BusEvent events1[MAX_EVENTS];
+        BusTrace trace1(events1, MAX_EVENTS);
+        BusTraceBuilder builder(trace1, BusTraceBuilder::TimingStrategy::Min, common::i2c_specification::StandardMode);
+        // Add spurious SDA changes while SCL is HIGH
+        builder.start_bit()
+                .address_byte(0xF0, false);
+        trace1.add_event(50, bus_trace::BusEventFlags::SCL_LINE_CHANGED | bus_trace::BusEventFlags::SCL_LINE_STATE);
+        trace1.add_event(50, bus_trace::BusEventFlags::SDA_LINE_CHANGED | bus_trace::BusEventFlags::SDA_LINE_STATE | bus_trace::BusEventFlags::SCL_LINE_STATE);
+        trace1.add_event(50, bus_trace::BusEventFlags::SDA_LINE_CHANGED | bus_trace::BusEventFlags::SCL_LINE_STATE);
+        trace1.add_event(50, bus_trace::BusEventFlags::SCL_LINE_CHANGED);
+        builder.data_byte(0xFF)
+                .ack()
+                .stop_bit();
+        BusEvent events2[MAX_EVENTS];
+        BusTrace trace2(events2, MAX_EVENTS);
+        add_simple_message(trace2);
+
+        // WHEN we compare the traces
+        auto edge_comparable = trace1.compare_edges(trace2);
+        auto message_comparable = trace1.compare_messages(trace2);
+
+        // THEN both comparisons return the same result
+        TEST_ASSERT_EQUAL_UINT32(message_comparable, edge_comparable);
+        TEST_ASSERT_EQUAL_UINT32(21, edge_comparable);
+        TEST_ASSERT_EQUAL_UINT32(21, message_comparable);
     }
 
     static void print_trace() {
@@ -193,19 +360,52 @@ public:
         TEST_ASSERT_EQUAL_UINT32(expected.length(), bytes_printed);
     }
 
+    static void add_simple_message(BusTrace& trace) {
+        BusTraceBuilder builder(trace, BusTraceBuilder::TimingStrategy::Min, common::i2c_specification::StandardMode);
+        builder.start_bit()
+            .address_byte(0xF0, false)
+            .ack()
+            .data_byte(0xFF)
+            .ack()
+            .stop_bit();
+    }
+
+    static void add_start_condition(BusTrace& trace) {
+        trace.add_event(BusEvent(0, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE));   // Both HIGH
+        trace.add_event(BusEvent(100, BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED)); // SDA falls
+        trace.add_event(BusEvent(100, BusEventFlags::SCL_LINE_CHANGED)); // SCL falls
+    }
+
     // Include all the tests here
     void test() final {
         RUN_TEST(max_events_required_without_pin_events);
         RUN_TEST(max_events_required_with_pin_events);
+
         RUN_TEST(new_trace_is_empty);
         RUN_TEST(cannot_get_event_that_has_not_been_added);
         RUN_TEST(add_event_override);
         RUN_TEST(add_event_drops_excess_events);
-        RUN_TEST(new_trace_compares_to_an_empty_trace);
-        RUN_TEST(traces_are_comparable_if_lines_match);
-        RUN_TEST(traces_are_not_comparable_if_one_is_longer_than_the_other);
-        RUN_TEST(compare_to_returns_index_of_first_difference);
-        RUN_TEST(print_trace);
+        RUN_TEST(destructor_does_not_deletes_supplied_array_of_events);
+        RUN_TEST(destructor_deletes_internal_array_of_events_if_it_owns_them);
+
+        // compare_edges
+        RUN_TEST(empty_traces_are_edge_comparable);
+        RUN_TEST(traces_are_edge_comparable_if_lines_and_edges_match);
+        RUN_TEST(traces_are_not_edge_comparable_if_one_is_longer_than_the_other);
+        RUN_TEST(compare_edges_returns_index_of_first_difference);
+
+        // to_message and compare_messages
+        RUN_TEST(to_message_converts_empty_trace_to_empty_message);
+        RUN_TEST(to_message_can_remove_last_event);
+        RUN_TEST(to_message_strips_out_spurious_SDA_changes);
+        RUN_TEST(empty_traces_are_message_comparable);
+
+        RUN_TEST(traces_are_message_comparable_if_they_are_edge_comparable);
+        RUN_TEST(traces_are_message_comparable_even_if_spurious_SDA_changes_are_different);
+        RUN_TEST(compare_messages_returns_index_of_first_difference);
+        RUN_TEST(message_comparable_does_not_ignore_SDA_changes_while_SCL_is_HIGH);
+
+//        RUN_TEST(print_trace);
     }
 
     BusTraceTest() : TestSuite(__FILE__) {};

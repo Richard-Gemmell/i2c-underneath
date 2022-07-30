@@ -19,7 +19,18 @@ size_t BusTrace::max_events_required(uint32_t bytes_per_message, bool include_pi
 }
 
 BusTrace::BusTrace(BusEvent* events, size_t max_event_count)
-    : events(events), max_event_count(max_event_count) {
+    : events(events), created_events(false), max_event_count(max_event_count) {
+}
+
+BusTrace::BusTrace(size_t max_event_count)
+    : events(new BusEvent[max_event_count]), created_events(true), max_event_count(max_event_count) {
+}
+
+BusTrace::~BusTrace() {
+    if(created_events && events) {
+        delete[] events;
+        events = nullptr;
+    }
 }
 
 size_t BusTrace::event_count() const {
@@ -47,14 +58,55 @@ void BusTrace::add_event(uint32_t delta_t_nanos, BusEventFlags flags) {
     add_event(BusEvent(delta_t_nanos, flags));
 }
 
-size_t BusTrace::compare_to(const BusEvent* other, size_t other_event_count) {
-    size_t min_count = min(current_event_count, other_event_count);
+BusTrace BusTrace::to_message() const {
+    auto sda_changed_while_scl_low = [](BusEventFlags flags) {
+        bool scl_low = (flags & BusEventFlags::SCL_LINE_STATE) != BusEventFlags::SCL_LINE_STATE;
+        bool sda_changed = (flags & BusEventFlags::SDA_LINE_CHANGED) == BusEventFlags::SDA_LINE_CHANGED;
+        return scl_low && sda_changed;
+    };
+    auto only_sda_changed = [](BusEventFlags previous, BusEventFlags next) {
+        BusEventFlags sda_flags = (BusEventFlags::SDA_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED);
+        return (previous | sda_flags) == (next | sda_flags);
+    };
+    BusTrace message(max_event_count);
+    if(current_event_count > 0) {
+        const BusEvent* previous = event(0);
+        for (size_t i = 1; i < current_event_count; ++i) {
+            const BusEvent* next = event(i);
+            bool previous_may_be_spurious = sda_changed_while_scl_low(previous->flags);
+            bool next_may_be_spurious = sda_changed_while_scl_low(next->flags);
+            if(previous_may_be_spurious && next_may_be_spurious && only_sda_changed(previous->flags, next->flags)) {
+                // The two events cancel out. Throw them away.
+                i++;
+                if(i < current_event_count) {
+                    previous = event(i);
+                } else {
+                    previous = nullptr;
+                }
+            } else {
+                message.add_event(*previous);
+                previous = next;
+            }
+        }
+        if (previous) {
+            message.add_event(*previous);
+        }
+    }
+    return message;
+}
+
+size_t BusTrace::compare_messages(const BusTrace& other) const {
+    return to_message().compare_edges(other.to_message());
+}
+
+size_t BusTrace::compare_edges(const BusTrace& other) const {
+    size_t min_count = min(current_event_count, other.event_count());
     for (size_t i = 0; i < min_count; ++i) {
-        if(event(i)->flags != other[i].flags) {
+        if(event(i)->flags != other.event(i)->flags) {
             return i;
         }
     }
-    if(min_count < max(current_event_count, other_event_count)) {
+    if(min_count < max(current_event_count, other.event_count())) {
         return min_count;
     }
     return SIZE_MAX;

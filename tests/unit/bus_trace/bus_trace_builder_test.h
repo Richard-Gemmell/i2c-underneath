@@ -269,7 +269,7 @@ public:
             .data_bit(true)
             .data_bit(true);
         TEST_ASSERT_EQUAL_UINT32(expected_trace.event_count(), trace.event_count());
-        TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, expected_trace.compare_to(events, trace.event_count()));
+        TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, expected_trace.compare_edges(trace));
     }
 
     static void address_byte_read() {
@@ -291,7 +291,7 @@ public:
             // 0x53 left shifted + 1
             .data_byte(0xA7);
         TEST_ASSERT_EQUAL_UINT32(expected_trace.event_count(), trace.event_count());
-        TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, expected_trace.compare_to(events, trace.event_count()));
+        TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, expected_trace.compare_edges(trace));
     }
 
     static void address_byte_write() {
@@ -313,7 +313,7 @@ public:
         // 0x53 left shifted + 0
         builder2.data_byte(0xA6);
         TEST_ASSERT_EQUAL_UINT32(expected_trace.event_count(), trace.event_count());
-        TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, expected_trace.compare_to(events, trace.event_count()));
+        TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, expected_trace.compare_edges(trace));
     }
 
     // Include all the tests here
