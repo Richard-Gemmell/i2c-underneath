@@ -12,6 +12,9 @@ namespace bus_trace {
 
 class BusTraceBuilder {
 public:
+    static const bool WRITE = false;
+    static const bool READ = true;
+
     enum class TimingStrategy {
         Min,    // Traces will have shortest valid deltas
         Max     // Traces will have largest valid deltas
