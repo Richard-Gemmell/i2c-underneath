@@ -16,7 +16,7 @@ BusTraceBuilder& BusTraceBuilder::bus_initially_idle() {
 BusTraceBuilder& BusTraceBuilder::start_bit() {
     uint32_t tf = get_time(params.times.fall_time);
     trace.add_event(BusEvent(tf, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SCL_LINE_STATE));
-    uint32_t tHD_STA = get_time(params.times.hold_time);
+    uint32_t tHD_STA = get_time(params.times.start_hold_time);
     trace.add_event(BusEvent(tHD_STA + tf, BusEventFlags::SCL_LINE_CHANGED));
     return *this;
 }
