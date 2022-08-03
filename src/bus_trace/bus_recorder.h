@@ -47,8 +47,7 @@ private:
     const common::hal::Clock& clock;    // Provides system time
     uint32_t ticks_at_latest_event = 0;
     BusTrace* current_trace = nullptr;
-    BusEventFlags sda_high = BusEventFlags::BOTH_LOW_AND_UNCHANGED;
-    BusEventFlags scl_high = BusEventFlags::BOTH_LOW_AND_UNCHANGED;
+    BusEventFlags line_states = BusEventFlags::BOTH_LOW_AND_UNCHANGED;
 
     void on_change(BusEventFlags edges);
 };

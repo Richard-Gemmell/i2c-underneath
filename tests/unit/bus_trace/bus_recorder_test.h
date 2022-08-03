@@ -190,9 +190,9 @@ public:
 
         // THEN the time to record all 4 transitions is reasonable
         uint32_t average_duration = real_clock.nanos_between(start, stop) / 4;
-        Serial.print("Average: ");Serial.println(average_duration);
+//        Serial.print("Average: ");Serial.println(average_duration);
         TEST_ASSERT_EQUAL(5, trace.event_count());
-        TEST_ASSERT_LESS_OR_EQUAL_UINT32(175, average_duration);
+        TEST_ASSERT_LESS_OR_EQUAL_UINT32(151, average_duration);
     }
 
     // Include all the tests here

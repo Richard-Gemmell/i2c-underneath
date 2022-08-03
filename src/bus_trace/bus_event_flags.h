@@ -16,7 +16,7 @@ namespace bus_trace {
 // Pin values and changes are not recorded if we're just spying on the
 // bus.
 
-enum class BusEventFlagBits : uint8_t {
+enum BusEventFlagBits : uint8_t {
 // PIN states are not supported as they're not likely to be useful.
     SDA_LINE_CHANGED_BIT = 3,
     SCL_LINE_CHANGED_BIT = 2,
@@ -24,7 +24,7 @@ enum class BusEventFlagBits : uint8_t {
     SCL_LINE_STATE_BIT = 0,
 };
 
-enum class BusEventFlags : uint8_t {
+enum BusEventFlags : uint8_t {
 // PIN states are not supported as they're not likely to be useful.
 //    SDA_PIN_CHANGED = 1 << 7,
 //    SCL_PIN_CHANGED = 1 << 6,
@@ -36,6 +36,11 @@ enum class BusEventFlags : uint8_t {
     SCL_LINE_STATE = 1 << (uint8_t)BusEventFlagBits::SCL_LINE_STATE_BIT,
     BOTH_LOW_AND_UNCHANGED = 0
 };
+
+// Sets bit 'bit' of 'flags' with the new value
+inline BusEventFlags update_from_bool(BusEventFlags flags, bool value, BusEventFlagBits bit) {
+    return BusEventFlags((flags & ~(1 << bit)) | (value << bit));
+}
 
 BusEventFlags operator|(BusEventFlags lhs, BusEventFlags rhs);
 
