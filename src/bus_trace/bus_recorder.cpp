@@ -11,18 +11,18 @@ BusRecorder::BusRecorder(common::hal::Pin& sda, common::hal::Pin& scl, const com
 
 void BusRecorder::start(BusTrace& trace) {
     current_trace = &trace;
-    sda_high = sda.read_line();
-    scl_high = scl.read_line();
+    sda_high = sda.read_line() ? BusEventFlags::SDA_LINE_STATE : BusEventFlags::BOTH_LOW_AND_UNCHANGED;
+    scl_high = scl.read_line() ? BusEventFlags::SCL_LINE_STATE : BusEventFlags::BOTH_LOW_AND_UNCHANGED;
     ticks_at_latest_event = clock.get_system_tick();
     // Record the initial line states
     on_change(BusEventFlags::BOTH_LOW_AND_UNCHANGED);
     // Start listening for line changes
     sda.on_edge([this](bool rising) {
-        sda_high = rising;
+        sda_high = rising ? BusEventFlags::SDA_LINE_STATE : BusEventFlags::BOTH_LOW_AND_UNCHANGED;
         on_change(BusEventFlags::SDA_LINE_CHANGED);
     });
     scl.on_edge([this](bool rising) {
-        scl_high = rising;
+        scl_high = rising ? BusEventFlags::SCL_LINE_STATE : BusEventFlags::BOTH_LOW_AND_UNCHANGED;
         on_change(BusEventFlags::SCL_LINE_CHANGED);
     });
 }
@@ -42,14 +42,7 @@ void BusRecorder::on_change(BusEventFlags edges) {
     // Do this first to minimise the delay before getting the system tick
     uint32_t delta_t_in_nanos = clock.nanos_since(ticks_at_latest_event);
 
-    BusEventFlags flags = edges;
-    if(sda_high) {
-        flags = flags | BusEventFlags::SDA_LINE_STATE;
-    }
-    if(scl_high) {
-        flags = flags | BusEventFlags::SCL_LINE_STATE;
-    }
-
+    BusEventFlags flags = edges | sda_high | scl_high;
     current_trace->add_event(delta_t_in_nanos, flags);
 }
 } // bus_trace
