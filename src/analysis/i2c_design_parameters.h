@@ -13,7 +13,7 @@ struct SlaveDesignParameters {
         : data_hold_time(data_hold_time), data_setup_time(data_setup_time) {
     };
 
-// Hold time is equal to valid time - tf or tr depending on whether SDA is falling or rising.
+    // Hold time is equal to valid time - tf or tr depending on whether SDA is falling or rising.
     // We can't actually measure this directly.
     uint32_t data_hold_time;       // tHD;DAT - time during which SDA holds its value after a clock pulse
     uint32_t data_setup_time;      // tSU;DAT - data setup time

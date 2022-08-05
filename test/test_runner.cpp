@@ -16,6 +16,8 @@
 #include "e2e/common/hal/teensy/teensy_timer_test.h"
 #include "e2e/common/hal/teensy/teensy_timestamp_test.h"
 #include "e2e/common/hal/teensy/teensy_clock_test.h"
+#include "unit/analysis/i2c_design_parameters_test.h"
+#include "unit/analysis/duration_statistics_test.h"
 
 void test(TestSuite* suite);
 
@@ -23,7 +25,7 @@ void test(TestSuite* suite);
 // Return true to run all tests afterwards.
 bool run_subset() {
     return true;
-//    test(new bus_trace::BusTraceBuilderTest());
+//    test(new analysis::DurationStatisticsTest());
 //    return false;
 }
 
@@ -33,6 +35,8 @@ void run_all_tests() {
     Serial.println("Run Unit Tests");
     Serial.println("--------------");
 //    test(new ExampleTestSuite());
+    test(new analysis::DurationStatisticsTest());
+    test(new analysis::I2CDesignParametersTest());
     test(new bus_monitor::BusMonitorTest());
     test(new bus_trace::BusEventFlagsTest());
     test(new bus_trace::BusEventTest());
