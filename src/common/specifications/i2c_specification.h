@@ -56,11 +56,45 @@ const I2CParameters StandardMode = {
                 .scl_high_time = {.min = 4'000, .max = UINT32_MAX},
 //                .repeated_start_setup_time = {.min = 4'700, .max = UINT32_MAX},
                 .data_hold_time = {.min = 300, .max = 3'450},
-                .data_setup_time = {.min = 250, .max = 0},
+                .data_setup_time = {.min = 250, .max = UINT32_MAX},
                 .rise_time = {.min = 0, .max = 1'000},
                 .fall_time = {.min = 0, .max = 300},
                 .stop_setup_time = {.min = 4'000, .max = UINT32_MAX},
                 .bus_free_time = {.min = 4'700, .max = UINT32_MAX},
+        }
+};
+
+const I2CParameters FastMode = {
+        .times = {
+                .output_fall_time = {.min = 12, .max = 250},
+                .spike_width = {.min = 0, .max = 50},
+                .start_hold_time = {.min = 600, .max = UINT32_MAX},
+                .scl_low_time = {.min = 1'300, .max = UINT32_MAX},
+                .scl_high_time = {.min = 600, .max = UINT32_MAX},
+//                .repeated_start_setup_time = {.min = 600, .max = UINT32_MAX},
+                .data_hold_time = {.min = 300, .max = 950},
+                .data_setup_time = {.min = 100, .max = UINT32_MAX},
+                .rise_time = {.min = 0, .max = 300},
+                .fall_time = {.min = 12, .max = 300},
+                .stop_setup_time = {.min = 600, .max = UINT32_MAX},
+                .bus_free_time = {.min = 1'300, .max = UINT32_MAX},
+        }
+};
+
+const I2CParameters FastModePlus = {
+        .times = {
+                .output_fall_time = {.min = 12, .max = 120},
+                .spike_width = {.min = 0, .max = 50},
+                .start_hold_time = {.min = 260, .max = UINT32_MAX},
+                .scl_low_time = {.min = 500, .max = UINT32_MAX},
+                .scl_high_time = {.min = 260, .max = UINT32_MAX},
+//                .repeated_start_setup_time = {.min = 260, .max = UINT32_MAX},
+                .data_hold_time = {.min = 0, .max = 450},
+                .data_setup_time = {.min = 50, .max = UINT32_MAX},
+                .rise_time = {.min = 0, .max = 120},
+                .fall_time = {.min = 12, .max = 120},
+                .stop_setup_time = {.min = 260, .max = UINT32_MAX},
+                .bus_free_time = {.min = 500, .max = UINT32_MAX},
         }
 };
 
