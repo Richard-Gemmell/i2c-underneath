@@ -4,6 +4,8 @@
 
 // Unit Tests
 //#include "example/example.h"
+#include "unit/analysis/duration_statistics_test.h"
+#include "unit/analysis/i2c_design_parameters_test.h"
 #include "unit/bus_monitor/bus_monitor_test.h"
 #include "unit/bus_trace/bus_event_flags_test.h"
 #include "unit/bus_trace/bus_event_test.h"
@@ -16,8 +18,7 @@
 #include "e2e/common/hal/teensy/teensy_timer_test.h"
 #include "e2e/common/hal/teensy/teensy_timestamp_test.h"
 #include "e2e/common/hal/teensy/teensy_clock_test.h"
-#include "unit/analysis/i2c_design_parameters_test.h"
-#include "unit/analysis/duration_statistics_test.h"
+#include "e2e/line_test/line_tester_test.h"
 
 void test(TestSuite* suite);
 
@@ -25,7 +26,7 @@ void test(TestSuite* suite);
 // Return true to run all tests afterwards.
 bool run_subset() {
     return true;
-//    test(new analysis::DurationStatisticsTest());
+//    test(new line_test::LineTesterTest());
 //    return false;
 }
 
@@ -52,6 +53,7 @@ void run_all_tests() {
     test(new common::hal::TeensyClockTest());
     test(new common::hal::TeensyTimerTest());
     test(new common::hal::TeensyTimestampTest());
+    test(new line_test::LineTesterTest());
 }
 
 TestSuite* test_suite;

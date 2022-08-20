@@ -1,8 +1,7 @@
 // Copyright (c) 2022 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_ANALYSIS_TIMESTATISTICS_H
-#define I2C_UNDERNEATH_ANALYSIS_TIMESTATISTICS_H
+#pragma once
 
 #include <cstdint>
 #include <common/specifications/i2c_specification.h>
@@ -33,8 +32,6 @@ private:
     uint32_t count_ = 0;
     uint32_t min_ = UINT32_MAX;
     uint32_t max_ = 0;
-    uint32_t total_ = 0;
+    double total_ = 0;
 };
 }
-
-#endif //I2C_UNDERNEATH_ANALYSIS_TIMESTATISTICS_H

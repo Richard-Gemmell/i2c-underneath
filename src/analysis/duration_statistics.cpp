@@ -13,7 +13,7 @@ void analysis::DurationStatistics::include(uint32_t duration) {
 }
 
 uint32_t analysis::DurationStatistics::average() const {
-    return std::lround((double)total_ / count_);
+    return std::llround(total_ / count_);
 }
 
 bool analysis::DurationStatistics::meets_specification(const common::i2c_specification::TimeRange& timeRange) const {

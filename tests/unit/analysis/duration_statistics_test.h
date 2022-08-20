@@ -92,6 +92,17 @@ public:
         TEST_ASSERT_EQUAL_UINT32(4635, statistics.average());
     }
 
+    static void calculates_average_for_very_large_values() {
+        DurationStatistics statistics;
+
+        // WHEN there are many measurements
+        // THEN the average is the average of all of them
+        statistics.include(UINT32_MAX);
+        statistics.include(UINT32_MAX);
+        statistics.include(UINT32_MAX);
+        TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, statistics.average());
+    }
+
     static void meets_specification() {
         // GIVEN some statistics
         DurationStatistics statistics;
@@ -114,6 +125,7 @@ public:
         RUN_TEST(can_get_minimum_value);
         RUN_TEST(can_get_maximum_value);
         RUN_TEST(calculates_average_correctly);
+        RUN_TEST(calculates_average_for_very_large_values);
         RUN_TEST(meets_specification);
     }
 
