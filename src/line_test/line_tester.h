@@ -23,6 +23,11 @@ public:
     // The estimate assumes the signal follows an RC curve and will
     // be incorrect if it doesn't.
     //
+    // The measurement process tends to return values in steps of 40
+    // nanoseconds starting at 5. Rise times less than 40 nanos get
+    // reported as 45. Times between 45 and 85 nanos are reported as
+    // 85 etc.
+    //
     // The time will be UINT32_MAX if the measurement timed out
     // before the pin changed state.
     analysis::DurationStatistics get_estimated_rise_time() {
@@ -33,6 +38,10 @@ public:
     // I2C spec. (The time for a signal to fall from 0.7 to 0.3 Vdd)
     // The estimate assumes the signal follows an RC curve and will
     // be incorrect if it doesn't.
+    //
+    // The measurement process tends to return values in steps of 40
+    // nanoseconds. Falls times less than 5 get reported as 5 nanos.
+    // Fall times between 5 and 45 nanos get reported as 45 etc.
     //
     // The time will be UINT32_MAX if the measurement timed out
     // before the pin changed state.
@@ -98,7 +107,8 @@ public:
     // devices affect the electrical behaviour of the line.
     //
     // Connecting an oscilloscope to the line will increase the rise time.
-    // Detaching the scope to get a more accurate result.
+    // Detaching the scope to get a more accurate result. Connecting unused
+    // pins can also affect the result.
     //
     // This test configures the pin and drives the bus line it's
     // connected to. This may cause one or more devices to get

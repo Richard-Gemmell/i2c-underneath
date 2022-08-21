@@ -22,6 +22,21 @@ LineTestReport::LineTestReport(
           estimated_rise_time(estimated_rise_time) {
 }
 
+// This implementation sets the pin and then polls it until
+// the level changes. The poll takes about 40 nanos. Any
+// edge that takes less than this is reported as 5ns.
+// Edges that take 2 polls get reported as 45 nanos etc.
+// This quantisation effect fades away above 100 nanos as
+// individual times vary a little and the average gets closer
+// to the truth.
+//
+// In practice, the measurement are always a bit too high.
+// Actual rise times for the Teensy are nearly always 15 to 20 nanos
+// less than the estimate. This is handy for estimating I2C rise times
+// as it's better to aim low than high.
+//
+// For a 1 MHz bus, the measurement accuracy is only good enough
+// to split rise times into Fast, Medium, Slow and too slow.
 uint32_t LineTester::measure_line_change(uint8_t pin, bool high, uint32_t timeout_nanos) {
     volatile uint32_t const* read_register = getDigitalReadPort(pin);
     const uint32_t bitmask = digitalPinToBitMask(pin);
