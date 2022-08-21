@@ -27,7 +27,7 @@ uint32_t LineTester::measure_line_change(uint8_t pin, bool high, uint32_t timeou
     const uint32_t bitmask = digitalPinToBitMask(pin);
     const uint32_t expected = high ? bitmask : 0;
     volatile uint32_t* write_register = getDigitalWritePort(pin, high);
-    const uint32_t timeout = timeout_nanos * 0.6;
+    const uint32_t timeout = common::hal::TeensyTimestamp::nanos_to_ticks(timeout_nanos);
 
     uint32_t stop;
     noInterrupts()

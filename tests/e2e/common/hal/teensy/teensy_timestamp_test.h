@@ -27,6 +27,15 @@ public:
         TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, TeensyTimestamp::ticks_to_nanos(UINT32_MAX));
     }
 
+    static void nanos_to_ticks() {
+        TEST_ASSERT_EQUAL_MESSAGE(600'000'000, F_CPU_ACTUAL, "This test assumes an Teensy 4 running at the standard frequency.");
+
+        TEST_ASSERT_EQUAL_UINT32(0, TeensyTimestamp::nanos_to_ticks(0));
+        // All results are a little high because we're rounding a double value
+        TEST_ASSERT_EQUAL_UINT32(60, TeensyTimestamp::nanos_to_ticks(100));
+        TEST_ASSERT_EQUAL_UINT32(2'400'000'000+95, TeensyTimestamp::nanos_to_ticks(4'000'000'000));
+    }
+
     static void nanos_between_ticks() {
         TEST_ASSERT_EQUAL_MESSAGE(600'000'000, F_CPU_ACTUAL, "This test assumes an Teensy 4 running at the standard frequency.");
 
@@ -128,6 +137,7 @@ public:
     // Include all the tests here
     void test() final {
         RUN_TEST(ticks_to_nanos);
+        RUN_TEST(nanos_to_ticks);
         RUN_TEST(nanos_between_ticks);
         RUN_TEST(not_timed_out_nanos_immediately);
         RUN_TEST(timed_out_nanos_millisecond_checks);

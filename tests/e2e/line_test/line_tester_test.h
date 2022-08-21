@@ -35,29 +35,32 @@ public:
     }
 
     static void measure_rise_and_fall_times() {
-        // This test assumes an 8k external pullup
-        // It will fail if you attach an oscilloscope.
         auto result = LineTester::TestLine(PIN_SNIFF_SCL);
 
         TEST_ASSERT_EQUAL(9, result.get_1_to_0_time().count());
         TEST_ASSERT_UINT32_WITHIN(2, 4, result.get_1_to_0_time().average());
         TEST_ASSERT_EQUAL(9, result.get_0_to_1_time().count());
-        TEST_ASSERT_UINT32_WITHIN(30, 244, result.get_0_to_1_time().average());
+        // We can't check an exact value because it's totally dependent
+        // on the board wiring. Just prove that we've got a vaguely sensible
+        // answer.
+        TEST_ASSERT_UINT32_WITHIN(290, 300, result.get_0_to_1_time().average());
     }
 
     static void estimate_rise_and_fall_times() {
-        // This test assumes an 8k external pullup
-        // It will fail if you attach an oscilloscope.
         auto result = LineTester::TestLine(PIN_SNIFF_SCL);
 
         TEST_ASSERT_EQUAL(9, result.get_1_to_0_time().count());
         TEST_ASSERT_UINT32_WITHIN(2, 5, result.get_estimated_fall_time().average());
         TEST_ASSERT_EQUAL(9, result.get_0_to_1_time().count());
-        TEST_ASSERT_UINT32_WITHIN(30, 300, result.get_estimated_rise_time().average());
+        // We can't check an exact value because it's totally dependent
+        // on the board wiring. Just prove that we've got a vaguely sensible
+        // answer.
+        TEST_ASSERT_UINT32_WITHIN(350, 370, result.get_estimated_rise_time().average());
     }
 
     static void report_timeout() {
         // WHEN we test the line with a really short timeout
+        // AND the rise time is at least 40 nanos
         auto result = LineTester::TestLine(PIN_SNIFF_SCL, 20);
 
         // THEN the fall time is recorded normally

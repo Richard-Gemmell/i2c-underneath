@@ -24,6 +24,9 @@ public:
     // ticks is larger than UINT32_MAX * 0.6.
     static uint32_t ticks_to_nanos(uint32_t ticks);
 
+    // Converts nanoseconds to ticks.
+    static uint32_t nanos_to_ticks(uint32_t nanos);
+
     // Returns the time between two tick counts in nanoseconds.
     // Handles the case when the tick count wraps round to 0.
     // Uses 'ticks_to_nanos' to convert to nanos.
