@@ -29,7 +29,9 @@ public:
     // 85 etc.
     //
     // The time will be UINT32_MAX if the measurement timed out
-    // before the pin changed state.
+    // before the pin changed state. This happens if there aren't
+    // any pullup resistors on the line or if the rise time is
+    // hopelessly slow.
     analysis::DurationStatistics get_estimated_rise_time() {
         return estimated_rise_time;
     }
@@ -128,6 +130,8 @@ private:
     //
     // Assumes both the rise and fall signals are perfect RC curves.
     constexpr const static double ScaleMeasuredToEstimate = 1.222;
+
+    static void include_edge_times(uint32_t measured_time, analysis::DurationStatistics& measured, analysis::DurationStatistics& estimated);
 };
 
 } // line_test

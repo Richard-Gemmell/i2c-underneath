@@ -60,6 +60,15 @@ uint32_t LineTester::measure_line_change(uint8_t pin, bool high, uint32_t timeou
     }
 }
 
+void LineTester::include_edge_times(uint32_t measured_time, analysis::DurationStatistics& measured, analysis::DurationStatistics& estimated) {
+    measured.include(measured_time);
+    if (measured_time == UINT32_MAX) {
+        estimated.include(measured_time);
+    } else {
+        estimated.include(std::llround(ScaleMeasuredToEstimate * measured_time));
+    }
+}
+
 LineTestReport LineTester::TestLine(uint8_t pin, uint32_t timeout_in_nanos) {
     analysis::DurationStatistics measured_fall_time;
     analysis::DurationStatistics estimated_fall_time;
@@ -72,13 +81,11 @@ LineTestReport LineTester::TestLine(uint8_t pin, uint32_t timeout_in_nanos) {
     for (int i = 0; i < repeats; ++i) {
         delayNanoseconds(delay_nanos);
         uint32_t rise = LineTester::measure_line_change(pin, true, timeout_in_nanos);
-        measured_rise_time.include(rise);
-        estimated_rise_time.include(std::llround(ScaleMeasuredToEstimate * rise));
+        include_edge_times(rise, measured_rise_time, estimated_rise_time);
 
         delayNanoseconds(delay_nanos);
         uint32_t fall = LineTester::measure_line_change(pin, false, timeout_in_nanos);
-        measured_fall_time.include(fall);
-        estimated_fall_time.include(std::llround(ScaleMeasuredToEstimate * fall));
+        include_edge_times(fall, measured_fall_time, estimated_fall_time);
     }
     pinMode(pin, INPUT_DISABLE);    // Release the line
 

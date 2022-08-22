@@ -63,12 +63,13 @@ public:
         // AND the rise time is at least 40 nanos
         auto result = LineTester::TestLine(PIN_SNIFF_SCL, 20);
 
-        // THEN the fall time is recorded normally
-        TEST_ASSERT_EQUAL(9, result.get_1_to_0_time().count());
-        TEST_ASSERT_UINT32_WITHIN(2, 4, result.get_1_to_0_time().average());
-        // AND the rise time is invalid
+        // THEN the rise time is invalid
         TEST_ASSERT_EQUAL(9, result.get_0_to_1_time().count());
+        TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, result.get_estimated_rise_time().average());
         TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, result.get_0_to_1_time().average());
+        // BUT the fall time is recorded normally
+        TEST_ASSERT_EQUAL(9, result.get_1_to_0_time().count());
+        TEST_ASSERT_UINT32_WITHIN(2, 5, result.get_estimated_fall_time().average());
     }
 
     // Include all the tests here
