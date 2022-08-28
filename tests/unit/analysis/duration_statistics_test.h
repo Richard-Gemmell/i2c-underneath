@@ -6,6 +6,7 @@
 #include <unity.h>
 #include <Arduino.h>
 #include "utils/test_suite.h"
+#include "fakes/fake_serial.h"
 #include <analysis/duration_statistics.h>
 #include <analysis/i2c_design_parameters.h>
 
@@ -119,6 +120,23 @@ public:
         TEST_ASSERT_FALSE(statistics.meets_specification({.min=100, .max=198}))
     }
 
+    static void print_self() {
+        // GIVEN some statistics
+        DurationStatistics statistics;
+        statistics.include(1);
+        statistics.include(4);
+        statistics.include(7);
+
+        // WHEN we print the statistics
+        FakeSerial serial;
+        size_t count = statistics.printTo(serial);
+
+        // THEN the output is as expected
+        TEST_ASSERT_EQUAL_STRING("Avg 4 (1 - 7)\r\n", serial.get_string().c_str());
+        // AND we print the expected number of characters
+        TEST_ASSERT_EQUAL_size_t(15, count);
+    }
+
     // Include all the tests here
     void test() final {
         RUN_TEST(include_increments_count);
@@ -127,6 +145,7 @@ public:
         RUN_TEST(calculates_average_correctly);
         RUN_TEST(calculates_average_for_very_large_values);
         RUN_TEST(meets_specification);
+        RUN_TEST(print_self);
     }
 
     DurationStatisticsTest() : TestSuite(__FILE__) {};

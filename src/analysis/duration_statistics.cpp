@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <Print.h>
 #include "duration_statistics.h"
 
 void analysis::DurationStatistics::include(uint32_t duration) {
@@ -18,4 +19,15 @@ uint32_t analysis::DurationStatistics::average() const {
 
 bool analysis::DurationStatistics::meets_specification(const common::i2c_specification::TimeRange& timeRange) const {
     return (timeRange.min <= min()) && (max() <= timeRange.max);
+}
+
+size_t analysis::DurationStatistics::printTo(Print& p) const {
+    size_t count =  p.print("Avg ");
+    count += p.print(average());
+    count += p.print(" (");
+    count += p.print(min());
+    count += p.print(" - ");
+    count += p.print(max());
+    count += p.println(")");
+    return count;
 }

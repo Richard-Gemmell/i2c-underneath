@@ -7,7 +7,7 @@
 #include <common/specifications/i2c_specification.h>
 
 namespace analysis {
-class DurationStatistics {
+class DurationStatistics : public Printable {
 public:
     // Adds another duration to the statistics
     void include(uint32_t duration);
@@ -27,6 +27,8 @@ public:
     uint32_t average() const;
 
     bool meets_specification(const common::i2c_specification::TimeRange& timeRange) const;
+
+    size_t printTo(Print& p) const override;
 
 private:
     uint32_t count_ = 0;
