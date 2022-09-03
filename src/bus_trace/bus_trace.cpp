@@ -19,11 +19,15 @@ size_t BusTrace::max_events_required(uint32_t bytes_per_message, bool include_pi
 }
 
 BusTrace::BusTrace(BusEvent* events, size_t max_event_count)
-    : events(events), created_events(false), max_event_count(max_event_count) {
+    : clock(nullptr), events(events), created_events(false), max_event_count(max_event_count) {
 }
 
 BusTrace::BusTrace(size_t max_event_count)
-    : events(new BusEvent[max_event_count]), created_events(true), max_event_count(max_event_count) {
+    : clock(nullptr), events(new BusEvent[max_event_count]), created_events(true), max_event_count(max_event_count) {
+}
+
+BusTrace::BusTrace(const common::hal::Clock* clock, size_t max_event_count)
+    : clock(clock), events(new BusEvent[max_event_count]), created_events(true), max_event_count(max_event_count) {
 }
 
 BusTrace::~BusTrace() {
@@ -44,18 +48,9 @@ const BusEvent* BusTrace::event(size_t index) const {
     return nullptr;
 }
 
-void BusTrace::add_event(const BusEvent& event) {
-    if(current_event_count == max_event_count) {
-        // We can't take another event. Discard it.
-        return;
-    }
-    events[current_event_count] = event;
-    current_event_count++;
-}
-
-void BusTrace::add_event(uint32_t delta_t_nanos, BusEventFlags flags) {
-    // This looks crazy but it makes BusRecorder slightly faster
-    add_event(BusEvent(delta_t_nanos, flags));
+void BusTrace::reset() {
+    current_event_count = 0;
+    set_ticks_start();
 }
 
 BusTrace BusTrace::to_message() const {

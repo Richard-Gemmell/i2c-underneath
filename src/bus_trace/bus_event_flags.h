@@ -1,9 +1,7 @@
 // Copyright © 2022 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_BUS_EVENT_FLAGS_H
-#define I2C_UNDERNEATH_BUS_EVENT_FLAGS_H
-
+#pragma once
 #include <cstdint>
 #include <cstddef>
 
@@ -17,19 +15,22 @@ namespace bus_trace {
 // bus.
 
 enum BusEventFlagBits : uint8_t {
-// PIN states are not supported as they're not likely to be useful.
+    SDA_PIN_CHANGED_BIT = 7,
+    SCL_PIN_CHANGED_BIT = 6,
+    SDA_PIN_STATE_BIT = 5,
+    SCL_PIN_STATE_BIT = 4,
     SDA_LINE_CHANGED_BIT = 3,
     SCL_LINE_CHANGED_BIT = 2,
     SDA_LINE_STATE_BIT = 1,
     SCL_LINE_STATE_BIT = 0,
 };
 
+// Note that the PIN_CHANGED and PIN_STATE flags are rarely captured.
 enum BusEventFlags : uint8_t {
-// PIN states are not supported as they're not likely to be useful.
-//    SDA_PIN_CHANGED = 1 << 7,
-//    SCL_PIN_CHANGED = 1 << 6,
-//    SDA_PIN_STATE = 1 << 5,
-//    SCL_PIN_STATE = 1 << 4,
+    SDA_PIN_CHANGED = 1 << (uint8_t)BusEventFlagBits::SDA_PIN_CHANGED_BIT,
+    SCL_PIN_CHANGED = 1 << (uint8_t)BusEventFlagBits::SCL_PIN_CHANGED_BIT,
+    SDA_PIN_STATE = 1 << (uint8_t)BusEventFlagBits::SDA_PIN_STATE_BIT,
+    SCL_PIN_STATE = 1 << (uint8_t)BusEventFlagBits::SCL_PIN_STATE_BIT,
     SDA_LINE_CHANGED = 1 << (uint8_t)BusEventFlagBits::SDA_LINE_CHANGED_BIT,
     SCL_LINE_CHANGED = 1 << (uint8_t)BusEventFlagBits::SCL_LINE_CHANGED_BIT,
     SDA_LINE_STATE = 1 << (uint8_t)BusEventFlagBits::SDA_LINE_STATE_BIT,
@@ -42,9 +43,21 @@ inline BusEventFlags update_from_bool(BusEventFlags flags, bool value, BusEventF
     return BusEventFlags((flags & ~(1 << bit)) | (value << bit));
 }
 
-BusEventFlags operator|(BusEventFlags lhs, BusEventFlags rhs);
-
-BusEventFlags operator&(BusEventFlags lhs, BusEventFlags rhs);
+inline BusEventFlags operator|(BusEventFlags lhs, BusEventFlags rhs) {
+    return static_cast<BusEventFlags>(
+            static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs)
+    );
 }
 
-#endif //I2C_UNDERNEATH_BUS_EVENT_FLAGS_H
+inline BusEventFlags operator&(BusEventFlags lhs, BusEventFlags rhs) {
+    return static_cast<BusEventFlags>(
+            static_cast<uint8_t>(lhs) & static_cast<uint8_t>(rhs)
+    );
+}
+
+inline BusEventFlags operator^(BusEventFlags lhs, BusEventFlags rhs) {
+    return static_cast<BusEventFlags>(
+            static_cast<uint8_t>(lhs) ^ static_cast<uint8_t>(rhs)
+    );
+}
+}

@@ -1,9 +1,7 @@
-// Copyright © 2021 Richard Gemmell
+// Copyright © 2022 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_BUS_EVENTS_H
-#define I2C_UNDERNEATH_BUS_EVENTS_H
-
+#pragma once
 #include <cstdint>
 #include <cstddef>
 #include "bus_event_flags.h"
@@ -16,15 +14,19 @@ public:
     BusEvent() = default;
 
     BusEvent(uint16_t delta_t_in_ticks, BusEventFlags flags)
-        : delta_t_nanos(delta_t_in_ticks),
-          flags(flags) {
+        : delta_t_in_ticks(delta_t_in_ticks), flags(flags) {
     }
 
-    // Nanoseconds since previous event.
-    // Data type must be large enough to record the largest expected period between events.
-    // SMBus time out is 35 ms which is 35,000,000 nanos. Would require a 4 byte type.
-    // 2 bytes between events gives 65536 nanos. Enough for a 9 KHz baud rate. SMBus is minimum of 10 kHz
-    uint16_t delta_t_nanos;
+    // System ticks since previous event.
+    //
+    // The conversion from system ticks to nanoseconds depends on the device
+    // and may be affected by overclocking.
+    //
+    // The data type must be large enough to record the largest expected period
+    // between events. The SMBus time out is 35 ms which is 35,000,000 nanos.
+    // This would require a 4 byte type. 2 bytes between events gives 109,000
+    // nanos on a Teensy 4. Enough for a 9 KHz baud rate. SMBus is minimum of 10 kHz
+    uint16_t delta_t_in_ticks;
 
     // Describes the event that happened and the state of the bus lines.
     BusEventFlags flags;
@@ -34,9 +36,11 @@ public:
 
 inline bool operator==(const BusEvent& lhs, const BusEvent& rhs) {
     return lhs.flags == rhs.flags &&
-           lhs.delta_t_nanos == rhs.delta_t_nanos;
+           lhs.delta_t_in_ticks == rhs.delta_t_in_ticks;
 }
-inline bool operator!=(const BusEvent& lhs, const BusEvent& rhs) { return !(lhs == rhs); }
+
+inline bool operator!=(const BusEvent& lhs, const BusEvent& rhs) {
+    return !(lhs == rhs);
+}
 
 }
-#endif //I2C_UNDERNEATH_BUS_EVENTS_H

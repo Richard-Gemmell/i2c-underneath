@@ -10,6 +10,7 @@
 #include <array>
 #include <bus_trace/bus_event.h>
 #include <bus_trace/bus_event_flags.h>
+#include <common/hal/clock.h>
 
 namespace bus_trace {
 
@@ -30,6 +31,13 @@ public:
     // Additional events are dropped. Must be less than SIZE_MAX.
     explicit BusTrace(size_t max_event_count);
 
+    // Creates a trace.
+    // This overload is provided to optimise BusRecorder. See add_event(BusEventFlags).
+    // max_event_count: maximum number of bus events that can be stored in this trace.
+    // clock: system clock for use by add_event(BusEventFlags)
+    // Additional events are dropped. Must be less than SIZE_MAX.
+    explicit BusTrace(const common::hal::Clock* clock, size_t max_event_count);
+
     virtual ~BusTrace();
 
     // Allows you to define the array of events wherever you want. This may
@@ -45,10 +53,30 @@ public:
     // Returns a recorded event or nullptr if index is out of range.
     const BusEvent* event(size_t index) const;
 
+    // Removes any existing events and resets the clock
+    void reset();
+
     // Adds an event to the trace as long as there is space for it.
     // Discards the event if there's no more space
-    void add_event(const BusEvent& event);
-    void add_event(uint32_t delta_t_nanos, BusEventFlags flags);
+    inline void add_event(const BusEvent& event) {
+        if(current_event_count == max_event_count) {
+            // We can't take another event. Discard it.
+            return;
+        }
+        events[current_event_count] = event;
+        current_event_count++;
+    }
+
+    inline void add_event(uint32_t delta_t_in_ticks, BusEventFlags flags) {
+        // This looks crazy but it makes BusRecorder very slightly faster
+        add_event(BusEvent(delta_t_in_ticks, flags));
+    }
+
+    inline void add_event(BusEventFlags flags) {
+        uint32_t past = ticks_start;
+        set_ticks_start();
+        add_event(BusEvent(ticks_start - past, flags));
+    }
 
     // Creates a copy of this message without any spurious changes in SDA
     // that occur while SCL is LOW. These don't affect the meaning of the
@@ -77,12 +105,25 @@ public:
     size_t printTo(Print& p) const override;
 
 private:
+    const common::hal::Clock* clock;
+    uint32_t ticks_start = 0;
     BusEvent* events;               // Array of events
     bool created_events;            // True if we own events. False if it was passed to the constructor.
     size_t max_event_count;         // Maximum number of items in 'events'
     size_t current_event_count = 0; // Current event count
 
     static void append_event_symbol(String& string, bool sda, BusEventFlags flags);
+
+    inline void set_ticks_start() {
+#ifdef ARDUINO_TEENSY40
+        // It's about 13 nanoseconds (8 ticks) faster to get the tick count directly.
+        ticks_start = ARM_DWT_CYCCNT;
+#else
+        if (clock) {
+            ticks_start = clock->get_system_tick();
+        }
+#endif
+    }
 };
 
 }

@@ -56,9 +56,19 @@ public:
         TEST_ASSERT_NULL(trace.event(1))
     }
 
+    static void add_event_with_bus_event_object() {
+        BusTrace trace(MAX_EVENTS);
+
+        // WHEN we add an event
+        trace.add_event(BusEvent(456, BusEventFlags::SDA_LINE_STATE));
+
+        // THEN we can retrieve the new event
+        auto actual = trace.event(0);
+        TEST_ASSERT_TRUE(*actual == BusEvent(456, BusEventFlags::SDA_LINE_STATE))
+    }
+
     static void add_event_override() {
-        BusEvent events[MAX_EVENTS];
-        BusTrace trace(events, MAX_EVENTS);
+        BusTrace trace(MAX_EVENTS);
 
         // WHEN we add an event with the override
         trace.add_event(123, BusEventFlags::SDA_LINE_STATE);
@@ -66,6 +76,56 @@ public:
         // THEN we can retrieve the new event
         auto actual = trace.event(0);
         TEST_ASSERT_TRUE(*actual == BusEvent(123, BusEventFlags::SDA_LINE_STATE))
+    }
+
+    static void add_event_gets_system_tick_directly_on_teensy4() {
+#ifdef ARDUINO_TEENSY40
+        BusTrace trace(MAX_EVENTS);
+
+        // WHEN we add a couple of events and BusTrace get the system tick count
+        trace.add_event(BusEventFlags::SCL_LINE_CHANGED);
+        trace.add_event(BusEventFlags::SDA_LINE_CHANGED);
+
+        // THEN we can retrieve the new event
+        auto actual = trace.event(1);
+        TEST_ASSERT_EQUAL(actual->flags, BusEventFlags::SDA_LINE_CHANGED);
+        TEST_ASSERT_UINT32_WITHIN(2, 4, actual->delta_t_in_ticks);
+#endif
+    }
+
+    static void add_event_is_fast_enough_on_a_teensy4() {
+#ifdef ARDUINO_TEENSY40
+        BusTrace trace(MAX_EVENTS);
+
+        // WHEN we add events
+        trace.add_event(BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(BusEventFlags::SDA_LINE_CHANGED);
+
+        // THEN the average time to add an event is a few ticks
+        for (size_t i = 1; i < trace.event_count(); ++i) {
+            auto actual = trace.event(i);
+//            Serial.printf("Index %d: delta_t %d\n", i, actual->delta_t_in_ticks);
+            TEST_ASSERT_UINT32_WITHIN(2, 6, actual->delta_t_in_ticks);
+        }
+#endif
+    }
+
+    static void add_event_gets_system_tick_from_clock() {
+#ifndef ARDUINO_TEENSY40
+        common::hal::FakeClock clock;
+        clock.system_tick = 12345;
+        BusTrace trace(&clock, MAX_EVENTS);
+
+        // WHEN we add an event
+        trace.add_event(BusEventFlags::SDA_LINE_STATE);
+
+        // THEN we can retrieve the new event
+        auto actual = trace.event(0);
+        TEST_ASSERT_TRUE(*actual == BusEvent(12345u, BusEventFlags::SDA_LINE_STATE))
+#endif
     }
 
     static void add_event_drops_excess_events() {
@@ -84,6 +144,24 @@ public:
         TEST_ASSERT_EQUAL_UINT32(1, trace.event_count());
         TEST_ASSERT_NULL(trace.event(1))
         TEST_ASSERT_TRUE(event == *trace.event(0))
+    }
+
+    static void reset() {
+        // GIVEN a trace that contains some events
+        BusTrace trace(MAX_EVENTS);
+        trace.add_event(BusEventFlags::SCL_LINE_CHANGED);
+        trace.add_event(BusEventFlags::SDA_LINE_CHANGED);
+        delayNanoseconds(1000);
+        TEST_ASSERT_EQUAL(2, trace.event_count());
+
+        // WHEN we call reset()
+        trace.reset();
+        trace.add_event(BusEventFlags::SCL_LINE_CHANGED);
+
+        // THEN the event count was reset
+        TEST_ASSERT_EQUAL(1, trace.event_count());
+        // AND the delta to the next event starts from 0 again
+        TEST_ASSERT_UINT32_WITHIN(2, 6, trace.event(0)->delta_t_in_ticks);
     }
 
     static void destructor_does_not_deletes_supplied_array_of_events() {
@@ -383,8 +461,13 @@ public:
 
         RUN_TEST(new_trace_is_empty);
         RUN_TEST(cannot_get_event_that_has_not_been_added);
+        RUN_TEST(add_event_with_bus_event_object);
         RUN_TEST(add_event_override);
+        RUN_TEST(add_event_gets_system_tick_directly_on_teensy4);
+        RUN_TEST(add_event_is_fast_enough_on_a_teensy4);
+        RUN_TEST(add_event_gets_system_tick_from_clock);
         RUN_TEST(add_event_drops_excess_events);
+        RUN_TEST(reset);
         RUN_TEST(destructor_does_not_deletes_supplied_array_of_events);
         RUN_TEST(destructor_deletes_internal_array_of_events_if_it_owns_them);
 
@@ -405,7 +488,7 @@ public:
         RUN_TEST(compare_messages_returns_index_of_first_difference);
         RUN_TEST(message_comparable_does_not_ignore_SDA_changes_while_SCL_is_HIGH);
 
-//        RUN_TEST(print_trace);
+        RUN_TEST(print_trace);
     }
 
     BusTraceTest() : TestSuite(__FILE__) {};

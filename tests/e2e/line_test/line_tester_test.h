@@ -13,10 +13,22 @@
 namespace line_test {
 
 class LineTesterTest : public TestSuite {
-//    const static uint32_t PIN_SNIFF_SDA = 23;
+    const static uint8_t PIN_SCL_300_ns = 9;    // From loopback test board.
     const static uint32_t PIN_SNIFF_SCL = 22;
 
 public:
+    void setUp() override {
+        TestSuite::setUp();
+        pinMode(PIN_SCL_300_ns, OUTPUT);
+        digitalWrite(PIN_SCL_300_ns, 1);
+        delayNanoseconds(500);
+    }
+
+    void tearDown() override {
+        pinMode(PIN_WIRE_SCL, INPUT_DISABLE);
+        TestSuite::tearDown();
+    }
+
     static void line_test_report_converts_measured_ticks_to_nanos() {
         analysis::DurationStatistics measured_fall_time;
         measured_fall_time.include(10);

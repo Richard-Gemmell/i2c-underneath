@@ -14,11 +14,10 @@ namespace bus_trace {
 class BusEventFlagsTest : public TestSuite {
 public:
     static void test_values() {
-        // Pins states are not supported at this time
-//        TEST_ASSERT_EQUAL(0x80, BusEventFlags::SDA_PIN_CHANGED);
-//        TEST_ASSERT_EQUAL(0x40, BusEventFlags::SCL_PIN_CHANGED);
-//        TEST_ASSERT_EQUAL(0x20, BusEventFlags::SDA_PIN_STATE);
-//        TEST_ASSERT_EQUAL(0x10, BusEventFlags::SCL_PIN_STATE);
+        TEST_ASSERT_EQUAL(0x80, BusEventFlags::SDA_PIN_CHANGED);
+        TEST_ASSERT_EQUAL(0x40, BusEventFlags::SCL_PIN_CHANGED);
+        TEST_ASSERT_EQUAL(0x20, BusEventFlags::SDA_PIN_STATE);
+        TEST_ASSERT_EQUAL(0x10, BusEventFlags::SCL_PIN_STATE);
         TEST_ASSERT_EQUAL(0x08, BusEventFlags::SDA_LINE_CHANGED);
         TEST_ASSERT_EQUAL(0x04, BusEventFlags::SCL_LINE_CHANGED);
         TEST_ASSERT_EQUAL(0x02, BusEventFlags::SDA_LINE_STATE);
@@ -39,10 +38,22 @@ public:
         TEST_ASSERT_EQUAL(BusEventFlags::SDA_LINE_STATE, flags);
     }
 
+    static void test_operator_xor() {
+        auto flags = BusEventFlags::SDA_LINE_CHANGED ^ BusEventFlags::SDA_LINE_STATE;
+        TEST_ASSERT_EQUAL(BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE, flags);
+
+        flags = BusEventFlags::SDA_LINE_CHANGED ^ BusEventFlags::SDA_LINE_CHANGED;
+        TEST_ASSERT_EQUAL(0x00, flags);
+
+        flags = BusEventFlags::SDA_LINE_CHANGED ^ (BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE);
+        TEST_ASSERT_EQUAL(BusEventFlags::SDA_LINE_STATE, flags);
+    }
+
     void test() final {
         RUN_TEST(test_values);
         RUN_TEST(test_operator_or);
         RUN_TEST(test_operator_and);
+        RUN_TEST(test_operator_xor);
     }
 
     BusEventFlagsTest() : TestSuite(__FILE__) {};

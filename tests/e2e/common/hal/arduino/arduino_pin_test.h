@@ -12,7 +12,7 @@
 namespace common {
 namespace hal {
 
-#define TEST_PIN 14
+#define TEST_PIN 0
 
 class ArduinoPinTest : public TestSuite {
 public:
@@ -25,6 +25,10 @@ public:
         digitalWrite(TEST_PIN, HIGH);
         called_back = false;
         callback_value = false;
+    }
+
+    void tearDown() final {
+        pinMode(TEST_PIN, INPUT_DISABLE);
     }
 
     static void on_edge_isr() {
