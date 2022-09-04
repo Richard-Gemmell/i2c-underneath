@@ -26,7 +26,7 @@ void test(TestSuite* suite);
 // Return true to run all tests afterwards.
 bool run_subset() {
     return true;
-//    test(new line_test::LineTesterTest());
+//    test(new bus_trace::BusRecorderTest());
 //    return false;
 }
 

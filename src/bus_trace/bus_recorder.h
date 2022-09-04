@@ -9,6 +9,7 @@
 #include <common/hal/clock.h>
 
 namespace bus_trace {
+#define NUM_I2C_PORTS 4
 
 // Records the electrical activity on an I2C bus.
 // The recorder is driven by interrupts. It will continue
@@ -21,11 +22,10 @@ namespace bus_trace {
 // devices. It was tested on a Teensy 4.
 //
 // WARNING
-// The recorder might not record the correct time between edges if they
-// happen less than 220 nanoseconds apart. This is because it takes about
-// 260 nanos to record an edge with a Teensy 4. About 220 nanos of this is
-// taken by the Teensy firing the interrupt service routine attached to
-// the pin. (The ISR itself takes the other 40 nanos.)
+// The BusRecorder can't measure the time between 2 edges that happen
+// in quick succession. This happens when the 2nd edge occurs whilst
+// the 1st edge is being recorded. On the Teensy 4 this means that
+// the smallest recorded interval is about 64 nanoseconds.
 //
 // WARNING 2
 // On the Teensy 4, edges that are less than 40 nanoseconds apart may
@@ -60,6 +60,7 @@ public:
             return;
         }
         current_trace = &trace;
+        reduce_i2c_irq_priorities();
         noInterrupts()
         attachInterrupt(digitalPinToInterrupt(pin_sda), sda_isr, CHANGE);
         attachInterrupt(digitalPinToInterrupt(pin_scl), scl_isr, CHANGE);
@@ -77,6 +78,7 @@ public:
         detachInterrupt(digitalPinToInterrupt(pin_scl));
         interrupts()
         current_trace = nullptr;
+        reset_i2c_irq_priorities();
     }
 
     // Returns true if we're recording
@@ -107,7 +109,30 @@ private:
     void (*scl_isr)() = nullptr;
     BusTrace* current_trace = nullptr;
     BusEventFlags line_states = BusEventFlags::BOTH_LOW_AND_UNCHANGED;
+
+    // We need to reduce the priority of the I2C interrupts to record an accurate trace.
+    // ANY other interrupts can cause problems but I2C is the obvious one.
+    static uint8_t I2C_IRQS[NUM_I2C_PORTS];
+    uint8_t original_i2c_irq_priorities[NUM_I2C_PORTS] = {};
+
+    // Drops the priority of all I2C interrupts, so they're lower than the GPIO pins.
+    void reduce_i2c_irq_priorities() {
+        uint8_t gpio_priority = NVIC_GET_PRIORITY(IRQ_GPIO6789);
+        for (int i = 0; i < NUM_I2C_PORTS; ++i) {
+            original_i2c_irq_priorities[i] = NVIC_GET_PRIORITY(I2C_IRQS[i]);
+            // Make I2C priority one step lower than the priority for GPIO
+            NVIC_SET_PRIORITY(I2C_IRQS[i], gpio_priority + 16);
+        }
+    }
+
+    // Reset the I2C IRQ priorities to whatever they were initially
+    void reset_i2c_irq_priorities() {
+        for (int i = 0; i < NUM_I2C_PORTS; ++i) {
+            NVIC_SET_PRIORITY(I2C_IRQS[i], original_i2c_irq_priorities[i]);
+        }
+    }
 };
+uint8_t BusRecorder::I2C_IRQS[NUM_I2C_PORTS] = {IRQ_LPI2C1, IRQ_LPI2C2, IRQ_LPI2C3, IRQ_LPI2C4};
 
 } // bus_trace
 

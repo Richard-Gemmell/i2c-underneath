@@ -23,14 +23,18 @@ class BusRecorderTest : public TestSuite {
 
 public:
     void setUp() final {
+        pinMode(PIN_SNIFF_SDA, INPUT_PULLUP);
+        digitalWriteFast(PIN_SNIFF_SDA, HIGH);
+        pinMode(PIN_SNIFF_SCL, INPUT_PULLUP);
+        digitalWriteFast(PIN_SNIFF_SDA, HIGH);
+        delayMicroseconds(10);
         recorder.set_callbacks(sda_trigger, scl_trigger);
-        // We're not actually going to do anything with the pins.
-        pinMode(PIN_SNIFF_SDA, INPUT_DISABLE);
-        pinMode(PIN_SNIFF_SCL, INPUT_DISABLE);
     }
 
     void tearDown() final {
         recorder.set_callbacks(nullptr, nullptr);
+        pinMode(PIN_SNIFF_SDA, INPUT_DISABLE);
+        pinMode(PIN_SNIFF_SCL, INPUT_DISABLE);
     }
 
     static void pins_start_high() {
@@ -218,6 +222,53 @@ public:
         TEST_ASSERT_LESS_OR_EQUAL_UINT32(18, average_duration);
     }
 
+    static void deprioritises_i2c_irqs() {
+        // GIVEN the I2C priorities have their default values
+        const uint8_t default_priority = 128;
+        int original_gpio_priority = NVIC_GET_PRIORITY(IRQ_GPIO6789);
+        int original_i2c_priorities[] = {
+                NVIC_GET_PRIORITY(IRQ_LPI2C1),
+                NVIC_GET_PRIORITY(IRQ_LPI2C2),
+                NVIC_GET_PRIORITY(IRQ_LPI2C3),
+                NVIC_GET_PRIORITY(IRQ_LPI2C4)
+        };
+        BusTrace trace(events, MAX_EVENTS);
+        TEST_ASSERT_EQUAL(default_priority, original_i2c_priorities[0]);
+        TEST_ASSERT_EQUAL(default_priority, original_i2c_priorities[1]);
+        TEST_ASSERT_EQUAL(default_priority, original_i2c_priorities[2]);
+        TEST_ASSERT_EQUAL(default_priority, original_i2c_priorities[3]);
+
+        // WHEN we start recording
+        recorder.start(trace);
+        int recording_gpio_priority = NVIC_GET_PRIORITY(IRQ_GPIO6789);
+        int recording_i2c_priorities[] = {
+                NVIC_GET_PRIORITY(IRQ_LPI2C1),
+                NVIC_GET_PRIORITY(IRQ_LPI2C2),
+                NVIC_GET_PRIORITY(IRQ_LPI2C3),
+                NVIC_GET_PRIORITY(IRQ_LPI2C4)
+        };
+        recorder.stop();
+
+        // THEN the I2C interrupts were de-prioritised
+//        for (int i = 0; i < 4; ++i) {
+//            Serial.printf("%d was %d then %d now %d\n", i, original_i2c_priorities[i], recording_i2c_priorities[i], NVIC_GET_PRIORITY(IRQ_LPI2C1+i));
+//        }
+        TEST_ASSERT_EQUAL(original_gpio_priority + 16, recording_i2c_priorities[0]);
+        TEST_ASSERT_EQUAL(original_gpio_priority + 16, recording_i2c_priorities[1]);
+        TEST_ASSERT_EQUAL(original_gpio_priority + 16, recording_i2c_priorities[2]);
+        TEST_ASSERT_EQUAL(original_gpio_priority + 16, recording_i2c_priorities[3]);
+
+        // AND the I2C priorities were returned to their initial values
+        TEST_ASSERT_EQUAL(original_i2c_priorities[0], NVIC_GET_PRIORITY(IRQ_LPI2C1));
+        TEST_ASSERT_EQUAL(original_i2c_priorities[1], NVIC_GET_PRIORITY(IRQ_LPI2C2));
+        TEST_ASSERT_EQUAL(original_i2c_priorities[2], NVIC_GET_PRIORITY(IRQ_LPI2C3));
+        TEST_ASSERT_EQUAL(original_i2c_priorities[3], NVIC_GET_PRIORITY(IRQ_LPI2C4));
+
+        // AND the GPIO priorities never changed
+        TEST_ASSERT_EQUAL(original_gpio_priority, recording_gpio_priority);
+        TEST_ASSERT_EQUAL(original_gpio_priority, NVIC_GET_PRIORITY(IRQ_GPIO6789));
+    }
+
     // Include all the tests here
     void test() final {
         RUN_TEST(pins_start_high);
@@ -229,6 +280,7 @@ public:
 //        RUN_TEST(delta_is_calculated_correctly_when_tick_count_wraps);
         RUN_TEST(creates_another_recording_correctly);
         RUN_TEST(interrupt_is_fast_enough);
+        RUN_TEST(deprioritises_i2c_irqs);
     }
 
     BusRecorderTest() : TestSuite(__FILE__) {};
