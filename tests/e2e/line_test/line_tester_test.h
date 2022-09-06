@@ -13,8 +13,8 @@
 namespace line_test {
 
 class LineTesterTest : public TestSuite {
-    const static uint8_t PIN_SCL_300_ns = 9;    // From loopback test board.
-    const static uint32_t PIN_SNIFF_SCL = 22;
+    const static uint8_t PIN_SCL_300_ns = 4;    // From loopback test board.
+    const static uint32_t PIN_SNIFF_SCL = 20;
 
 public:
     void setUp() override {
