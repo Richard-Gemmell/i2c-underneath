@@ -144,4 +144,18 @@ void BusTrace::append_event_symbol(String& string, bool sda, BusEventFlags flags
     }
 }
 
+uint32_t BusTrace::nanos_to_previous(size_t index) const {
+    if(index >= event_count() || !clock) {
+        // Can't calculate a result. Return an error code.
+        return UINT32_MAX;
+    }
+    if(index) {
+        return clock->ticks_to_nanos(events[index].delta_t_in_ticks);
+    }
+    // It doesn't make sense to return a value for the first event so return 0.
+    // This is mainly to allow us to change BusEvent to hold absolute
+    // tick values in the future.
+    return 0;
+}
+
 }

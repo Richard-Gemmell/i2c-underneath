@@ -1,9 +1,7 @@
 // Copyright © 2022 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_CLOCK_H
-#define I2C_UNDERNEATH_CLOCK_H
-
+#pragma once
 #include <cstdint>
 
 namespace common {
@@ -20,6 +18,8 @@ public:
 
     virtual uint32_t get_system_mills() const = 0;
 
+    virtual uint32_t ticks_to_nanos(uint32_t ticks) const = 0;
+
     virtual uint32_t nanos_between(uint32_t ticks_start, uint32_t ticks_end) const = 0;
 
     virtual uint32_t nanos_since(uint32_t& ticks_start) const = 0;
@@ -27,4 +27,3 @@ public:
 
 }
 }
-#endif //I2C_UNDERNEATH_CLOCK_H

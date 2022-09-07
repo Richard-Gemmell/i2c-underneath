@@ -1,9 +1,7 @@
 // Copyright (c) 2022 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_FAKE_CLOCK_H
-#define I2C_UNDERNEATH_FAKE_CLOCK_H
-
+#pragma once
 #include <Arduino.h>
 #include <cstdint>
 #include <imxrt.h>
@@ -14,6 +12,7 @@ namespace hal {
 
 class FakeClock : public Clock {
 public:
+    const uint32_t nanos_per_tick = 2;
     uint32_t system_tick = 1'000'000;
     uint32_t system_millis = 5'000;
 
@@ -25,8 +24,12 @@ public:
         return system_millis;
     }
 
+    uint32_t ticks_to_nanos(uint32_t ticks) const override {
+        return ticks * nanos_per_tick;
+    }
+
     uint32_t nanos_between(uint32_t ticks_start, uint32_t ticks_end) const override {
-        return (ticks_end - ticks_start)*2;
+        return ticks_to_nanos(ticks_end - ticks_start);
     }
 
     uint32_t nanos_since(uint32_t& ticks_start) const override {
@@ -38,5 +41,3 @@ public:
 
 }
 }
-
-#endif //I2C_UNDERNEATH_FAKE_CLOCK_H

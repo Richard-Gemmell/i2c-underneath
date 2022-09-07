@@ -1,8 +1,7 @@
 // Copyright © 2021-2022 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_BUS_TRACE_H
-#define I2C_UNDERNEATH_BUS_TRACE_H
+#pragma once
 
 #include <Arduino.h>
 #include <cstdint>
@@ -36,7 +35,7 @@ public:
     // max_event_count: maximum number of bus events that can be stored in this trace.
     // clock: system clock for use by add_event(BusEventFlags)
     // Additional events are dropped. Must be less than SIZE_MAX.
-    explicit BusTrace(const common::hal::Clock* clock, size_t max_event_count);
+    BusTrace(const common::hal::Clock* clock, size_t max_event_count);
 
     virtual ~BusTrace();
 
@@ -52,6 +51,12 @@ public:
 
     // Returns a recorded event or nullptr if index is out of range.
     const BusEvent* event(size_t index) const;
+
+    // Returns the time since the previous event in nanoseconds.
+    // Returns UINT32_MAX if index is out of range or this trace
+    // doesn't have a clock.
+    // Returns 0 for the first event.
+    uint32_t nanos_to_previous(size_t index) const;
 
     // Removes any existing events and resets the clock
     void reset();
@@ -127,4 +132,3 @@ private:
 };
 
 }
-#endif //I2C_UNDERNEATH_BUS_TRACE_H

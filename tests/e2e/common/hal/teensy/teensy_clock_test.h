@@ -58,6 +58,13 @@ public:
         TEST_ASSERT_LESS_OR_EQUAL(afterActual, actual);
     }
 
+    static void ticks_to_nanos() {
+        TeensyClock clock = TeensyClock();
+
+        // Only a quick test as the real work is done by TeensyTimestamp
+        TEST_ASSERT_EQUAL_UINT32(TeensyTimestamp::ticks_to_nanos(1000), clock.ticks_to_nanos(1000));
+    }
+
     static void nanos_between() {
         TeensyClock clock = TeensyClock();
 
@@ -81,6 +88,7 @@ public:
         RUN_TEST(get_system_tick);
         RUN_TEST(no_overhead_to_get_ticks);
         RUN_TEST(get_system_millis);
+        RUN_TEST(ticks_to_nanos);
         RUN_TEST(nanos_between);
         RUN_TEST(nanos_since);
     }

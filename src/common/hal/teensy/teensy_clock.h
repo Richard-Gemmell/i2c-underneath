@@ -1,9 +1,7 @@
 // Copyright © 2022 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_TEENSY_CLOCK_H
-#define I2C_UNDERNEATH_TEENSY_CLOCK_H
-
+#pragma once
 #include <Arduino.h>
 #include <cstdint>
 #include <imxrt.h>
@@ -25,6 +23,10 @@ public:
         return millis();
     }
 
+    uint32_t ticks_to_nanos(uint32_t ticks) const override {
+        return TeensyTimestamp::ticks_to_nanos(ticks);
+    }
+
     inline uint32_t nanos_between(uint32_t ticks_start, uint32_t ticks_end) const override {
         return TeensyTimestamp::nanos_between(ticks_start, ticks_end);
     }
@@ -38,5 +40,3 @@ public:
 
 } // common
 } // hal
-
-#endif //I2C_UNDERNEATH_TEENSY_CLOCK_H

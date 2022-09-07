@@ -356,7 +356,7 @@ public:
         auto message_comparable = trace.compare_messages(expected);
 
         // THEN they are message comparable but not edge comparable
-        TEST_ASSERT_NOT_EQUAL(SIZE_MAX, edge_comparable);
+        TEST_ASSERT_NOT_EQUAL(SIZE_MAX, edge_comparable)
         TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, message_comparable);
     }
 
@@ -454,6 +454,56 @@ public:
         trace.add_event(BusEvent(100, BusEventFlags::SCL_LINE_CHANGED)); // SCL falls
     }
 
+    static void nanos_to_previous_when_index_is_out_of_range() {
+        // GIVEN a trace with a clock but no events
+        common::hal::FakeClock clock;
+        BusTrace trace(&clock, MAX_EVENTS);
+
+        // WHEN we get the duration since the previous event
+        uint32_t actual = trace.nanos_to_previous(0);
+
+        // THEN the result is UINT32_MAX if the index is out of range
+        TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, actual);
+    }
+
+    static void nanos_to_previous_without_a_clock() {
+        // GIVEN a trace with some events but no clock
+        BusTrace trace(MAX_EVENTS);
+        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(200, BusEventFlags::SCL_LINE_CHANGED);
+
+        // WHEN we get the duration between 2 existing events
+        uint32_t actual = trace.nanos_to_previous(1);
+
+        // THEN the result is UINT32_MAX as there is no clock
+        TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, actual);
+    }
+
+    static void nanos_to_previous_for_first_event() {
+        // GIVEN a trace with an event and a clock
+        common::hal::FakeClock clock;
+        BusTrace trace(&clock, MAX_EVENTS);
+        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
+
+        // THEN nanos_to_previous is always 0 for the first event
+        uint32_t actual = trace.nanos_to_previous(0);
+        TEST_ASSERT_EQUAL_UINT32(0, actual);
+    }
+
+    static void nanos_to_previous() {
+        // GIVEN a trace with some events and a clock
+        common::hal::FakeClock clock;
+        BusTrace trace(&clock, MAX_EVENTS);
+        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(200, BusEventFlags::SCL_LINE_CHANGED);
+
+        // WHEN we get the duration between 2 existing events
+        uint32_t actual = trace.nanos_to_previous(1);
+
+        // THEN we get the correct duration in nanoseconds
+        TEST_ASSERT_EQUAL_UINT32(400, actual);
+    }
+
     // Include all the tests here
     void test() final {
         RUN_TEST(max_events_required_without_pin_events);
@@ -487,6 +537,12 @@ public:
         RUN_TEST(traces_are_message_comparable_even_if_spurious_SDA_changes_are_different);
         RUN_TEST(compare_messages_returns_index_of_first_difference);
         RUN_TEST(message_comparable_does_not_ignore_SDA_changes_while_SCL_is_HIGH);
+
+        // duration between events
+        RUN_TEST(nanos_to_previous_when_index_is_out_of_range);
+        RUN_TEST(nanos_to_previous_without_a_clock);
+        RUN_TEST(nanos_to_previous_for_first_event);
+        RUN_TEST(nanos_to_previous);
 
         RUN_TEST(print_trace);
     }
