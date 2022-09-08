@@ -504,47 +504,140 @@ public:
         TEST_ASSERT_EQUAL_UINT32(400, actual);
     }
 
+    // Returns UINT32_MAX if either index is out of range or
+    // first > last, or this trace doesn't have a clock.
+    static void nanos_between_when_from_is_out_of_range() {
+        // GIVEN a trace with a clock
+        common::hal::FakeClock clock;
+        BusTrace trace(&clock, MAX_EVENTS);
+        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
+
+        // WHEN we try to get the duration
+        uint32_t actual = trace.nanos_between(0, 1);
+
+        // THEN the result is UINT32_MAX
+        TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, actual);
+    }
+
+    static void nanos_between_when_to_is_out_of_range() {
+        // GIVEN a trace with a clock
+        common::hal::FakeClock clock;
+        BusTrace trace(&clock, MAX_EVENTS);
+        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
+
+        // WHEN we try to get the duration
+        uint32_t actual = trace.nanos_between(1, 0);
+
+        // THEN the result is UINT32_MAX
+        TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, actual);
+    }
+
+    static void nanos_between_when_from_is_greater_than_last() {
+        // GIVEN a trace with a clock
+        common::hal::FakeClock clock;
+        BusTrace trace(&clock, MAX_EVENTS);
+        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
+
+        // WHEN we try to get the duration
+        uint32_t actual = trace.nanos_between(0, 1);
+
+        // THEN the result is UINT32_MAX
+        TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, actual);
+    }
+
+    static void nanos_between_without_a_clock() {
+        // GIVEN a trace without a clock
+        BusTrace trace(MAX_EVENTS);
+        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
+
+        // WHEN we try to get the duration
+        uint32_t actual = trace.nanos_between(1, 0);
+
+        // THEN the result is UINT32_MAX
+        TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, actual);
+    }
+
+    static void nanos_between_all_events() {
+        // GIVEN a trace with some events
+        common::hal::FakeClock clock;
+        BusTrace trace(&clock, MAX_EVENTS);
+        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(200, BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(300, BusEventFlags::SDA_LINE_CHANGED);
+
+        // WHEN we try to get the duration between all events
+        uint32_t actual = trace.nanos_between(2, 0);
+
+        // THEN the result is correct
+        TEST_ASSERT_EQUAL_UINT32(500*clock.nanos_per_tick, actual);
+    }
+
+    static void nanos_between() {
+        // GIVEN a trace with some events
+        common::hal::FakeClock clock;
+        BusTrace trace(&clock, MAX_EVENTS);
+        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(200, BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(50, BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(300, BusEventFlags::SDA_LINE_CHANGED);
+
+        // WHEN we try to get the duration between events which
+        // are neither at the beginning nor the end of the trace
+        uint32_t actual = trace.nanos_between(2, 1);
+
+        // THEN the result is correct
+        TEST_ASSERT_EQUAL_UINT32(50*clock.nanos_per_tick, actual);
+    }
+
     // Include all the tests here
     void test() final {
-        RUN_TEST(max_events_required_without_pin_events);
-        RUN_TEST(max_events_required_with_pin_events);
+//        RUN_TEST(max_events_required_without_pin_events);
+//        RUN_TEST(max_events_required_with_pin_events);
+//
+//        RUN_TEST(new_trace_is_empty);
+//        RUN_TEST(cannot_get_event_that_has_not_been_added);
+//        RUN_TEST(add_event_with_bus_event_object);
+//        RUN_TEST(add_event_override);
+//        RUN_TEST(add_event_gets_system_tick_directly_on_teensy4);
+//        RUN_TEST(add_event_is_fast_enough_on_a_teensy4);
+//        RUN_TEST(add_event_gets_system_tick_from_clock);
+//        RUN_TEST(add_event_drops_excess_events);
+//        RUN_TEST(reset);
+//        RUN_TEST(destructor_does_not_deletes_supplied_array_of_events);
+//        RUN_TEST(destructor_deletes_internal_array_of_events_if_it_owns_them);
+//
+//        // compare_edges
+//        RUN_TEST(empty_traces_are_edge_comparable);
+//        RUN_TEST(traces_are_edge_comparable_if_lines_and_edges_match);
+//        RUN_TEST(traces_are_not_edge_comparable_if_one_is_longer_than_the_other);
+//        RUN_TEST(compare_edges_returns_index_of_first_difference);
+//
+//        // to_message and compare_messages
+//        RUN_TEST(to_message_converts_empty_trace_to_empty_message);
+//        RUN_TEST(to_message_can_remove_last_event);
+//        RUN_TEST(to_message_strips_out_spurious_SDA_changes);
+//        RUN_TEST(empty_traces_are_message_comparable);
+//
+//        RUN_TEST(traces_are_message_comparable_if_they_are_edge_comparable);
+//        RUN_TEST(traces_are_message_comparable_even_if_spurious_SDA_changes_are_different);
+//        RUN_TEST(compare_messages_returns_index_of_first_difference);
+//        RUN_TEST(message_comparable_does_not_ignore_SDA_changes_while_SCL_is_HIGH);
+//
+//        // duration between events
+//        RUN_TEST(nanos_to_previous_when_index_is_out_of_range);
+//        RUN_TEST(nanos_to_previous_without_a_clock);
+//        RUN_TEST(nanos_to_previous_for_first_event);
+//        RUN_TEST(nanos_to_previous);
+        RUN_TEST(nanos_between_when_from_is_out_of_range);
+        RUN_TEST(nanos_between_when_to_is_out_of_range);
+        RUN_TEST(nanos_between_when_from_is_greater_than_last);
+        RUN_TEST(nanos_between_without_a_clock);
+        RUN_TEST(nanos_between_all_events);
+        RUN_TEST(nanos_between);
 
-        RUN_TEST(new_trace_is_empty);
-        RUN_TEST(cannot_get_event_that_has_not_been_added);
-        RUN_TEST(add_event_with_bus_event_object);
-        RUN_TEST(add_event_override);
-        RUN_TEST(add_event_gets_system_tick_directly_on_teensy4);
-        RUN_TEST(add_event_is_fast_enough_on_a_teensy4);
-        RUN_TEST(add_event_gets_system_tick_from_clock);
-        RUN_TEST(add_event_drops_excess_events);
-        RUN_TEST(reset);
-        RUN_TEST(destructor_does_not_deletes_supplied_array_of_events);
-        RUN_TEST(destructor_deletes_internal_array_of_events_if_it_owns_them);
-
-        // compare_edges
-        RUN_TEST(empty_traces_are_edge_comparable);
-        RUN_TEST(traces_are_edge_comparable_if_lines_and_edges_match);
-        RUN_TEST(traces_are_not_edge_comparable_if_one_is_longer_than_the_other);
-        RUN_TEST(compare_edges_returns_index_of_first_difference);
-
-        // to_message and compare_messages
-        RUN_TEST(to_message_converts_empty_trace_to_empty_message);
-        RUN_TEST(to_message_can_remove_last_event);
-        RUN_TEST(to_message_strips_out_spurious_SDA_changes);
-        RUN_TEST(empty_traces_are_message_comparable);
-
-        RUN_TEST(traces_are_message_comparable_if_they_are_edge_comparable);
-        RUN_TEST(traces_are_message_comparable_even_if_spurious_SDA_changes_are_different);
-        RUN_TEST(compare_messages_returns_index_of_first_difference);
-        RUN_TEST(message_comparable_does_not_ignore_SDA_changes_while_SCL_is_HIGH);
-
-        // duration between events
-        RUN_TEST(nanos_to_previous_when_index_is_out_of_range);
-        RUN_TEST(nanos_to_previous_without_a_clock);
-        RUN_TEST(nanos_to_previous_for_first_event);
-        RUN_TEST(nanos_to_previous);
-
-        RUN_TEST(print_trace);
+//        RUN_TEST(print_trace);
     }
 
     BusTraceTest() : TestSuite(__FILE__) {};

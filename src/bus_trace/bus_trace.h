@@ -47,7 +47,9 @@ public:
     BusTrace(BusEvent* events, size_t max_event_count);
 
     // The number of events we've recorded.
-    size_t event_count() const;
+    inline size_t event_count() const {
+        return current_event_count;
+    }
 
     // Returns a recorded event or nullptr if index is out of range.
     const BusEvent* event(size_t index) const;
@@ -57,6 +59,11 @@ public:
     // doesn't have a clock.
     // Returns 0 for the first event.
     uint32_t nanos_to_previous(size_t index) const;
+
+    // Returns the time between the 2 events in nanoseconds.
+    // Returns UINT32_MAX if either index is out of range or
+    // from > to, or this trace doesn't have a clock.
+    uint32_t nanos_between(size_t to, size_t from) const;
 
     // Removes any existing events and resets the clock
     void reset();
@@ -118,6 +125,8 @@ private:
     size_t current_event_count = 0; // Current event count
 
     static void append_event_symbol(String& string, bool sda, BusEventFlags flags);
+
+    bool out_of_range(size_t index) const;
 
     inline void set_ticks_start() {
 #ifdef ARDUINO_TEENSY40

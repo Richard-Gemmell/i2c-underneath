@@ -37,10 +37,6 @@ BusTrace::~BusTrace() {
     }
 }
 
-size_t BusTrace::event_count() const {
-    return current_event_count;
-}
-
 const BusEvent* BusTrace::event(size_t index) const {
     if(index+1 <= current_event_count) {
         return &events[index];
@@ -145,7 +141,7 @@ void BusTrace::append_event_symbol(String& string, bool sda, BusEventFlags flags
 }
 
 uint32_t BusTrace::nanos_to_previous(size_t index) const {
-    if(index >= event_count() || !clock) {
+    if(out_of_range(index) || !clock) {
         // Can't calculate a result. Return an error code.
         return UINT32_MAX;
     }
@@ -156,6 +152,23 @@ uint32_t BusTrace::nanos_to_previous(size_t index) const {
     // This is mainly to allow us to change BusEvent to hold absolute
     // tick values in the future.
     return 0;
+}
+
+uint32_t BusTrace::nanos_between(size_t to, size_t from) const {
+    if(out_of_range(from) || out_of_range(to)
+       || from > to
+       || !clock) {
+        return UINT32_MAX;
+    }
+    uint32_t total_ticks = 0;
+    for (size_t i = from + 1; i <= to; ++i) {
+        total_ticks += events[i].delta_t_in_ticks;
+    }
+    return clock->ticks_to_nanos(total_ticks);
+}
+
+bool BusTrace::out_of_range(size_t index) const {
+    return index >= event_count();
 }
 
 }

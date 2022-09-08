@@ -25,6 +25,7 @@ struct TimeRange {
 struct Times {
     TimeRange output_fall_time;     // tof - output fall time from V_IHmin to V_ILmax
     TimeRange spike_width;          // tSP - pulse width of spikes that must be suppressed by the input filter
+    TimeRange frequency;            // fSCL - SCL clock frequency
     TimeRange start_hold_time;      // tHD;STA - hold time for a START or repeated START condition
     TimeRange scl_low_time;         // tLOW - LOW period of the SCL clock
     TimeRange scl_high_time;        // tHIGH - HIGH period of the SCL clock
@@ -51,6 +52,7 @@ const I2CParameters StandardMode = {
         .times = {
                 .output_fall_time = {.min = 0, .max = 250},
                 .spike_width = {.min = 0, .max = 0},    // Not applicable for standard mode
+                .frequency = {.min = 0, .max = 100'000},
                 .start_hold_time = {.min = 4'000, .max = UINT32_MAX},
                 .scl_low_time = {.min = 4'700, .max = UINT32_MAX},
                 .scl_high_time = {.min = 4'000, .max = UINT32_MAX},
@@ -68,6 +70,7 @@ const I2CParameters FastMode = {
         .times = {
                 .output_fall_time = {.min = 12, .max = 250},
                 .spike_width = {.min = 0, .max = 50},
+                .frequency = {.min = 0, .max = 400'000},
                 .start_hold_time = {.min = 600, .max = UINT32_MAX},
                 .scl_low_time = {.min = 1'300, .max = UINT32_MAX},
                 .scl_high_time = {.min = 600, .max = UINT32_MAX},
@@ -85,6 +88,7 @@ const I2CParameters FastModePlus = {
         .times = {
                 .output_fall_time = {.min = 12, .max = 120},
                 .spike_width = {.min = 0, .max = 50},
+                .frequency = {.min = 0, .max = 1'000'000},
                 .start_hold_time = {.min = 260, .max = UINT32_MAX},
                 .scl_low_time = {.min = 500, .max = UINT32_MAX},
                 .scl_high_time = {.min = 260, .max = UINT32_MAX},

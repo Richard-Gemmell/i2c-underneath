@@ -12,9 +12,18 @@ namespace hal {
 
 class FakeClock : public Clock {
 public:
-    const uint32_t nanos_per_tick = 2;
-    uint32_t system_tick = 1'000'000;
-    uint32_t system_millis = 5'000;
+    static const uint32_t nanos_per_tick = 2;
+    uint32_t system_tick = 0;
+    uint32_t system_millis = 0;
+
+    inline explicit FakeClock() {
+        reset();
+    }
+
+    inline void reset() {
+        system_tick = 1'000'000;
+        system_millis = 5'000;
+    }
 
     inline uint32_t get_system_tick() const override {
         return system_tick;

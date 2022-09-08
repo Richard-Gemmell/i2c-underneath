@@ -43,7 +43,7 @@ struct MasterDesignParameters : public SlaveDesignParameters {
         stop_setup_time(stop_setup_time), bus_free_time(bus_free_time) {
     }
 
-    uint32_t clock_frequency;      // fSCL - SCL clock frequency
+    uint32_t clock_frequency;      // fSCL - maximum SCL clock frequency
     uint32_t start_hold_time;      // tHD;STA - hold time for a START or repeated START condition
     uint32_t scl_low_time;         // tLOW - LOW period of the SCL clock
     uint32_t scl_high_time;        // tHIGH - HIGH period of the SCL clock
