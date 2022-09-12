@@ -129,7 +129,7 @@ private:
     bool out_of_range(size_t index) const;
 
     inline void set_ticks_start() {
-#ifdef ARDUINO_TEENSY40
+#if defined(ARDUINO_TEENSY40) || defined(ARDUINO_TEENSY41)
         // It's about 13 nanoseconds (8 ticks) faster to get the tick count directly.
         ticks_start = ARM_DWT_CYCCNT;
 #else

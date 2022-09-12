@@ -15,8 +15,8 @@ namespace bus_trace {
 class BusRecorderTest : public TestSuite {
     static const size_t MAX_EVENTS = 10;
     static bus_trace::BusEvent events[MAX_EVENTS];
-    const static uint32_t PIN_SNIFF_SDA = 23;
-    const static uint32_t PIN_SNIFF_SCL = 22;
+    const static uint32_t PIN_SNIFF_SDA = 21;
+    const static uint32_t PIN_SNIFF_SCL = 20;
     static BusRecorder recorder;
     static void (*sda_trigger)();
     static void (*scl_trigger)();
