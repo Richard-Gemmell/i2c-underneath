@@ -9,7 +9,7 @@
 namespace analysis {
 
 struct I2CTimingAnalysis {
-    bool well_formed;                       // true if the trace has the correct structure for an I2C message
+//    bool well_formed;                       // true if the trace has the correct structure for an I2C message
     DurationStatistics clock_frequency;     // fSCL - SCL clock frequency
     DurationStatistics start_hold_time;     // tHD;STA - hold time for a START or repeated START condition
     DurationStatistics scl_low_time;        // tLOW - LOW period of the SCL clock

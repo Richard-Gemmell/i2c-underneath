@@ -135,7 +135,7 @@ public:
         trace.add_event(tHD_DAT, SDA_LINE_CHANGED);
         trace.add_event(tLOW+51, SCL_LINE_CHANGED | SCL_LINE_STATE);
         uint32_t tSU_STO = 4'000/nanos_per_tick;
-        trace.add_event(tSU_STO, SDA_LINE_CHANGED | SDA_LINE_STATE | SCL_LINE_STATE);
+        trace.add_event(tSU_STO+1, SDA_LINE_CHANGED | SDA_LINE_STATE | SCL_LINE_STATE);
     }
 
     static bool trace_matches_expected(const bus_trace::BusTrace& trace) {
@@ -221,6 +221,21 @@ public:
         TEST_ASSERT_EQUAL_UINT32(114'129, actual.max());
     }
 
+    static void analysis_records_setup_stop_time() {
+        // GIVEN a trace
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_a_valid_trace(trace);
+
+        // WHEN we analyse the trace
+        auto actual = I2CTimingAnalyser::analyse(trace).stop_setup_time;
+
+        // THEN the stop setup time (tSU;STO) is recorded correctly
+//        log_value("Setup stop time", actual);
+        TEST_ASSERT_EQUAL_UINT32(1, actual.count());
+        TEST_ASSERT_EQUAL_UINT32(4'002, actual.min());
+        TEST_ASSERT_EQUAL_UINT32(4'002, actual.max());
+    }
+
     void test() final {
         RUN_TEST(test_trace_is_valid);
         RUN_TEST(analysis_records_start_hold_time);
@@ -228,6 +243,7 @@ public:
         RUN_TEST(analysis_records_clock_high_time);
         RUN_TEST(analysis_records_clock_low_time);
         RUN_TEST(analysis_records_clock_frequency);
+        RUN_TEST(analysis_records_setup_stop_time);
     }
 
     I2CTimingAnalyserTest() : TestSuite(__FILE__) {};

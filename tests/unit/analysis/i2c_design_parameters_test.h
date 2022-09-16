@@ -12,55 +12,83 @@ namespace analysis {
 class I2CDesignParametersTest : public TestSuite {
 public:
     static void slave_design_parameters_ctor() {
-        SlaveDesignParameters params(123, 555);
+        SlaveDesignParameters params({123, 456}, {555, 666});
 
-        TEST_ASSERT_EQUAL(123, params.data_hold_time);
-        TEST_ASSERT_EQUAL(555, params.data_setup_time);
+        TEST_ASSERT_EQUAL(123, params.data_hold_time.min);
+        TEST_ASSERT_EQUAL(456, params.data_hold_time.max);
+        TEST_ASSERT_EQUAL(555, params.data_setup_time.min);
+        TEST_ASSERT_EQUAL(666, params.data_setup_time.max);
     }
 
     static void slave_static_initialiser() {
         SlaveDesignParameters params = {
-            123, // data_hold_time
-            555, // data_setup_time
+                {123, 456}, // data_hold_time
+                {555, 666}, // data_setup_time
         };
 
-        TEST_ASSERT_EQUAL(123, params.data_hold_time);
-        TEST_ASSERT_EQUAL(555, params.data_setup_time);
+        TEST_ASSERT_EQUAL(123, params.data_hold_time.min);
+        TEST_ASSERT_EQUAL(456, params.data_hold_time.max);
+        TEST_ASSERT_EQUAL(555, params.data_setup_time.min);
+        TEST_ASSERT_EQUAL(666, params.data_setup_time.max);
     }
 
     static void master_design_parameters_ctor() {
-        MasterDesignParameters params(1, 2, 3, 4, 5, 6, 7, 8);
+        MasterDesignParameters params(
+                {1, 11},
+                {2, 22},
+                {3, 33},
+                {4, 44},
+                {5, 55},
+                {6, 66},
+                {7, 77},
+                {8, 88});
 
-        TEST_ASSERT_EQUAL(1, params.clock_frequency);
-        TEST_ASSERT_EQUAL(2, params.start_hold_time);
-        TEST_ASSERT_EQUAL(3, params.scl_low_time);
-        TEST_ASSERT_EQUAL(4, params.scl_high_time);
-        TEST_ASSERT_EQUAL(5, params.data_hold_time);
-        TEST_ASSERT_EQUAL(6, params.data_setup_time);
-        TEST_ASSERT_EQUAL(7, params.stop_setup_time);
-        TEST_ASSERT_EQUAL(8, params.bus_free_time);
+        TEST_ASSERT_EQUAL(1, params.clock_frequency.min);
+        TEST_ASSERT_EQUAL(11, params.clock_frequency.max);
+        TEST_ASSERT_EQUAL(2, params.start_hold_time.min);
+        TEST_ASSERT_EQUAL(22, params.start_hold_time.max);
+        TEST_ASSERT_EQUAL(3, params.scl_low_time.min);
+        TEST_ASSERT_EQUAL(33, params.scl_low_time.max);
+        TEST_ASSERT_EQUAL(4, params.scl_high_time.min);
+        TEST_ASSERT_EQUAL(44, params.scl_high_time.max);
+        TEST_ASSERT_EQUAL(5, params.data_hold_time.min);
+        TEST_ASSERT_EQUAL(55, params.data_hold_time.max);
+        TEST_ASSERT_EQUAL(6, params.data_setup_time.min);
+        TEST_ASSERT_EQUAL(66, params.data_setup_time.max);
+        TEST_ASSERT_EQUAL(7, params.stop_setup_time.min);
+        TEST_ASSERT_EQUAL(77, params.stop_setup_time.max);
+        TEST_ASSERT_EQUAL(8, params.bus_free_time.min);
+        TEST_ASSERT_EQUAL(88, params.bus_free_time.max);
     }
 
     static void master_static_initialiser() {
         MasterDesignParameters params = {
-                1, // clock_frequency
-                2, // start_hold_time
-                3, // scl_low_time
-                4, // scl_high_time
-                5, // data_hold_time
-                6, // data_setup_time
-                7, // stop_setup_time
-                8, // bus_free_time
+                {1, 11}, // clock_frequency
+                {2, 22}, // start_hold_time
+                {3, 33}, // scl_low_time
+                {4, 44}, // scl_high_time
+                {5, 55}, // data_hold_time
+                {6, 66}, // data_setup_time
+                {7, 77}, // stop_setup_time
+                {8, 88}, // bus_free_time
         };
 
-        TEST_ASSERT_EQUAL(1, params.clock_frequency);
-        TEST_ASSERT_EQUAL(2, params.start_hold_time);
-        TEST_ASSERT_EQUAL(3, params.scl_low_time);
-        TEST_ASSERT_EQUAL(4, params.scl_high_time);
-        TEST_ASSERT_EQUAL(5, params.data_hold_time);
-        TEST_ASSERT_EQUAL(6, params.data_setup_time);
-        TEST_ASSERT_EQUAL(7, params.stop_setup_time);
-        TEST_ASSERT_EQUAL(8, params.bus_free_time);
+        TEST_ASSERT_EQUAL(1, params.clock_frequency.min);
+        TEST_ASSERT_EQUAL(11, params.clock_frequency.max);
+        TEST_ASSERT_EQUAL(2, params.start_hold_time.min);
+        TEST_ASSERT_EQUAL(22, params.start_hold_time.max);
+        TEST_ASSERT_EQUAL(3, params.scl_low_time.min);
+        TEST_ASSERT_EQUAL(33, params.scl_low_time.max);
+        TEST_ASSERT_EQUAL(4, params.scl_high_time.min);
+        TEST_ASSERT_EQUAL(44, params.scl_high_time.max);
+        TEST_ASSERT_EQUAL(5, params.data_hold_time.min);
+        TEST_ASSERT_EQUAL(55, params.data_hold_time.max);
+        TEST_ASSERT_EQUAL(6, params.data_setup_time.min);
+        TEST_ASSERT_EQUAL(66, params.data_setup_time.max);
+        TEST_ASSERT_EQUAL(7, params.stop_setup_time.min);
+        TEST_ASSERT_EQUAL(77, params.stop_setup_time.max);
+        TEST_ASSERT_EQUAL(8, params.bus_free_time.min);
+        TEST_ASSERT_EQUAL(88, params.bus_free_time.max);
     }
 
     // Include all the tests here

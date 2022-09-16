@@ -7,7 +7,7 @@ namespace analysis {
 I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace) {
     // TODO: check that the trace is well formed
     // maybe get the trace to normalise itself first or maybe that's up to the caller
-    bool well_formed = true;
+//    bool well_formed = true;
     // Edge zero should be both lines high
     size_t start_bit_index = 1;
     // The next edge must be SCL going LOW
@@ -23,6 +23,10 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace) {
     DurationStatistics scl_low_time;
     DurationStatistics scl_high_time;
     DurationStatistics clock_frequency;
+    DurationStatistics data_hold_time;
+    DurationStatistics data_setup_time;
+    DurationStatistics stop_setup_time;
+    DurationStatistics bus_free_time;
 
     size_t previous_scl_rise_event = 0;
     size_t previous_scl_fall_event = current_edge;
@@ -50,14 +54,25 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace) {
                 clock_frequency.include(frequency);
             }
         }
+        else {
+            if(flags & bus_trace::BusEventFlags::SCL_LINE_STATE) {
+                // This is a STOP condition
+                uint32_t delta = trace.nanos_to_previous(current_edge);
+                stop_setup_time.include(delta);
+            }
+        }
     }
 
     return {
-        .well_formed = well_formed,
+//        .well_formed = well_formed,
         .clock_frequency = clock_frequency,
         .start_hold_time = start_hold_time,
         .scl_low_time = scl_low_time,
         .scl_high_time = scl_high_time,
+        .data_hold_time = data_hold_time,
+        .data_setup_time = data_setup_time,
+        .stop_setup_time = stop_setup_time,
+        .bus_free_time = bus_free_time,
     };
 }
 
