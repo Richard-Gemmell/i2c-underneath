@@ -4,7 +4,9 @@
 #include "i2c_timing_analyser.h"
 
 namespace analysis {
-I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace) {
+I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
+                                             uint16_t sda_rise_time, uint16_t scl_rise_time,
+                                             uint16_t sda_fall_time, uint16_t scl_fall_time) {
     // TODO: check that the trace is well formed
     // maybe get the trace to normalise itself first or maybe that's up to the caller
 //    bool well_formed = true;
@@ -17,15 +19,17 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace) {
 //        well_formed = false;
 //        return {.well_formed = well_formed};
 //    }
-    DurationStatistics start_hold_time;
-    start_hold_time.include(trace.nanos_to_previous(current_edge));
+    DurationStatistics start_hold_time_statistics;
+    uint32_t start_hold_time = adjust_start_hold_time(trace.nanos_to_previous(current_edge), sda_fall_time,
+                                                      scl_fall_time);
+    start_hold_time_statistics.include(start_hold_time);
 
     DurationStatistics scl_low_time;
     DurationStatistics scl_high_time;
     DurationStatistics clock_frequency;
     DurationStatistics data_hold_time;
     DurationStatistics data_setup_time;
-    DurationStatistics stop_setup_time;
+    DurationStatistics stop_setup_time_stats;
     DurationStatistics bus_free_time;
 
     size_t previous_scl_rise_event = 0;
@@ -57,8 +61,8 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace) {
         else {
             if(flags & bus_trace::BusEventFlags::SCL_LINE_STATE) {
                 // This is a STOP condition
-                uint32_t delta = trace.nanos_to_previous(current_edge);
-                stop_setup_time.include(delta);
+                uint32_t setup_stop_time = adjust_setup_stop_time(trace.nanos_to_previous(current_edge), sda_rise_time, scl_rise_time);
+                stop_setup_time_stats.include(setup_stop_time);
             }
         }
     }
@@ -66,21 +70,28 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace) {
     return {
 //        .well_formed = well_formed,
         .clock_frequency = clock_frequency,
-        .start_hold_time = start_hold_time,
+        .start_hold_time = start_hold_time_statistics,
         .scl_low_time = scl_low_time,
         .scl_high_time = scl_high_time,
         .data_hold_time = data_hold_time,
         .data_setup_time = data_setup_time,
-        .stop_setup_time = stop_setup_time,
+        .stop_setup_time = stop_setup_time_stats,
         .bus_free_time = bus_free_time,
     };
 }
 
-//size_t I2CTimingAnalyser::find_start_bit(const bus_trace::BusTrace& trace) {
-//    for (int i = 0; i < trace.event_count(); ++i) {
-//
-//    }
-//    return 0;
-//}
+// The Teensy triggers too soon when SCL rises line and too late when SDA rises.
+uint32_t I2CTimingAnalyser::adjust_setup_stop_time(uint32_t raw_time, uint16_t sda_rise_time, uint16_t scl_rise_time) {
+        uint32_t adjusted =  raw_time - (scl_rise_time * RISE_TRIGGER_to_V0_7) - (sda_rise_time * RISE_V0_3_to_TRIGGER);
+//        Serial.printf("Setup stop time (tSU;STO) raw: %d adjusted %d\n", raw_time, adjusted);
+        return adjusted;
+}
+
+// Adjusts for the fact that the Teensy triggers too soon when SDA falls and too late when SCL falls.
+uint32_t I2CTimingAnalyser::adjust_start_hold_time(uint32_t raw_time, uint16_t sda_fall_time, uint16_t scl_fall_time) {
+        uint32_t adjusted = raw_time - (sda_fall_time * FALL_TRIGGER_to_V0_3) - (scl_fall_time * FALL_V0_7_to_TRIGGER);
+//        Serial.printf("Start hold (tHD;STA) raw: %d adjusted %d\n", raw_time, adjusted);
+        return adjusted;
+    }
 
 } // analysis

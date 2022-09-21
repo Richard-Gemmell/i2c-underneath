@@ -27,6 +27,11 @@ private:
     const static uint8_t BYTE_B = 0xA7; // 1010 0111
     const static uint8_t ADDRESS = 0x53;// 0101 0011
 
+    const static uint16_t SDA_RISE = 500;
+    const static uint16_t SCL_RISE = 1'000;
+    const static uint16_t SDA_FALL = 150;
+    const static uint16_t SCL_FALL = 300;
+
 public:
     void setUp() override {
         TestSuite::setUp();
@@ -163,17 +168,30 @@ public:
         TEST_ASSERT_TRUE(trace_matches_expected(trace))
     }
 
-    static void analysis_records_start_hold_time() {
+    static void analysis_records_raw_start_hold_time() {
         // GIVEN a trace
         bus_trace::BusTrace trace(&clock, MAX_EVENTS);
         given_a_valid_trace(trace);
 
         // WHEN we analyse the trace
-        auto analysis = I2CTimingAnalyser::analyse(trace);
+        auto analysis = I2CTimingAnalyser::analyse(trace, 0, 0, 0, 0);
 
         // THEN the start hold time is analysed correctly
         TEST_ASSERT_EQUAL_UINT32(1, analysis.start_hold_time.count());
         TEST_ASSERT_EQUAL_UINT32(4'120, analysis.start_hold_time.average());
+    }
+
+    static void analysis_adjusts_start_hold_time() {
+        // GIVEN a trace
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_a_valid_trace(trace);
+
+        // WHEN we analyse the trace
+        auto analysis = I2CTimingAnalyser::analyse(trace, SDA_RISE, SCL_RISE, SDA_FALL, SCL_FALL);
+
+        // THEN the start hold time is analysed correctly
+        TEST_ASSERT_EQUAL_UINT32(1, analysis.start_hold_time.count());
+        TEST_ASSERT_EQUAL_UINT32(3'909, analysis.start_hold_time.average());
     }
 
     static void analysis_records_clock_high_time() {
@@ -182,7 +200,7 @@ public:
         given_a_valid_trace(trace);
 
         // WHEN we analyse the trace
-        auto actual = I2CTimingAnalyser::analyse(trace).scl_high_time;
+        auto actual = I2CTimingAnalyser::analyse(trace, SDA_RISE, SCL_RISE, SDA_FALL, SCL_FALL).scl_high_time;
 
         // THEN the clock high time is measured correctly
 //        log_value("Clock HIGH", actual);
@@ -197,7 +215,7 @@ public:
         given_a_valid_trace(trace);
 
         // WHEN we analyse the trace
-        auto actual = I2CTimingAnalyser::analyse(trace).scl_low_time;
+        auto actual = I2CTimingAnalyser::analyse(trace, SDA_RISE, SCL_RISE, SDA_FALL, SCL_FALL).scl_low_time;
 
         // THEN the clock low time is measured correctly
 //        log_value("Clock LOW", actual);
@@ -212,7 +230,7 @@ public:
         given_a_valid_trace(trace);
 
         // WHEN we analyse the trace
-        auto actual = I2CTimingAnalyser::analyse(trace).clock_frequency;
+        auto actual = I2CTimingAnalyser::analyse(trace, SDA_RISE, SCL_RISE, SDA_FALL, SCL_FALL).clock_frequency;
 
         // THEN the SCL clock frequency is measured correctly
 //        log_value("SCL clock frequency", actual);
@@ -221,29 +239,46 @@ public:
         TEST_ASSERT_EQUAL_UINT32(114'129, actual.max());
     }
 
-    static void analysis_records_setup_stop_time() {
+    static void analysis_records_raw_setup_stop_time() {
         // GIVEN a trace
         bus_trace::BusTrace trace(&clock, MAX_EVENTS);
         given_a_valid_trace(trace);
 
-        // WHEN we analyse the trace
-        auto actual = I2CTimingAnalyser::analyse(trace).stop_setup_time;
+        // WHEN we analyse the trace with zero rise and fall times
+        auto actual = I2CTimingAnalyser::analyse(trace, 0, 0, 0, 0).stop_setup_time;
 
-        // THEN the stop setup time (tSU;STO) is recorded correctly
+        // THEN the stop setup time (tSU;STO) is the recorded time
 //        log_value("Setup stop time", actual);
         TEST_ASSERT_EQUAL_UINT32(1, actual.count());
         TEST_ASSERT_EQUAL_UINT32(4'002, actual.min());
         TEST_ASSERT_EQUAL_UINT32(4'002, actual.max());
     }
 
+    static void analysis_adjusts_setup_stop_time() {
+        // GIVEN a trace
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_a_valid_trace(trace);
+
+        // WHEN we analyse the trace with actual rise times
+        auto actual = I2CTimingAnalyser::analyse(trace, SDA_RISE, SCL_RISE).stop_setup_time;
+
+        // THEN the stop setup time (tSU;STO) is modified to account for the Teensy's trigger voltage
+//        log_value("Setup stop time", actual);
+        TEST_ASSERT_EQUAL_UINT32(1, actual.count());
+        TEST_ASSERT_EQUAL_UINT32(3'201, actual.min());
+        TEST_ASSERT_EQUAL_UINT32(3'201, actual.max());
+    }
+
     void test() final {
         RUN_TEST(test_trace_is_valid);
-        RUN_TEST(analysis_records_start_hold_time);
+        RUN_TEST(analysis_records_raw_start_hold_time);
+        RUN_TEST(analysis_adjusts_start_hold_time);
         // TODO: Test SCL clock for traces of broken I2C transfer
         RUN_TEST(analysis_records_clock_high_time);
         RUN_TEST(analysis_records_clock_low_time);
         RUN_TEST(analysis_records_clock_frequency);
-        RUN_TEST(analysis_records_setup_stop_time);
+        RUN_TEST(analysis_records_raw_setup_stop_time);
+        RUN_TEST(analysis_adjusts_setup_stop_time);
     }
 
     I2CTimingAnalyserTest() : TestSuite(__FILE__) {};
