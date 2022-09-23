@@ -19,18 +19,19 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
 //        well_formed = false;
 //        return {.well_formed = well_formed};
 //    }
-    DurationStatistics start_hold_time_statistics;
+    DurationStatistics start_hold_time_stats;
     uint32_t start_hold_time = adjust_start_hold_time(trace.nanos_to_previous(current_edge), sda_fall_time,
                                                       scl_fall_time);
-    start_hold_time_statistics.include(start_hold_time);
+    start_hold_time_stats.include(start_hold_time);
 
-    DurationStatistics scl_low_time;
-    DurationStatistics scl_high_time;
-    DurationStatistics clock_frequency;
-    DurationStatistics data_hold_time;
-    DurationStatistics data_setup_time;
+    DurationStatistics scl_low_time_stats;
+    DurationStatistics scl_high_time_stats;
+    DurationStatistics start_setup_time_stats;
+    DurationStatistics clock_frequency_stats;
+    DurationStatistics data_hold_time_stats;
+    DurationStatistics data_setup_time_stats;
     DurationStatistics stop_setup_time_stats;
-    DurationStatistics bus_free_time;
+    DurationStatistics bus_free_time_stats;
 
     size_t previous_scl_rise_event = 0;
     size_t previous_scl_fall_event = current_edge;
@@ -43,48 +44,62 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
                 previous_scl_rise_event = current_edge;
                 latest_clock_low = trace.nanos_between(current_edge, previous_scl_fall_event);
 //                Serial.printf("Index %d LOW time %d\n", current_edge, latest_clock_low);
-                scl_low_time.include(latest_clock_low);
+                scl_low_time_stats.include(latest_clock_low);
             } else {
                 // SCL HIGH -> LOW
                 previous_scl_fall_event = current_edge;
                 auto clock_high = trace.nanos_between(current_edge, previous_scl_rise_event);
 //                Serial.printf("Index %d HIGH time %d\n", current_edge, clock_high);
-                scl_high_time.include(clock_high);
+                scl_high_time_stats.include(clock_high);
 
                 // Calculate frequency for the last clock cycle
                 auto period = clock_high + latest_clock_low;
                 auto frequency = (uint32_t)((1e9 * 1.0) / period);
 //                Serial.printf("Index %d period %d frequency %d\n", current_edge, period, frequency);
-                clock_frequency.include(frequency);
+                clock_frequency_stats.include(frequency);
             }
         }
         else {
             if(flags & bus_trace::BusEventFlags::SCL_LINE_STATE) {
-                // This is a STOP condition
-                uint32_t setup_stop_time = adjust_setup_stop_time(trace.nanos_to_previous(current_edge), sda_rise_time, scl_rise_time);
-                stop_setup_time_stats.include(setup_stop_time);
+                if (flags & bus_trace::BusEventFlags::SDA_LINE_STATE) {
+                    // This is a STOP condition
+                    uint32_t setup_stop_time = adjust_setup_stop_time(trace.nanos_to_previous(current_edge), sda_rise_time, scl_rise_time);
+                    stop_setup_time_stats.include(setup_stop_time);
+                } else {
+                    // This is a repeated START condition
+                    uint32_t setup_start_time = adjust_setup_start_time(trace.nanos_to_previous(current_edge), sda_fall_time, scl_rise_time);
+                    start_setup_time_stats.include(setup_start_time);
+                }
             }
         }
     }
 
     return {
 //        .well_formed = well_formed,
-        .clock_frequency = clock_frequency,
-        .start_hold_time = start_hold_time_statistics,
-        .scl_low_time = scl_low_time,
-        .scl_high_time = scl_high_time,
-        .data_hold_time = data_hold_time,
-        .data_setup_time = data_setup_time,
+        .clock_frequency = clock_frequency_stats,
+        .start_hold_time = start_hold_time_stats,
+        .scl_low_time = scl_low_time_stats,
+        .scl_high_time = scl_high_time_stats,
+        .start_setup_time = start_setup_time_stats,
+        .data_hold_time = data_hold_time_stats,
+        .data_setup_time = data_setup_time_stats,
         .stop_setup_time = stop_setup_time_stats,
-        .bus_free_time = bus_free_time,
+        .bus_free_time = bus_free_time_stats,
     };
 }
 
-// The Teensy triggers too soon when SCL rises line and too late when SDA rises.
+// The Teensy triggers too soon when SCL rises and too late when SDA rises.
 uint32_t I2CTimingAnalyser::adjust_setup_stop_time(uint32_t raw_time, uint16_t sda_rise_time, uint16_t scl_rise_time) {
         uint32_t adjusted =  raw_time - (scl_rise_time * RISE_TRIGGER_to_V0_7) - (sda_rise_time * RISE_V0_3_to_TRIGGER);
 //        Serial.printf("Setup stop time (tSU;STO) raw: %d adjusted %d\n", raw_time, adjusted);
         return adjusted;
+}
+
+// The Teensy triggers too soon when SCL rises and too late when SDA falls.
+uint32_t I2CTimingAnalyser::adjust_setup_start_time(uint32_t raw_time, uint16_t sda_fall_time, uint16_t scl_rise_time) {
+    uint32_t adjusted = raw_time - (scl_rise_time * RISE_TRIGGER_to_V0_7) - (sda_fall_time * FALL_V0_7_to_TRIGGER);
+//    Serial.printf("Setup time for repeated start (tSU;STA) raw: %d adjusted %d\n", raw_time, adjusted);
+    return adjusted;
 }
 
 // Adjusts for the fact that the Teensy triggers too soon when SDA falls and too late when SCL falls.
@@ -92,6 +107,6 @@ uint32_t I2CTimingAnalyser::adjust_start_hold_time(uint32_t raw_time, uint16_t s
         uint32_t adjusted = raw_time - (sda_fall_time * FALL_TRIGGER_to_V0_3) - (scl_fall_time * FALL_V0_7_to_TRIGGER);
 //        Serial.printf("Start hold (tHD;STA) raw: %d adjusted %d\n", raw_time, adjusted);
         return adjusted;
-    }
+}
 
 } // analysis

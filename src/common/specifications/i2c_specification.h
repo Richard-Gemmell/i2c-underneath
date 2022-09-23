@@ -29,7 +29,7 @@ struct Times {
     TimeRange start_hold_time;      // tHD;STA - hold time for a START or repeated START condition
     TimeRange scl_low_time;         // tLOW - LOW period of the SCL clock
     TimeRange scl_high_time;        // tHIGH - HIGH period of the SCL clock
-//    TimeRange repeated_start_setup_time; // tSU;STA - setup time for a repeated START condition
+    TimeRange start_setup_time;     // tSU;STA - setup time for a repeated START condition
     TimeRange data_hold_time;       // tHD;DAT - time during which SDA holds its value after a clock pulse
     TimeRange data_setup_time;      // tSU;DAT - data setup time
     TimeRange rise_time;            // tr - rise time of both SDA and SCL signals
@@ -56,7 +56,7 @@ const I2CParameters StandardMode = {
                 .start_hold_time = {.min = 4'000, .max = UINT32_MAX},
                 .scl_low_time = {.min = 4'700, .max = UINT32_MAX},
                 .scl_high_time = {.min = 4'000, .max = UINT32_MAX},
-//                .repeated_start_setup_time = {.min = 4'700, .max = UINT32_MAX},
+                .start_setup_time = {.min = 4'700, .max = UINT32_MAX},
                 .data_hold_time = {.min = 300, .max = 3'450},
                 .data_setup_time = {.min = 250, .max = UINT32_MAX},
                 .rise_time = {.min = 0, .max = 1'000},
@@ -74,7 +74,7 @@ const I2CParameters FastMode = {
                 .start_hold_time = {.min = 600, .max = UINT32_MAX},
                 .scl_low_time = {.min = 1'300, .max = UINT32_MAX},
                 .scl_high_time = {.min = 600, .max = UINT32_MAX},
-//                .repeated_start_setup_time = {.min = 600, .max = UINT32_MAX},
+                .start_setup_time = {.min = 600, .max = UINT32_MAX},
                 .data_hold_time = {.min = 300, .max = 950},
                 .data_setup_time = {.min = 100, .max = UINT32_MAX},
                 .rise_time = {.min = 0, .max = 300},
@@ -92,7 +92,7 @@ const I2CParameters FastModePlus = {
                 .start_hold_time = {.min = 260, .max = UINT32_MAX},
                 .scl_low_time = {.min = 500, .max = UINT32_MAX},
                 .scl_high_time = {.min = 260, .max = UINT32_MAX},
-//                .repeated_start_setup_time = {.min = 260, .max = UINT32_MAX},
+                .start_setup_time = {.min = 260, .max = UINT32_MAX},
                 .data_hold_time = {.min = 0, .max = 450},
                 .data_setup_time = {.min = 50, .max = UINT32_MAX},
                 .rise_time = {.min = 0, .max = 120},

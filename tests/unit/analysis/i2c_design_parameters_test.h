@@ -38,6 +38,7 @@ public:
                 {2, 22},
                 {3, 33},
                 {4, 44},
+                {40, 404},
                 {5, 55},
                 {6, 66},
                 {7, 77},
@@ -51,6 +52,8 @@ public:
         TEST_ASSERT_EQUAL(33, params.scl_low_time.max);
         TEST_ASSERT_EQUAL(4, params.scl_high_time.min);
         TEST_ASSERT_EQUAL(44, params.scl_high_time.max);
+        TEST_ASSERT_EQUAL(40, params.start_setup_time.min);
+        TEST_ASSERT_EQUAL(404, params.start_setup_time.max);
         TEST_ASSERT_EQUAL(5, params.data_hold_time.min);
         TEST_ASSERT_EQUAL(55, params.data_hold_time.max);
         TEST_ASSERT_EQUAL(6, params.data_setup_time.min);
@@ -67,6 +70,7 @@ public:
                 {2, 22}, // start_hold_time
                 {3, 33}, // scl_low_time
                 {4, 44}, // scl_high_time
+                {40, 440}, // start_setup_time
                 {5, 55}, // data_hold_time
                 {6, 66}, // data_setup_time
                 {7, 77}, // stop_setup_time
@@ -81,6 +85,8 @@ public:
         TEST_ASSERT_EQUAL(33, params.scl_low_time.max);
         TEST_ASSERT_EQUAL(4, params.scl_high_time.min);
         TEST_ASSERT_EQUAL(44, params.scl_high_time.max);
+        TEST_ASSERT_EQUAL(40, params.start_setup_time.min);
+        TEST_ASSERT_EQUAL(440, params.start_setup_time.max);
         TEST_ASSERT_EQUAL(5, params.data_hold_time.min);
         TEST_ASSERT_EQUAL(55, params.data_hold_time.max);
         TEST_ASSERT_EQUAL(6, params.data_setup_time.min);

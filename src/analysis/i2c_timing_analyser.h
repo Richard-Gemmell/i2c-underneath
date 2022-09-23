@@ -37,6 +37,7 @@ public:
 
 private:
     static uint32_t adjust_setup_stop_time(uint32_t raw_time, uint16_t sda_rise_time, uint16_t scl_rise_time);
+    static uint32_t adjust_setup_start_time(uint32_t raw_time, uint16_t sda_fall_time, uint16_t scl_rise_time);
     static uint32_t adjust_start_hold_time(uint32_t raw_time, uint16_t sda_fall_time, uint16_t scl_fall_time);
 };
 

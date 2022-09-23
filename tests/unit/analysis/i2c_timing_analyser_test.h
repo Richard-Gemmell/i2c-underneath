@@ -27,6 +27,10 @@ private:
     const static uint8_t BYTE_B = 0xA7; // 1010 0111
     const static uint8_t ADDRESS = 0x53;// 0101 0011
 
+    constexpr static uint32_t tLOW = 4'700/nanos_per_tick;
+    constexpr static uint32_t tHIGH = 4'000/nanos_per_tick;
+    constexpr static uint32_t tHD_DAT = 2'000/nanos_per_tick;
+
     const static uint16_t SDA_RISE = 500;
     const static uint16_t SCL_RISE = 1'000;
     const static uint16_t SDA_FALL = 150;
@@ -43,18 +47,15 @@ public:
         Serial.println(actual);
     }
 
-    static void given_a_valid_trace(bus_trace::BusTrace& trace) {
-        // BUS is idle to start with
-        trace.add_event(0, SDA_LINE_STATE | SCL_LINE_STATE);
-        // START
+    static void add_start(bus_trace::BusTrace& trace) {
+        // Adds a start bit
         const uint32_t tf = 110/nanos_per_tick; // Fall time
         trace.add_event(tf, SDA_LINE_CHANGED | SCL_LINE_STATE);
         uint32_t tHD_STA = (4'000 + 120)/nanos_per_tick;
         trace.add_event(tHD_STA, SCL_LINE_CHANGED);
+    }
 
-        uint32_t tLOW = 4'700/nanos_per_tick;
-        uint32_t tHIGH = 4'000/nanos_per_tick;
-        uint32_t tHD_DAT = 2'000/nanos_per_tick;
+    static void add_address_byte(bus_trace::BusTrace& trace) {
         // 7 bit Address - 101 0011
         // 1 (0->1)
         trace.add_event(tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
@@ -93,7 +94,9 @@ public:
         trace.add_event(tHD_DAT, SDA_LINE_CHANGED);
         trace.add_event(tLOW+25, SCL_LINE_CHANGED | SCL_LINE_STATE);
         trace.add_event(tHIGH+26, SCL_LINE_CHANGED);
+    }
 
+    static void add_data_byte(bus_trace::BusTrace& trace) {
         // Data Byte - 0101 1000
         // 0 (0->0)
         trace.add_event(tLOW+27, SCL_LINE_CHANGED | SCL_LINE_STATE);
@@ -125,22 +128,61 @@ public:
         trace.add_event(tLOW+45, SCL_LINE_CHANGED | SCL_LINE_STATE);
         trace.add_event(tHIGH+46, SCL_LINE_CHANGED);
 
-        // ACK data byte - by master
-        // 0 (0->0)
-//        trace.add_event(tLOW, SCL_LINE_CHANGED | SCL_LINE_STATE);
-//        trace.add_event(tHIGH, SCL_LINE_CHANGED);
-
-        // Data Byte
         // NACK data byte - master NACKS final byte to say it's done
         // 1 (0->1)
         trace.add_event(tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
         trace.add_event(tLOW+48, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
         trace.add_event(tHIGH+49, SCL_LINE_CHANGED | SDA_LINE_STATE);
-        // STOP (1->0)
+    }
+
+    static void add_stop(bus_trace::BusTrace& trace) {
         trace.add_event(tHD_DAT, SDA_LINE_CHANGED);
         trace.add_event(tLOW+51, SCL_LINE_CHANGED | SCL_LINE_STATE);
         uint32_t tSU_STO = 4'000/nanos_per_tick;
         trace.add_event(tSU_STO+1, SDA_LINE_CHANGED | SDA_LINE_STATE | SCL_LINE_STATE);
+    }
+
+    static void given_a_valid_trace(bus_trace::BusTrace& trace) {
+        // BUS is idle to start with
+        trace.add_event(0, SDA_LINE_STATE | SCL_LINE_STATE);
+
+        // START
+        add_start(trace);
+
+        // 7 bit Address - 101 0011
+        // followed by READ/WRITE Bit
+        // followed by ACK from slave
+        add_address_byte(trace);
+
+        // Data Byte - 0101 1000
+        // followed by NACK from master
+        add_data_byte(trace);
+
+        // STOP (1->0)
+        add_stop(trace);
+    }
+
+    static void given_2_messages_separated_by_a_repeated_start(bus_trace::BusTrace& trace) {
+        // BUS is idle to start with
+        trace.add_event(0, SDA_LINE_STATE | SCL_LINE_STATE);
+
+        // First Message
+        add_start(trace);
+        add_address_byte(trace);
+        add_data_byte(trace);
+
+        // Repeated Start
+        // SCL rises as if we're about to write a 1.
+        // Assume SDA is already high because the last byte was NACKed
+        trace.add_event(tLOW+53, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
+        // SDA falls while SCL is still high
+        uint32_t tSU_STA = 4'700/nanos_per_tick;
+        trace.add_event(tSU_STA+1, SDA_LINE_CHANGED | SCL_LINE_STATE);
+
+        // Second Message
+        add_address_byte(trace);
+        add_data_byte(trace);
+        add_stop(trace);
     }
 
     static bool trace_matches_expected(const bus_trace::BusTrace& trace) {
@@ -269,6 +311,36 @@ public:
         TEST_ASSERT_EQUAL_UINT32(3'201, actual.max());
     }
 
+    static void analysis_records_raw_setup_start_time() {
+        // GIVEN a trace
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_2_messages_separated_by_a_repeated_start(trace);
+
+        // WHEN we analyse the trace with zero rise and fall times
+        auto actual = I2CTimingAnalyser::analyse(trace, 0, 0, 0, 0).start_setup_time;
+
+        // THEN the repeated start setup time (tSU;STA) is the recorded time
+        log_value("Setup time for repeated start", actual);
+        TEST_ASSERT_EQUAL_UINT32(1, actual.count());
+        TEST_ASSERT_EQUAL_UINT32(4'702, actual.min());
+        TEST_ASSERT_EQUAL_UINT32(4'702, actual.max());
+    }
+
+    static void analysis_adjusts_setup_start_time() {
+        // GIVEN a trace
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_2_messages_separated_by_a_repeated_start(trace);
+
+        // WHEN we analyse the trace with zero rise and fall times
+        auto actual = I2CTimingAnalyser::analyse(trace, SDA_RISE, SCL_RISE, SDA_FALL, SCL_FALL).start_setup_time;
+
+        // THEN the repeated start setup time (tSU;STA) is the recorded time
+        log_value("Setup time for repeated start", actual);
+        TEST_ASSERT_EQUAL_UINT32(1, actual.count());
+        TEST_ASSERT_EQUAL_UINT32(4'041, actual.min());
+        TEST_ASSERT_EQUAL_UINT32(4'041, actual.max());
+    }
+
     void test() final {
         RUN_TEST(test_trace_is_valid);
         RUN_TEST(analysis_records_raw_start_hold_time);
@@ -279,6 +351,8 @@ public:
         RUN_TEST(analysis_records_clock_frequency);
         RUN_TEST(analysis_records_raw_setup_stop_time);
         RUN_TEST(analysis_adjusts_setup_stop_time);
+        RUN_TEST(analysis_records_raw_setup_start_time);
+        RUN_TEST(analysis_adjusts_setup_start_time);
     }
 
     I2CTimingAnalyserTest() : TestSuite(__FILE__) {};
