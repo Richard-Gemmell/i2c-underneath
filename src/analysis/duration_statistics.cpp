@@ -18,7 +18,7 @@ uint32_t analysis::DurationStatistics::average() const {
 }
 
 bool analysis::DurationStatistics::meets_specification(const common::i2c_specification::TimeRange& timeRange) const {
-    return (timeRange.min <= min()) && (max() <= timeRange.max);
+    return (count() > 0) && (timeRange.min <= min()) && (max() <= timeRange.max);
 }
 
 size_t analysis::DurationStatistics::printTo(Print& p) const {

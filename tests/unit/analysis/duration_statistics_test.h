@@ -120,6 +120,14 @@ public:
         TEST_ASSERT_FALSE(statistics.meets_specification({.min=100, .max=198}))
     }
 
+    static void does_not_meet_specification_if_there_are_no_results() {
+        // GIVEN some statistics
+        DurationStatistics statistics;
+
+        // THEN it meets the specification if the min >= spec.min
+        TEST_ASSERT_FALSE(statistics.meets_specification({.min=100, .max=500}))
+    }
+
     static void print_self() {
         // GIVEN some statistics
         DurationStatistics statistics;
@@ -145,6 +153,7 @@ public:
         RUN_TEST(calculates_average_correctly);
         RUN_TEST(calculates_average_for_very_large_values);
         RUN_TEST(meets_specification);
+        RUN_TEST(does_not_meet_specification_if_there_are_no_results);
         RUN_TEST(print_self);
     }
 
