@@ -1,0 +1,6 @@
+{
+  "name": "i2c-underneath",
+  "version": "0.1.1-alpha",
+  "frameworks": "*",
+  "platforms": "*"
+}
