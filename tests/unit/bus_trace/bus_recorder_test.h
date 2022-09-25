@@ -15,8 +15,8 @@ namespace bus_trace {
 class BusRecorderTest : public TestSuite {
     static const size_t MAX_EVENTS = 10;
     static bus_trace::BusEvent events[MAX_EVENTS];
-    const static uint32_t PIN_SNIFF_SDA = 21;
-    const static uint32_t PIN_SNIFF_SCL = 20;
+    const static uint32_t PIN_SNIFF_SDA = 2;
+    const static uint32_t PIN_SNIFF_SCL = 3;
     static BusRecorder recorder;
     static void (*sda_trigger)();
     static void (*scl_trigger)();
@@ -26,7 +26,7 @@ public:
         pinMode(PIN_SNIFF_SDA, INPUT_PULLUP);
         digitalWriteFast(PIN_SNIFF_SDA, HIGH);
         pinMode(PIN_SNIFF_SCL, INPUT_PULLUP);
-        digitalWriteFast(PIN_SNIFF_SDA, HIGH);
+        digitalWriteFast(PIN_SNIFF_SCL, HIGH);
         delayMicroseconds(10);
         recorder.set_callbacks(sda_trigger, scl_trigger);
     }
@@ -35,6 +35,8 @@ public:
         recorder.set_callbacks(nullptr, nullptr);
         pinMode(PIN_SNIFF_SDA, INPUT_DISABLE);
         pinMode(PIN_SNIFF_SCL, INPUT_DISABLE);
+        pinMode(SDA, INPUT_DISABLE);
+        pinMode(SCL, INPUT_DISABLE);
     }
 
     static void pins_start_high() {
@@ -123,7 +125,7 @@ public:
         BusEvent expected_trace[5] = {
                 BusEvent(8, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE),
                 BusEvent(58, BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED),
-                BusEvent(93, BusEventFlags::SCL_LINE_CHANGED),
+                BusEvent(82, BusEventFlags::SCL_LINE_CHANGED),
                 BusEvent(88, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED),
                 BusEvent(166, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE | BusEventFlags::SCL_LINE_CHANGED),
         };
