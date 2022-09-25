@@ -43,17 +43,17 @@ public:
 
         // WHEN we try to get the first event before it's been added
         // THEN we get nullptr
-        TEST_ASSERT_NULL(trace.event(0))
-        TEST_ASSERT_NULL(trace.event(1))
+        TEST_ASSERT_NULL(trace.event(0));
+        TEST_ASSERT_NULL(trace.event(1));
 
         // WHEN we add an event
         trace.add_event(BusEvent(123, BusEventFlags::SDA_LINE_STATE));
 
         // THEN we can retrieve the new event
         auto actual = trace.event(0);
-        TEST_ASSERT_NOT_NULL(actual)
+        TEST_ASSERT_NOT_NULL(actual);
         // BUT not one that hasn't been recorded
-        TEST_ASSERT_NULL(trace.event(1))
+        TEST_ASSERT_NULL(trace.event(1));
     }
 
     static void add_event_with_bus_event_object() {
@@ -64,7 +64,7 @@ public:
 
         // THEN we can retrieve the new event
         auto actual = trace.event(0);
-        TEST_ASSERT_TRUE(*actual == BusEvent(456, BusEventFlags::SDA_LINE_STATE))
+        TEST_ASSERT_TRUE(*actual == BusEvent(456, BusEventFlags::SDA_LINE_STATE));
     }
 
     static void add_event_override() {
@@ -75,7 +75,7 @@ public:
 
         // THEN we can retrieve the new event
         auto actual = trace.event(0);
-        TEST_ASSERT_TRUE(*actual == BusEvent(123, BusEventFlags::SDA_LINE_STATE))
+        TEST_ASSERT_TRUE(*actual == BusEvent(123, BusEventFlags::SDA_LINE_STATE));
     }
 
     static void add_event_gets_system_tick_directly_on_teensy4() {
@@ -114,7 +114,7 @@ public:
     }
 
     static void add_event_gets_system_tick_from_clock() {
-#ifndef ARDUINO_TEENSY40
+#if !defined(ARDUINO_TEENSY40) && !defined(ARDUINO_TEENSY41)
         common::hal::FakeClock clock;
         clock.system_tick = 12345;
         BusTrace trace(&clock, MAX_EVENTS);
@@ -124,7 +124,7 @@ public:
 
         // THEN we can retrieve the new event
         auto actual = trace.event(0);
-        TEST_ASSERT_TRUE(*actual == BusEvent(12345u, BusEventFlags::SDA_LINE_STATE))
+        TEST_ASSERT_TRUE(*actual == BusEvent(12345u, BusEventFlags::SDA_LINE_STATE));
 #endif
     }
 
@@ -142,8 +142,8 @@ public:
 
         // THEN the event is ignored
         TEST_ASSERT_EQUAL_UINT32(1, trace.event_count());
-        TEST_ASSERT_NULL(trace.event(1))
-        TEST_ASSERT_TRUE(event == *trace.event(0))
+        TEST_ASSERT_NULL(trace.event(1));
+        TEST_ASSERT_TRUE(event == *trace.event(0));
     }
 
     static void reset() {
@@ -356,7 +356,7 @@ public:
         auto message_comparable = trace.compare_messages(expected);
 
         // THEN they are message comparable but not edge comparable
-        TEST_ASSERT_NOT_EQUAL(SIZE_MAX, edge_comparable)
+        TEST_ASSERT_NOT_EQUAL(SIZE_MAX, edge_comparable);
         TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, message_comparable);
     }
 
@@ -593,43 +593,43 @@ public:
 
     // Include all the tests here
     void test() final {
-//        RUN_TEST(max_events_required_without_pin_events);
-//        RUN_TEST(max_events_required_with_pin_events);
-//
-//        RUN_TEST(new_trace_is_empty);
-//        RUN_TEST(cannot_get_event_that_has_not_been_added);
-//        RUN_TEST(add_event_with_bus_event_object);
-//        RUN_TEST(add_event_override);
-//        RUN_TEST(add_event_gets_system_tick_directly_on_teensy4);
-//        RUN_TEST(add_event_is_fast_enough_on_a_teensy4);
-//        RUN_TEST(add_event_gets_system_tick_from_clock);
-//        RUN_TEST(add_event_drops_excess_events);
-//        RUN_TEST(reset);
-//        RUN_TEST(destructor_does_not_deletes_supplied_array_of_events);
-//        RUN_TEST(destructor_deletes_internal_array_of_events_if_it_owns_them);
-//
-//        // compare_edges
-//        RUN_TEST(empty_traces_are_edge_comparable);
-//        RUN_TEST(traces_are_edge_comparable_if_lines_and_edges_match);
-//        RUN_TEST(traces_are_not_edge_comparable_if_one_is_longer_than_the_other);
-//        RUN_TEST(compare_edges_returns_index_of_first_difference);
-//
-//        // to_message and compare_messages
-//        RUN_TEST(to_message_converts_empty_trace_to_empty_message);
-//        RUN_TEST(to_message_can_remove_last_event);
-//        RUN_TEST(to_message_strips_out_spurious_SDA_changes);
-//        RUN_TEST(empty_traces_are_message_comparable);
-//
-//        RUN_TEST(traces_are_message_comparable_if_they_are_edge_comparable);
-//        RUN_TEST(traces_are_message_comparable_even_if_spurious_SDA_changes_are_different);
-//        RUN_TEST(compare_messages_returns_index_of_first_difference);
-//        RUN_TEST(message_comparable_does_not_ignore_SDA_changes_while_SCL_is_HIGH);
-//
-//        // duration between events
-//        RUN_TEST(nanos_to_previous_when_index_is_out_of_range);
-//        RUN_TEST(nanos_to_previous_without_a_clock);
-//        RUN_TEST(nanos_to_previous_for_first_event);
-//        RUN_TEST(nanos_to_previous);
+        RUN_TEST(max_events_required_without_pin_events);
+        RUN_TEST(max_events_required_with_pin_events);
+
+        RUN_TEST(new_trace_is_empty);
+        RUN_TEST(cannot_get_event_that_has_not_been_added);
+        RUN_TEST(add_event_with_bus_event_object);
+        RUN_TEST(add_event_override);
+        RUN_TEST(add_event_gets_system_tick_directly_on_teensy4);
+        RUN_TEST(add_event_is_fast_enough_on_a_teensy4);
+        RUN_TEST(add_event_gets_system_tick_from_clock);
+        RUN_TEST(add_event_drops_excess_events);
+        RUN_TEST(reset);
+        RUN_TEST(destructor_does_not_deletes_supplied_array_of_events);
+        RUN_TEST(destructor_deletes_internal_array_of_events_if_it_owns_them);
+
+        // compare_edges
+        RUN_TEST(empty_traces_are_edge_comparable);
+        RUN_TEST(traces_are_edge_comparable_if_lines_and_edges_match);
+        RUN_TEST(traces_are_not_edge_comparable_if_one_is_longer_than_the_other);
+        RUN_TEST(compare_edges_returns_index_of_first_difference);
+
+        // to_message and compare_messages
+        RUN_TEST(to_message_converts_empty_trace_to_empty_message);
+        RUN_TEST(to_message_can_remove_last_event);
+        RUN_TEST(to_message_strips_out_spurious_SDA_changes);
+        RUN_TEST(empty_traces_are_message_comparable);
+
+        RUN_TEST(traces_are_message_comparable_if_they_are_edge_comparable);
+        RUN_TEST(traces_are_message_comparable_even_if_spurious_SDA_changes_are_different);
+        RUN_TEST(compare_messages_returns_index_of_first_difference);
+        RUN_TEST(message_comparable_does_not_ignore_SDA_changes_while_SCL_is_HIGH);
+
+        // duration between events
+        RUN_TEST(nanos_to_previous_when_index_is_out_of_range);
+        RUN_TEST(nanos_to_previous_without_a_clock);
+        RUN_TEST(nanos_to_previous_for_first_event);
+        RUN_TEST(nanos_to_previous);
         RUN_TEST(nanos_between_when_from_is_out_of_range);
         RUN_TEST(nanos_between_when_to_is_out_of_range);
         RUN_TEST(nanos_between_when_from_is_greater_than_last);
@@ -637,7 +637,7 @@ public:
         RUN_TEST(nanos_between_all_events);
         RUN_TEST(nanos_between);
 
-//        RUN_TEST(print_trace);
+        RUN_TEST(print_trace);
     }
 
     BusTraceTest() : TestSuite(__FILE__) {};

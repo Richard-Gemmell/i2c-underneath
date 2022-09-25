@@ -38,8 +38,8 @@ public:
     }
 
     static void pins_start_high() {
-        TEST_ASSERT_TRUE(digitalReadFast(PIN_SNIFF_SDA))
-        TEST_ASSERT_TRUE(digitalReadFast(PIN_SNIFF_SCL))
+        TEST_ASSERT_TRUE(digitalReadFast(PIN_SNIFF_SDA));
+        TEST_ASSERT_TRUE(digitalReadFast(PIN_SNIFF_SCL));
     }
 
     static void cannot_record_unless_callbacks_have_been_set() {
@@ -65,9 +65,9 @@ public:
         recorder.stop();
         bool after_stop = recorder.is_recording();
 
-        TEST_ASSERT_FALSE(before_start)
-        TEST_ASSERT_TRUE(after_start)
-        TEST_ASSERT_FALSE(after_stop)
+        TEST_ASSERT_FALSE(before_start);
+        TEST_ASSERT_TRUE(after_start);
+        TEST_ASSERT_FALSE(after_stop);
     }
 
     static void records_initial_line_states() {

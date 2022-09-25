@@ -29,7 +29,7 @@ public:
             BusEvent(0, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE),
         };
         TEST_ASSERT_EQUAL(numExpected, trace.event_count());
-        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(0))
+        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(0));
     }
 
     static void start_bit() {
@@ -47,8 +47,8 @@ public:
             BusEvent(4'000, BusEventFlags::SCL_LINE_CHANGED),
         };
         TEST_ASSERT_EQUAL(numExpected, trace.event_count());
-        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(0))
-        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(1))
+        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(0));
+        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(1));
     }
 
     static void ack_after_zero() {
@@ -67,8 +67,8 @@ public:
             BusEvent(4'000, BusEventFlags::SCL_LINE_CHANGED),
         };
         TEST_ASSERT_EQUAL(events_so_far+2, trace.event_count());
-        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(events_so_far + 0))
-        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(events_so_far + 1))
+        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(events_so_far + 0));
+        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(events_so_far + 1));
     }
 
     static void ack_after_one() {
@@ -88,9 +88,9 @@ public:
             BusEvent(4'000, BusEventFlags::SCL_LINE_CHANGED),
         };
         TEST_ASSERT_EQUAL(events_so_far+3, trace.event_count());
-        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(events_so_far + 0))
-        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(events_so_far + 1))
-        TEST_ASSERT_TRUE(expected_trace[2] == *trace.event(events_so_far + 2))
+        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(events_so_far + 0));
+        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(events_so_far + 1));
+        TEST_ASSERT_TRUE(expected_trace[2] == *trace.event(events_so_far + 2));
     }
 
     static void nack_after_zero() {
@@ -110,9 +110,9 @@ public:
                 BusEvent(4'000, BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE),
         };
         TEST_ASSERT_EQUAL(events_so_far+3, trace.event_count());
-        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(events_so_far + 0))
-        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(events_so_far + 1))
-        TEST_ASSERT_TRUE(expected_trace[2] == *trace.event(events_so_far + 2))
+        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(events_so_far + 0));
+        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(events_so_far + 1));
+        TEST_ASSERT_TRUE(expected_trace[2] == *trace.event(events_so_far + 2));
     }
 
     static void nack_after_one() {
@@ -131,8 +131,8 @@ public:
             BusEvent(4'000, BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE),
         };
         TEST_ASSERT_EQUAL(events_so_far+2, trace.event_count());
-        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(events_so_far + 0))
-        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(events_so_far + 1))
+        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(events_so_far + 0));
+        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(events_so_far + 1));
     }
 
     static void stop_bit_after_ack() {
@@ -152,8 +152,8 @@ public:
             BusEvent(4'000, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE),
         };
         TEST_ASSERT_EQUAL(events_so_far+2, trace.event_count());
-        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(events_so_far + 0))
-        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(events_so_far + 1))
+        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(events_so_far + 0));
+        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(events_so_far + 1));
     }
 
     static void stop_bit_after_nack() {
@@ -173,9 +173,9 @@ public:
             BusEvent(4'000, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE),
         };
         TEST_ASSERT_EQUAL(events_so_far+3, trace.event_count());
-        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(events_so_far + 0))
-        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(events_so_far + 1))
-        TEST_ASSERT_TRUE(expected_trace[2] == *trace.event(events_so_far + 2))
+        TEST_ASSERT_TRUE(expected_trace[0] == *trace.event(events_so_far + 0));
+        TEST_ASSERT_TRUE(expected_trace[1] == *trace.event(events_so_far + 1));
+        TEST_ASSERT_TRUE(expected_trace[2] == *trace.event(events_so_far + 2));
     }
 
     static void data_bits() {
@@ -196,8 +196,8 @@ public:
                 BusEvent(4'000, BusEventFlags::SCL_LINE_CHANGED),
         };
         TEST_ASSERT_EQUAL(events_so_far+2, trace.event_count());
-        TEST_ASSERT_TRUE(bit_0_expected_trace[0] == *trace.event(events_so_far+0))
-        TEST_ASSERT_TRUE(bit_0_expected_trace[1] == *trace.event(events_so_far+1))
+        TEST_ASSERT_TRUE(bit_0_expected_trace[0] == *trace.event(events_so_far+0));
+        TEST_ASSERT_TRUE(bit_0_expected_trace[1] == *trace.event(events_so_far+1));
         events_so_far = trace.event_count();
 
         // WHEN we send a 1 bit after a 0 bit
@@ -210,9 +210,9 @@ public:
             BusEvent(4'000, BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE),
         };
         TEST_ASSERT_EQUAL(events_so_far+3, trace.event_count());
-        TEST_ASSERT_TRUE(bit_1_expected_trace[0] == *trace.event(events_so_far+0))
-        TEST_ASSERT_TRUE(bit_1_expected_trace[1] == *trace.event(events_so_far+1))
-        TEST_ASSERT_TRUE(bit_1_expected_trace[2] == *trace.event(events_so_far+2))
+        TEST_ASSERT_TRUE(bit_1_expected_trace[0] == *trace.event(events_so_far+0));
+        TEST_ASSERT_TRUE(bit_1_expected_trace[1] == *trace.event(events_so_far+1));
+        TEST_ASSERT_TRUE(bit_1_expected_trace[2] == *trace.event(events_so_far+2));
         events_so_far = trace.event_count();
 
         // WHEN we send a 1 bit after a 1 bit
@@ -224,8 +224,8 @@ public:
             BusEvent(4'000, BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE),
         };
         TEST_ASSERT_EQUAL(events_so_far+2, trace.event_count());
-        TEST_ASSERT_TRUE(bit_2_expected_trace[0] == *trace.event(events_so_far+0))
-        TEST_ASSERT_TRUE(bit_2_expected_trace[1] == *trace.event(events_so_far+1))
+        TEST_ASSERT_TRUE(bit_2_expected_trace[0] == *trace.event(events_so_far+0));
+        TEST_ASSERT_TRUE(bit_2_expected_trace[1] == *trace.event(events_so_far+1));
         events_so_far = trace.event_count();
 
         // WHEN we send a 0 bit after a 1 bit
@@ -238,9 +238,9 @@ public:
                 BusEvent(4'000, BusEventFlags::SCL_LINE_CHANGED),
         };
         TEST_ASSERT_EQUAL(events_so_far+3, trace.event_count());
-        TEST_ASSERT_TRUE(bit_3_expected_trace[0] == *trace.event(events_so_far+0))
-        TEST_ASSERT_TRUE(bit_3_expected_trace[1] == *trace.event(events_so_far+1))
-        TEST_ASSERT_TRUE(bit_3_expected_trace[2] == *trace.event(events_so_far+2))
+        TEST_ASSERT_TRUE(bit_3_expected_trace[0] == *trace.event(events_so_far+0));
+        TEST_ASSERT_TRUE(bit_3_expected_trace[1] == *trace.event(events_so_far+1));
+        TEST_ASSERT_TRUE(bit_3_expected_trace[2] == *trace.event(events_so_far+2));
     }
 
     static void data_byte() {

@@ -112,12 +112,12 @@ public:
 
         // THEN it meets the specification if the min >= spec.min
         // AND the max <= spec.max
-        TEST_ASSERT_TRUE(statistics.meets_specification({.min=99, .max=200}))
-        TEST_ASSERT_TRUE(statistics.meets_specification({.min=100, .max=199}))
+        TEST_ASSERT_TRUE(statistics.meets_specification({.min=99, .max=200}));
+        TEST_ASSERT_TRUE(statistics.meets_specification({.min=100, .max=199}));
         // THEN it does not meet the spec if the actual minimum is too low
-        TEST_ASSERT_FALSE(statistics.meets_specification({.min=101, .max=199}))
+        TEST_ASSERT_FALSE(statistics.meets_specification({.min=101, .max=199}));
         // OR if the actual max is too high
-        TEST_ASSERT_FALSE(statistics.meets_specification({.min=100, .max=198}))
+        TEST_ASSERT_FALSE(statistics.meets_specification({.min=100, .max=198}));
     }
 
     static void does_not_meet_specification_if_there_are_no_results() {
@@ -125,7 +125,7 @@ public:
         DurationStatistics statistics;
 
         // THEN it meets the specification if the min >= spec.min
-        TEST_ASSERT_FALSE(statistics.meets_specification({.min=100, .max=500}))
+        TEST_ASSERT_FALSE(statistics.meets_specification({.min=100, .max=500}));
     }
 
     static void print_self() {

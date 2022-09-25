@@ -34,16 +34,16 @@ public:
         BusEvent c(44, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE);
 
         // Object equals itself
-        TEST_ASSERT_TRUE(a == a)
-        TEST_ASSERT_FALSE(a != a)
+        TEST_ASSERT_TRUE(a == a);
+        TEST_ASSERT_FALSE(a != a);
         // Object equals identical object
-        TEST_ASSERT_TRUE(a == a1)
-        TEST_ASSERT_FALSE(a != a1)
+        TEST_ASSERT_TRUE(a == a1);
+        TEST_ASSERT_FALSE(a != a1);
         // Object does not equal similar but different objects
-        TEST_ASSERT_FALSE(a == b)
-        TEST_ASSERT_TRUE(a != b)
-        TEST_ASSERT_FALSE(a == c)
-        TEST_ASSERT_TRUE(a != c)
+        TEST_ASSERT_FALSE(a == b);
+        TEST_ASSERT_TRUE(a != b);
+        TEST_ASSERT_FALSE(a == c);
+        TEST_ASSERT_TRUE(a != c);
     }
 
     void test() final {

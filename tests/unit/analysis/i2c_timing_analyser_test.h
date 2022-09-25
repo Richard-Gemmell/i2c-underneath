@@ -207,7 +207,7 @@ public:
         given_a_valid_trace(trace);
 
         // THEN the test trace represents the expected I2C message
-        TEST_ASSERT_TRUE(trace_matches_expected(trace))
+        TEST_ASSERT_TRUE(trace_matches_expected(trace));
     }
 
     static void analysis_records_raw_start_hold_time() {
