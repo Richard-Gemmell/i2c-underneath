@@ -125,7 +125,7 @@ public:
         BusEvent expected_trace[5] = {
                 BusEvent(8, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE),
                 BusEvent(58, BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED),
-                BusEvent(82, BusEventFlags::SCL_LINE_CHANGED),
+                BusEvent(76, BusEventFlags::SCL_LINE_CHANGED),
                 BusEvent(88, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED),
                 BusEvent(166, BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_STATE | BusEventFlags::SCL_LINE_CHANGED),
         };
@@ -190,10 +190,10 @@ public:
 
     static void interrupt_is_fast_enough() {
         // Local callbacks get inlined
-        auto sda_trigger_local = [](){
+        auto sda_trigger_local = []() FASTRUN __attribute__((always_inline)){
             recorder.add_event(false);
         };
-        auto scl_trigger_local = [](){
+        auto scl_trigger_local = []() FASTRUN __attribute__((always_inline)){
             recorder.add_event(true);
         };
         recorder.set_callbacks(sda_trigger_local, scl_trigger_local);
@@ -221,7 +221,7 @@ public:
 //            Serial.printf("Index %d: delta %d\n", i, trace.event(i)->delta_t_in_ticks);
 //        }
         TEST_ASSERT_EQUAL(5, trace.event_count());
-        TEST_ASSERT_LESS_OR_EQUAL_UINT32(18, average_duration);
+        TEST_ASSERT_LESS_OR_EQUAL_UINT32(16, average_duration);
     }
 
     static void deprioritises_i2c_irqs() {
