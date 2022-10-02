@@ -46,45 +46,18 @@ public:
     // The easiest way to do this is to create a static BusRecorder called
     // 'bus_recorder'. This line of code will then setup the callbacks correctly.
     // bus_recorder.set_callbacks([](){bus_recorder.add_event(false);}, [](){bus_recorder.add_event(true);});
-    void set_callbacks(void (*on_sda_changed)(), void (*on_scl_changed)()) {
-        this->sda_isr = on_sda_changed;
-        this->scl_isr = on_scl_changed;
-    }
+    void set_callbacks(void (*on_sda_changed)(), void (*on_scl_changed)());
 
     // Stops any recording that's in progress and then
     // starts recording. Bus events are added to 'trace'.
     // The recording stops automatically when the trace is full.
-    void start(BusTrace& trace) {
-        if (!(sda_isr && scl_isr)) {
-            Serial.println("You must call set_callbacks() before start()");
-            return;
-        }
-        current_trace = &trace;
-        reduce_i2c_irq_priorities();
-        noInterrupts()
-        attachInterrupt(digitalPinToInterrupt(pin_sda), sda_isr, CHANGE);
-        attachInterrupt(digitalPinToInterrupt(pin_scl), scl_isr, CHANGE);
-        line_states = update_from_bool(line_states, digitalRead(pin_sda), BusEventFlagBits::SDA_LINE_STATE_BIT);
-        line_states = update_from_bool(line_states, digitalRead(pin_scl), BusEventFlagBits::SCL_LINE_STATE_BIT);
-        current_trace->reset();
-        trace.add_event(line_states);
-        interrupts()
-    }
+    void start(BusTrace& trace);
 
     // Stops recording
-    void stop() {
-        noInterrupts()
-        detachInterrupt(digitalPinToInterrupt(pin_sda));
-        detachInterrupt(digitalPinToInterrupt(pin_scl));
-        interrupts()
-        current_trace = nullptr;
-        reset_i2c_irq_priorities();
-    }
+    void stop();
 
     // Returns true if we're recording
-    bool is_recording() const {
-        return current_trace != nullptr;
-    }
+    bool is_recording() const;
 
     // Adds an event to the trace. DON'T call this method directly.
     // Use set_callbacks() to fire it automatically when the pins
@@ -112,27 +85,14 @@ private:
 
     // We need to reduce the priority of the I2C interrupts to record an accurate trace.
     // ANY other interrupts can cause problems but I2C is the obvious one.
-    static uint8_t I2C_IRQS[NUM_I2C_PORTS];
     uint8_t original_i2c_irq_priorities[NUM_I2C_PORTS] = {};
 
     // Drops the priority of all I2C interrupts, so they're lower than the GPIO pins.
-    void reduce_i2c_irq_priorities() {
-        uint8_t gpio_priority = NVIC_GET_PRIORITY(IRQ_GPIO6789);
-        for (int i = 0; i < NUM_I2C_PORTS; ++i) {
-            original_i2c_irq_priorities[i] = NVIC_GET_PRIORITY(I2C_IRQS[i]);
-            // Make I2C priority one step lower than the priority for GPIO
-            NVIC_SET_PRIORITY(I2C_IRQS[i], gpio_priority + 16);
-        }
-    }
+    void reduce_i2c_irq_priorities();
 
     // Reset the I2C IRQ priorities to whatever they were initially
-    void reset_i2c_irq_priorities() {
-        for (int i = 0; i < NUM_I2C_PORTS; ++i) {
-            NVIC_SET_PRIORITY(I2C_IRQS[i], original_i2c_irq_priorities[i]);
-        }
-    }
+    void reset_i2c_irq_priorities();
 };
-uint8_t BusRecorderA::I2C_IRQS[NUM_I2C_PORTS] = {IRQ_LPI2C1, IRQ_LPI2C2, IRQ_LPI2C3, IRQ_LPI2C4};
 
 } // bus_trace
 
