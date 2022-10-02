@@ -16,6 +16,7 @@
 
 // End to End Tests
 #include "e2e/common/hal/arduino/arduino_pin_test.h"
+#include "e2e/common/hal/teensy/teensy_pin_test.h"
 #include "e2e/common/hal/teensy/teensy_timer_test.h"
 #include "e2e/common/hal/teensy/teensy_timestamp_test.h"
 #include "e2e/common/hal/teensy/teensy_clock_test.h"
@@ -57,6 +58,7 @@ void run_all_tests() {
     test(new common::hal::TeensyTimerTest());
     test(new common::hal::TeensyTimestampTest());
     test(new line_test::LineTesterTest());
+    test(new common::hal::TeensyPinTest);
 }
 
 TestSuite* test_suite;
