@@ -6,6 +6,8 @@
 #include <unity.h>
 #include <Arduino.h>
 #include "utils/test_suite.h"
+#include "fakes/common/hal/fake_clock.h"
+#include "bus_trace/bus_trace_builder.h"
 #include <analysis/i2c_timing_analyser.h>
 #include <analysis/i2c_timing_analysis.h>
 

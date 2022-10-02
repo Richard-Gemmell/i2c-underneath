@@ -6,6 +6,7 @@
 //#include "example/example.h"
 #include "unit/analysis/duration_statistics_test.h"
 #include "unit/analysis/i2c_design_parameters_test.h"
+#include "unit/analysis/i2c_timing_analyser_test.h"
 #include "unit/bus_monitor/bus_monitor_test.h"
 #include "unit/bus_trace/bus_event_flags_test.h"
 #include "unit/bus_trace/bus_event_test.h"
@@ -19,9 +20,6 @@
 #include "e2e/common/hal/teensy/teensy_timestamp_test.h"
 #include "e2e/common/hal/teensy/teensy_clock_test.h"
 #include "e2e/line_test/line_tester_test.h"
-#include "unit/analysis/duration_statistics_test.h"
-#include "unit/analysis/i2c_design_parameters_test.h"
-#include "unit/analysis/i2c_timing_analyser_test.h"
 
 void test(TestSuite* suite);
 
