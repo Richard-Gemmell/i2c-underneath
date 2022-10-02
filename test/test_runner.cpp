@@ -15,6 +15,7 @@
 #include "unit/bus_trace/bus_trace_test.h"
 
 // End to End Tests
+#include "e2e/bus_trace/bus_recorder_a_e2e_test.h"
 #include "e2e/common/hal/arduino/arduino_pin_test.h"
 #include "e2e/common/hal/teensy/teensy_pin_test.h"
 #include "e2e/common/hal/teensy/teensy_timer_test.h"
@@ -28,8 +29,9 @@ void test(TestSuite* suite);
 // Return true to run all tests afterwards.
 bool run_subset() {
     return true;
-//    test(new analysis::I2CDesignParametersTest());
-    test(new analysis::I2CTimingAnalyserTest());
+//    test(new analysis::I2CDesignParametersTest);
+//    test(new analysis::I2CTimingAnalyserTest);
+    test(new BusRecorderAE2ETest);
     return false;
 }
 
@@ -38,27 +40,28 @@ void run_all_tests() {
     // Unit tests run an any board layout
     Serial.println("Run Unit Tests");
     Serial.println("--------------");
-//    test(new ExampleTestSuite());
-    test(new analysis::DurationStatisticsTest());
-    test(new analysis::I2CDesignParametersTest());
-    test(new analysis::I2CTimingAnalyserTest());
-    test(new bus_monitor::BusMonitorTest());
-    test(new bus_trace::BusEventFlagsTest());
-    test(new bus_trace::BusEventTest());
-    test(new bus_trace::BusRecorderTest());
-    test(new bus_trace::BusTraceBuilderTest());
-    test(new bus_trace::BusTraceTest());
+//    test(new ExampleTestSuite);
+    test(new analysis::DurationStatisticsTest);
+    test(new analysis::I2CDesignParametersTest);
+    test(new analysis::I2CTimingAnalyserTest);
+    test(new bus_monitor::BusMonitorTest);
+    test(new bus_trace::BusEventFlagsTest);
+    test(new bus_trace::BusEventTest);
+    test(new bus_trace::BusRecorderTest);
+    test(new bus_trace::BusTraceBuilderTest);
+    test(new bus_trace::BusTraceTest);
 
     // Full Stack Tests
     // These tests require working hardware
     Serial.println("Run Full Stack Tests");
     Serial.println("--------------------");
-    test(new common::hal::ArduinoPinTest());
-    test(new common::hal::TeensyClockTest());
-    test(new common::hal::TeensyTimerTest());
-    test(new common::hal::TeensyTimestampTest());
-    test(new line_test::LineTesterTest());
+    test(new BusRecorderAE2ETest);
+    test(new common::hal::ArduinoPinTest);
+    test(new common::hal::TeensyClockTest);
     test(new common::hal::TeensyPinTest);
+    test(new common::hal::TeensyTimerTest);
+    test(new common::hal::TeensyTimestampTest);
+    test(new line_test::LineTesterTest);
 }
 
 TestSuite* test_suite;
