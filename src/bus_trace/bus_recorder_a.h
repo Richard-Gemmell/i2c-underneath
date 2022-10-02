@@ -1,8 +1,8 @@
 // Copyright (c) 2022 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_BUS_RECORDER_H
-#define I2C_UNDERNEATH_BUS_RECORDER_H
+#ifndef I2C_UNDERNEATH_BUS_RECORDER_A_H
+#define I2C_UNDERNEATH_BUS_RECORDER_A_H
 
 #include "bus_trace.h"
 #include <common/hal/pin.h>
@@ -36,9 +36,9 @@ namespace bus_trace {
 // state in this time it always fires the ISR for one pin before the other.
 // Swapping the pin assignments round helps because it's usually SCL that
 // changes before SDA not the other way round.
-class BusRecorder {
+class BusRecorderA {
 public:
-    BusRecorder(uint8_t pin_sda, uint8_t pin_scl)
+    BusRecorderA(uint8_t pin_sda, uint8_t pin_scl)
         :pin_sda(pin_sda), pin_scl(pin_scl) {
     }
 
@@ -132,8 +132,8 @@ private:
         }
     }
 };
-uint8_t BusRecorder::I2C_IRQS[NUM_I2C_PORTS] = {IRQ_LPI2C1, IRQ_LPI2C2, IRQ_LPI2C3, IRQ_LPI2C4};
+uint8_t BusRecorderA::I2C_IRQS[NUM_I2C_PORTS] = {IRQ_LPI2C1, IRQ_LPI2C2, IRQ_LPI2C3, IRQ_LPI2C4};
 
 } // bus_trace
 
-#endif //I2C_UNDERNEATH_BUS_RECORDER_H
+#endif //I2C_UNDERNEATH_BUS_RECORDER_A_H

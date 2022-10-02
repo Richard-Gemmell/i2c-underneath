@@ -10,7 +10,7 @@
 #include "unit/bus_monitor/bus_monitor_test.h"
 #include "unit/bus_trace/bus_event_flags_test.h"
 #include "unit/bus_trace/bus_event_test.h"
-#include "unit/bus_trace/bus_recorder_test.h"
+#include "unit/bus_trace/bus_recorder_a_test.h"
 #include "unit/bus_trace/bus_trace_builder_test.h"
 #include "unit/bus_trace/bus_trace_test.h"
 

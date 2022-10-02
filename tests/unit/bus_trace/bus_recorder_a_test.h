@@ -1,13 +1,13 @@
 // Copyright (c) 2022 Richard Gemmell
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
-#ifndef I2C_UNDERNEATH_BUS_RECORDER_TEST_H
-#define I2C_UNDERNEATH_BUS_RECORDER_TEST_H
+#ifndef I2C_UNDERNEATH_BUS_RECORDER_A_TEST_H
+#define I2C_UNDERNEATH_BUS_RECORDER_A_TEST_H
 
 #include <unity.h>
 #include <Arduino.h>
 #include "utils/test_suite.h"
-#include "bus_trace/bus_recorder.h"
+#include "bus_trace/bus_recorder_a.h"
 #include "common/hal/teensy/teensy_clock.h"
 
 namespace bus_trace {
@@ -17,7 +17,7 @@ class BusRecorderTest : public TestSuite {
     static bus_trace::BusEvent events[MAX_EVENTS];
     const static uint32_t PIN_SNIFF_SDA = 2;
     const static uint32_t PIN_SNIFF_SCL = 3;
-    static BusRecorder recorder;
+    static BusRecorderA recorder;
     static void (*sda_trigger)();
     static void (*scl_trigger)();
 
@@ -290,7 +290,7 @@ public:
 
 // Define statics
 bus_trace::BusEvent BusRecorderTest::events[MAX_EVENTS];
-BusRecorder BusRecorderTest::recorder(PIN_SNIFF_SDA, PIN_SNIFF_SCL); // NOLINT(cppcoreguidelines-interfaces-global-init)
+BusRecorderA BusRecorderTest::recorder(PIN_SNIFF_SDA, PIN_SNIFF_SCL); // NOLINT(cppcoreguidelines-interfaces-global-init)
 void (*BusRecorderTest::sda_trigger)() = [](){
     recorder.add_event(false);
 };
@@ -299,4 +299,4 @@ void (*BusRecorderTest::scl_trigger)() = [](){
 };
 
 }
-#endif //I2C_UNDERNEATH_BUS_RECORDER_TEST_H
+#endif //I2C_UNDERNEATH_BUS_RECORDER_A_TEST_H
