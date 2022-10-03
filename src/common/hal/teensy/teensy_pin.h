@@ -14,10 +14,21 @@ namespace hal {
 // It's faster or as fast as digitalWriteFast().
 class TeensyPin {
 public:
-    explicit TeensyPin(uint8_t pin, uint8_t mode) {
+    explicit TeensyPin(uint8_t pin) :
+            pin(pin),
+            mask(getPortBitmask(pin)),
+            gpio((IMXRT_GPIO_t * )(getDigitalReadPort(pin) - 2)) {
+    }
+
+    TeensyPin(uint8_t pin, uint8_t mode) :
+            pin(pin),
+            mask(getPortBitmask(pin)),
+            gpio((IMXRT_GPIO_t * )(getDigitalReadPort(pin) - 2)) {
         pinMode(pin, mode);
-        mask = getPortBitmask(pin);
-        gpio = (IMXRT_GPIO_t*)(getDigitalReadPort(pin) - 2);
+    }
+
+    uint8_t get_pin() const {
+        return pin;
     }
 
     // Sets the pin HIGH
@@ -41,13 +52,14 @@ public:
     // (Actually the pin's mask)
     // If the pin is configured as an output then this returns the last
     // value written to the pin.
-    uint32_t read() {
+    uint32_t read() const {
         return gpio->DR & mask;
     }
 
 private:
-    uint32_t mask;
-    IMXRT_GPIO_t* gpio;
+    const uint8_t pin;
+    const uint32_t mask;
+    IMXRT_GPIO_t* const gpio;
 };
 }
 }

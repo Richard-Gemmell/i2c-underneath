@@ -31,7 +31,8 @@ bool run_subset() {
     return true;
 //    test(new analysis::I2CDesignParametersTest);
 //    test(new analysis::I2CTimingAnalyserTest);
-    test(new BusRecorderAE2ETest);
+    test(new bus_trace::BusRecorderATest);
+    test(new bus_trace::BusRecorderAE2ETest);
     return false;
 }
 
@@ -47,7 +48,7 @@ void run_all_tests() {
     test(new bus_monitor::BusMonitorTest);
     test(new bus_trace::BusEventFlagsTest);
     test(new bus_trace::BusEventTest);
-    test(new bus_trace::BusRecorderTest);
+    test(new bus_trace::BusRecorderATest);
     test(new bus_trace::BusTraceBuilderTest);
     test(new bus_trace::BusTraceTest);
 
@@ -55,7 +56,7 @@ void run_all_tests() {
     // These tests require working hardware
     Serial.println("Run Full Stack Tests");
     Serial.println("--------------------");
-    test(new BusRecorderAE2ETest);
+    test(new bus_trace::BusRecorderAE2ETest);
     test(new common::hal::ArduinoPinTest);
     test(new common::hal::TeensyClockTest);
     test(new common::hal::TeensyPinTest);

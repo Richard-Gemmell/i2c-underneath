@@ -12,8 +12,29 @@ namespace hal {
 
 class TeensyPinTest : public e2e::E2ETestBase {
 public:
+    static void test_constructor_without_MODE() {
+        pinMode(PIN_DRIVE_SCL, OUTPUT);
+        common::hal::TeensyPin pin(PIN_DRIVE_SCL);
+
+        // GIVEN the pin is LOW to start with
+        TEST_ASSERT_FALSE(digitalRead(PIN_SNIFF_SCL));
+
+        // WHEN we set the pin
+        pin.set();
+
+        // THEN the line goes high
+        TEST_ASSERT_TRUE(digitalRead(PIN_SNIFF_SCL));
+    }
+
+    static void get_pin() {
+        common::hal::TeensyPin pin(PIN_DRIVE_SCL);
+
+        TEST_ASSERT_EQUAL(PIN_DRIVE_SCL, pin.get_pin());
+    }
+
     static void test_set() {
         common::hal::TeensyPin pin(PIN_DRIVE_SCL, OUTPUT);
+        digitalWriteFast(PIN_DRIVE_SCL, LOW);
 
         // GIVEN the pin is LOW to start with
         TEST_ASSERT_FALSE(digitalRead(PIN_SNIFF_SCL));
@@ -130,6 +151,8 @@ public:
 
     // Include all the tests here
     void test() final {
+        RUN_TEST(test_constructor_without_MODE);
+        RUN_TEST(get_pin);
         RUN_TEST(test_set);
         RUN_TEST(test_clear);
         RUN_TEST(test_toggle);

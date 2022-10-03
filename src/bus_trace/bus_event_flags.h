@@ -49,6 +49,11 @@ inline BusEventFlags operator|(BusEventFlags lhs, BusEventFlags rhs) {
     );
 }
 
+inline BusEventFlags& operator |=(BusEventFlags& lhs, BusEventFlags rhs)
+{
+    return lhs = lhs | rhs;
+}
+
 inline BusEventFlags operator&(BusEventFlags lhs, BusEventFlags rhs) {
     return static_cast<BusEventFlags>(
             static_cast<uint8_t>(lhs) & static_cast<uint8_t>(rhs)
@@ -58,6 +63,12 @@ inline BusEventFlags operator&(BusEventFlags lhs, BusEventFlags rhs) {
 inline BusEventFlags operator^(BusEventFlags lhs, BusEventFlags rhs) {
     return static_cast<BusEventFlags>(
             static_cast<uint8_t>(lhs) ^ static_cast<uint8_t>(rhs)
+    );
+}
+
+inline BusEventFlags operator~(BusEventFlags flags) {
+    return static_cast<BusEventFlags>(
+            ~static_cast<uint8_t>(flags)
     );
 }
 }

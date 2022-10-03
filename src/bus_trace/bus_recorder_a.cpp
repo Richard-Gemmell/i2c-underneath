@@ -18,10 +18,10 @@ void bus_trace::BusRecorderA::start(BusTrace& trace) {
     current_trace = &trace;
     reduce_i2c_irq_priorities();
     noInterrupts()
-    attachInterrupt(digitalPinToInterrupt(pin_sda), sda_isr, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(pin_scl), scl_isr, CHANGE);
-    line_states = update_from_bool(line_states, digitalRead(pin_sda), BusEventFlagBits::SDA_LINE_STATE_BIT);
-    line_states = update_from_bool(line_states, digitalRead(pin_scl), BusEventFlagBits::SCL_LINE_STATE_BIT);
+    attachInterrupt(digitalPinToInterrupt(pin_sda.get_pin()), sda_isr, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(pin_scl.get_pin()), scl_isr, CHANGE);
+    line_states = update_from_bool(line_states, pin_sda.read(), BusEventFlagBits::SDA_LINE_STATE_BIT);
+    line_states = update_from_bool(line_states, pin_scl.read(), BusEventFlagBits::SCL_LINE_STATE_BIT);
     current_trace->reset();
     trace.add_event(line_states);
     interrupts()
@@ -29,8 +29,8 @@ void bus_trace::BusRecorderA::start(BusTrace& trace) {
 
 void bus_trace::BusRecorderA::stop() {
     noInterrupts()
-    detachInterrupt(digitalPinToInterrupt(pin_sda));
-    detachInterrupt(digitalPinToInterrupt(pin_scl));
+    detachInterrupt(digitalPinToInterrupt(pin_sda.get_pin()));
+    detachInterrupt(digitalPinToInterrupt(pin_scl.get_pin()));
     interrupts()
     current_trace = nullptr;
     reset_i2c_irq_priorities();

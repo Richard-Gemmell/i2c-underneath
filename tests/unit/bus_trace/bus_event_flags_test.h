@@ -49,11 +49,22 @@ public:
         TEST_ASSERT_EQUAL(BusEventFlags::SDA_LINE_STATE, flags);
     }
 
+    static void test_operator_not() {
+        auto flags = BusEventFlags::SDA_LINE_CHANGED;
+
+        flags = ~flags;
+        TEST_ASSERT_EQUAL(0b11110111, flags);
+
+        flags = ~flags;
+        TEST_ASSERT_EQUAL(BusEventFlags::SDA_LINE_CHANGED, flags);
+    }
+
     void test() final {
         RUN_TEST(test_values);
         RUN_TEST(test_operator_or);
         RUN_TEST(test_operator_and);
         RUN_TEST(test_operator_xor);
+        RUN_TEST(test_operator_not);
     }
 
     BusEventFlagsTest() : TestSuite(__FILE__) {};
