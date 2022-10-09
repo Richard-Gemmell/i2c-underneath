@@ -18,17 +18,18 @@ public:
           irq(getSlowIRQ(pin_sda)), irq_scl(getSlowIRQ(pin_scl)) {
     }
 
-    // Sets up the interrupt service routines (ISR) on the pins.
+    // Sets up the interrupt service routine (ISR).
     // The easiest way to do this is to create a static BusRecorder called
-    // 'bus_recorder'. This line of code will then setup the callbacks correctly.
-    // bus_recorder.set_callbacks([](){bus_recorder.add_event(false);}, [](){bus_recorder.add_event(true);});
-    void set_callbacks(void (*on_sda_changed)(), void (*on_scl_changed)());
+    // 'recorder'. This line of code will then set up the callbacks correctly.
+    // recorder.set_callback([]() { recorder.add_event(); });
+    void set_callback(void (*on_change)());
 
-    // Stops any recording that's in progress and then
-    // starts recording. Bus events are added to 'trace'.
+    // Stops any recording that's in progress and then starts a new recording.
+    // Bus events are added to 'trace'.
     // The recording stops automatically when the trace is full.
-    // Returns false if the recorder won't start because the pins
-    // belong to different GPIO blocks. Try a different pair of pins.
+    // Returns false if the recorder can't start. This only happens if the
+    // BusRecorder has been configured incorrectly. The failure reason is
+    // printed to Serial.
     bool start(BusTrace& trace);
 
     // Stops recording
@@ -40,7 +41,7 @@ public:
     // Adds an event to the trace. DON'T call this method directly.
     // Use set_callbacks() to fire it automatically when the pins
     // detect a rising or falling edge.
-    inline void add_event(bool scl) {
+    inline void add_event() {
         if(!current_trace) return;
 
         // It's much faster to use the fast GPIO port to read the pins.
@@ -52,7 +53,7 @@ public:
         // If both pins have changed then we don't know what order they happened.
         // In I2C it's common for SDA to fall immediately after SCL, so assume SCL
         // changed first.
-        // TODO: If we don't know the order then raise 1 event intead of 2
+        // TODO: If we don't know the order then raise 1 event instead of 2
 
         // Handle SCL interrupt
         const uint32_t changed_pins = pin_states ^ previous_pin_states;
@@ -84,13 +85,12 @@ private:
     IMXRT_GPIO_t* const fastGpio;
     const IRQ_NUMBER_t irq;
     const IRQ_NUMBER_t irq_scl;
-    void (*sda_isr)() = nullptr;
-    void (*scl_isr)() = nullptr;
+    void (*isr)() = nullptr;
     BusTrace* current_trace = nullptr;
     uint32_t previous_pin_states = 0;
     BusEventFlags line_states = BusEventFlags::BOTH_LOW_AND_UNCHANGED;
 
-    void attach_gpio_interrupt(void (*isr)());
+    void attach_gpio_interrupt();
     void detach_gpio_interrupt();
 };
 

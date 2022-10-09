@@ -24,20 +24,13 @@ public:
 
     void setUp() override {
         E2ETestBase::setUp();
-        recorder.set_callbacks(
-            []() FASTRUN __attribute__((always_inline)) {
-                recorder.add_event(false);
-            },
-            []() FASTRUN __attribute__((always_inline)) {
-                recorder.add_event(true);
-            }
-        );
+        recorder.set_callback([]() { recorder.add_event(); });
     }
 
     void tearDown() override {
         delayNanoseconds(WAIT_FOR_FINAL_EDGE);
         recorder.stop();
-        recorder.set_callbacks(nullptr, nullptr);
+        recorder.set_callback(nullptr);
         // Reset lines if necessary
         scl.clear();
         sda.clear();
@@ -45,7 +38,7 @@ public:
     }
 
     static void lines_are_low_to_start_with() {
-        // This is the opposite way round to a normal I2C setup
+        // This is the opposite way round to a normal I2C setup,
         // but we're using OUTPUT here not pullups
         TEST_ASSERT_FALSE(sda.read());
         TEST_ASSERT_FALSE(scl.read());
@@ -187,10 +180,10 @@ public:
 
     // Number of nanoseconds recorded from event 'start_index' to the end
     // of the trace.
-    static uint32_t nanos_til_end(BusTrace& trace, size_t start_index) {
+    static uint32_t nanos_til_end(BusTrace& busTrace, size_t start_index) {
         uint32_t total = 0;
-        for (size_t i = start_index; i < trace.event_count(); ++i) {
-            uint32_t nanos = common::hal::TeensyTimestamp::ticks_to_nanos(trace.event(i)->delta_t_in_ticks);
+        for (size_t i = start_index; i < busTrace.event_count(); ++i) {
+            uint32_t nanos = common::hal::TeensyTimestamp::ticks_to_nanos(busTrace.event(i)->delta_t_in_ticks);
             total += nanos;
         }
         return total;
@@ -232,7 +225,7 @@ public:
         TEST_ASSERT_UINT32_WITHIN(20, expected, nanos_per_call);
     }
 
-    static void toggle_both_pins_repeatedly(int repeats, common::hal::TeensyPin& sda, common::hal::TeensyPin& scl) {
+    static void toggle_both_pins_repeatedly(int repeats) {
         for (int i = 0; i < repeats; ++i) {
             scl.toggle();
             sda.toggle();
@@ -252,7 +245,7 @@ public:
         // WHEN we record the events
         recorder.start(trace);
         int repeats = 10;
-        toggle_both_pins_repeatedly(repeats, sda, scl);
+        toggle_both_pins_repeatedly(repeats);
         delayNanoseconds(WAIT_FOR_FINAL_EDGE);
         recorder.stop();
 //        print_trace(trace);
