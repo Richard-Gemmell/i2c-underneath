@@ -17,13 +17,13 @@ public:
     explicit TeensyPin(uint8_t pin) :
             pin(pin),
             mask(getPortBitmask(pin)),
-            gpio((IMXRT_GPIO_t * )(getDigitalReadPort(pin) - 2)) {
+            gpio(getGPIO(pin)) {
     }
 
     TeensyPin(uint8_t pin, uint8_t mode) :
             pin(pin),
             mask(getPortBitmask(pin)),
-            gpio((IMXRT_GPIO_t * )(getDigitalReadPort(pin) - 2)) {
+            gpio(getGPIO(pin)) {
         pinMode(pin, mode);
     }
 

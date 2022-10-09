@@ -1,38 +1,41 @@
-#ifndef I2C_UNDERNEATH_BUS_RECORDER_A_E2E_TEST_H
-#define I2C_UNDERNEATH_BUS_RECORDER_A_E2E_TEST_H
+#ifndef I2C_UNDERNEATH_BUS_RECORDER_E2E_TEST_H
+#define I2C_UNDERNEATH_BUS_RECORDER_E2E_TEST_H
 
 #include <unity.h>
 #include <Arduino.h>
 #include "e2e/e2e_test_base.h"
 #include "utils/test_suite.h"
 #include "common/hal/teensy/teensy_pin.h"
+#include "bus_trace/bus_recorder.h"
+#include "common/hal/teensy/teensy_timestamp.h"
 
 namespace bus_trace {
 
 // I2C uses open drain pins and pullups. That's too slow
 // for this test, so we're using OUTPUT mode.
-class BusRecorderAE2ETest : public e2e::E2ETestBase {
+class BusRecorderE2ETest : public e2e::E2ETestBase {
 public:
     constexpr static size_t MAX_EVENTS = 100;
     constexpr static size_t WAIT_FOR_FINAL_EDGE = 500;
     static BusTrace trace;
-    static BusRecorderA recorder;
+    static BusRecorder recorder;
     static common::hal::TeensyPin sda;
     static common::hal::TeensyPin scl;
 
     void setUp() override {
         E2ETestBase::setUp();
         recorder.set_callbacks(
-                []() FASTRUN __attribute__((always_inline)) {
-                    recorder.add_event(false);
-                },
-                []() FASTRUN __attribute__((always_inline)) {
-                    recorder.add_event(true);
-                }
+            []() FASTRUN __attribute__((always_inline)) {
+                recorder.add_event(false);
+            },
+            []() FASTRUN __attribute__((always_inline)) {
+                recorder.add_event(true);
+            }
         );
     }
 
     void tearDown() override {
+        delayNanoseconds(WAIT_FOR_FINAL_EDGE);
         recorder.stop();
         recorder.set_callbacks(nullptr, nullptr);
         // Reset lines if necessary
@@ -42,14 +45,77 @@ public:
     }
 
     static void lines_are_low_to_start_with() {
+        // This is the opposite way round to a normal I2C setup
+        // but we're using OUTPUT here not pullups
         TEST_ASSERT_FALSE(sda.read());
         TEST_ASSERT_FALSE(scl.read());
+    }
+
+    static void is_recording() {
+        // WHEN we are recording
+        bool before_start = recorder.is_recording();
+        recorder.start(trace);
+
+        // THEN is_recording is set
+        bool after_start = recorder.is_recording();
+        recorder.stop();
+        bool after_stop = recorder.is_recording();
+
+        TEST_ASSERT_FALSE(before_start);
+        TEST_ASSERT_TRUE(after_start);
+        TEST_ASSERT_FALSE(after_stop);
+    }
+
+    static void records_initial_line_states() {
+        sda.set();
+        scl.clear();
+        // WHEN there are no line edges during the recording
+        bool started = recorder.start(trace);
+        recorder.stop();
+
+        // THEN the trace contains just the initial line states
+        TEST_ASSERT(started);
+        TEST_ASSERT_EQUAL(1, trace.event_count());
+        auto one_high_one_low = SDA_LINE_STATE;
+        TEST_ASSERT_EQUAL(one_high_one_low, trace.event(0)->flags);
+        TEST_ASSERT_UINT32_WITHIN(4, 8, trace.event(0)->delta_t_in_ticks);
+    }
+
+    static void will_not_start_unless_callbacks_are_set() {
+        // GIVEN we have not set the callbacks for the BusRecorder
+        BusRecorder broken(PIN_SNIFF_SDA, PIN_SNIFF_SCL);
+        BusTrace failedTrace(MAX_EVENTS);
+
+        // WHEN we try to start recording
+        boolean started = broken.start(failedTrace);
+        broken.stop();
+
+        // THEN the recording did not start
+        TEST_ASSERT_FALSE(started);
+        // AND the trace is empty
+        TEST_ASSERT_EQUAL(0, failedTrace.event_count());
+    }
+
+    static void will_not_start_unless_pins_share_the_same_GPIO_block() {
+        // GIVEN the bus recorder is given pins with different GPIO blocks
+        const static uint8_t GPIO1_PIN = 0; // Pin 0 uses GPIO1 or GPIO6
+        const static uint8_t GPIO2_PIN = 10; // Pin 10 uses GPIO2 or GPIO7
+        BusRecorder broken(GPIO1_PIN, GPIO2_PIN);
+        BusTrace failedTrace(MAX_EVENTS);
+
+        // WHEN we try to start recording
+        boolean started = broken.start(failedTrace);
+        broken.stop();
+
+        // THEN the recording did not start
+        TEST_ASSERT_FALSE(started);
+        // AND the trace is empty
+        TEST_ASSERT_EQUAL(0, failedTrace.event_count());
     }
 
     static void records_edges() {
         sda.set();
         scl.set();
-
         // WHEN both pins transition from HIGH->LOW->HIGH
         recorder.start(trace);
         delayNanoseconds(20);
@@ -68,8 +134,8 @@ public:
         TEST_ASSERT_EQUAL(5, trace.event_count());
         BusEvent expected_trace[5] = {
                 BusEvent(8, SDA_LINE_STATE | SCL_LINE_STATE),
-                BusEvent(200 * .6, SCL_LINE_STATE | SDA_LINE_CHANGED),
-                BusEvent(520 * .6, SCL_LINE_CHANGED),
+                BusEvent(255 * .6, SCL_LINE_STATE | SDA_LINE_CHANGED),
+                BusEvent(560 * .6, SCL_LINE_CHANGED),
                 BusEvent(1020 * .6, SDA_LINE_STATE | SDA_LINE_CHANGED),
                 BusEvent(820 * .6, SDA_LINE_STATE | SCL_LINE_STATE | SCL_LINE_CHANGED),
         };
@@ -109,7 +175,7 @@ public:
         // THEN the events and deltas are recorded correctly
         BusEvent expected_trace[2] = {
                 BusEvent(8, SCL_LINE_STATE | SDA_LINE_STATE),
-                BusEvent(100, SCL_LINE_CHANGED | SDA_LINE_STATE),
+                BusEvent(130, SCL_LINE_CHANGED | SDA_LINE_STATE),
         };
         TEST_ASSERT_EQUAL(2, trace2.event_count());
         TEST_ASSERT_EQUAL(expected_trace[0].flags, trace2.event(0)->flags);
@@ -121,10 +187,10 @@ public:
 
     // Number of nanoseconds recorded from event 'start_index' to the end
     // of the trace.
-    static uint32_t nanos_til_end(BusTrace& busTrace, size_t start_index) {
+    static uint32_t nanos_til_end(BusTrace& trace, size_t start_index) {
         uint32_t total = 0;
-        for (size_t i = start_index; i < busTrace.event_count(); ++i) {
-            uint32_t nanos = common::hal::TeensyTimestamp::ticks_to_nanos(busTrace.event(i)->delta_t_in_ticks);
+        for (size_t i = start_index; i < trace.event_count(); ++i) {
+            uint32_t nanos = common::hal::TeensyTimestamp::ticks_to_nanos(trace.event(i)->delta_t_in_ticks);
             total += nanos;
         }
         return total;
@@ -162,11 +228,11 @@ public:
         uint32_t num_interrupts = (trace.event_count() - start_index);
         double nanos_per_call = ((double)duration_with_interrupts) / num_interrupts;
 //        Serial.printf("%.0f nanos per interrupt for single pin\n", nanos_per_call);
-        const uint32_t expected = 267; // Confirmed with scope
+        const uint32_t expected = 209; // Confirmed with scope
         TEST_ASSERT_UINT32_WITHIN(20, expected, nanos_per_call);
     }
 
-    static void toggle_both_pins_repeatedly(int repeats) {
+    static void toggle_both_pins_repeatedly(int repeats, common::hal::TeensyPin& sda, common::hal::TeensyPin& scl) {
         for (int i = 0; i < repeats; ++i) {
             scl.toggle();
             sda.toggle();
@@ -186,7 +252,7 @@ public:
         // WHEN we record the events
         recorder.start(trace);
         int repeats = 10;
-        toggle_both_pins_repeatedly(repeats);
+        toggle_both_pins_repeatedly(repeats, sda, scl);
         delayNanoseconds(WAIT_FOR_FINAL_EDGE);
         recorder.stop();
 //        print_trace(trace);
@@ -201,7 +267,7 @@ public:
         uint32_t num_interrupts = (trace.event_count() - start_index) / 2;
         double nanos_per_call = ((double)duration_with_interrupts) / num_interrupts;
 //        Serial.printf("%.0f nanos per interrupt for both pins\n", nanos_per_call);
-        const uint32_t expected = 361; // Confirmed with scope
+        const uint32_t expected = 233; // Confirmed with scope
         TEST_ASSERT_UINT32_WITHIN(20, expected, nanos_per_call);
     }
 
@@ -275,7 +341,13 @@ public:
 
     // Include all the tests here
     void test() final {
+        // TODO: Check for glitch (very short pulse)
         RUN_TEST(lines_are_low_to_start_with);
+        RUN_TEST(is_recording);
+        RUN_TEST(records_initial_line_states);
+        RUN_TEST(will_not_start_unless_callbacks_are_set);
+        RUN_TEST(will_not_start_unless_pins_share_the_same_GPIO_block);
+//        RUN_TEST(ignores_edges_when_not_recording);
         RUN_TEST(records_edges);
         RUN_TEST(creates_another_recording_correctly);
         RUN_TEST(test_interrupt_duration_single_line);
@@ -285,14 +357,13 @@ public:
         RUN_TEST(test_does_not_lose_sync);
     }
 
-    BusRecorderAE2ETest() : E2ETestBase(__FILE__) {};
+    BusRecorderE2ETest() : E2ETestBase(__FILE__) {};
 };
 
 // Define statics
-BusTrace BusRecorderAE2ETest::trace(MAX_EVENTS);
-BusRecorderA BusRecorderAE2ETest::recorder(PIN_SNIFF_SDA, PIN_SNIFF_SCL);
-common::hal::TeensyPin BusRecorderAE2ETest::sda(PIN_DRIVE_SDA, OUTPUT);
-common::hal::TeensyPin BusRecorderAE2ETest::scl(PIN_DRIVE_SCL, OUTPUT);
-
+BusTrace BusRecorderE2ETest::trace(MAX_EVENTS);
+BusRecorder BusRecorderE2ETest::recorder(PIN_SNIFF_SDA, PIN_SNIFF_SCL);
+common::hal::TeensyPin BusRecorderE2ETest::sda(PIN_DRIVE_SDA, OUTPUT);
+common::hal::TeensyPin BusRecorderE2ETest::scl(PIN_DRIVE_SCL, OUTPUT);
 }
-#endif  //I2C_UNDERNEATH_BUS_RECORDER_A_E2E_TEST_H
+#endif  //I2C_UNDERNEATH_BUS_RECORDER_E2E_TEST_H

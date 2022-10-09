@@ -5,6 +5,69 @@
 #pragma once
 #include <core_pins.h>
 
+// Returns the start of the fast GPIO register block for this pin.
+// This will be one of GPIO6, GPIO7, GPIO8 or GPIO9
+// Use this function in preference to getSlowGPIO if you can.
+static inline IMXRT_GPIO_t* getGPIO(uint8_t pin) {
+    if (__builtin_constant_p(pin)) {
+        switch(pin) {
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+            case 11:
+            case 12:
+            case 13:
+            case 32:
+            case 34:
+            case 35:
+            case 36:
+            case 37:
+                return (IMXRT_GPIO_t* const)IMXRT_GPIO7_ADDRESS;
+            case 28:
+            case 30:
+            case 31:
+#if CORE_NUM_DIGITAL >= 55
+            case 42:
+            case 43:
+            case 44:
+            case 45:
+            case 46:
+            case 47:
+#endif
+                return (IMXRT_GPIO_t* const)IMXRT_GPIO8_ADDRESS;
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 29:
+            case 33:
+#if CORE_NUM_DIGITAL >= 55
+            case 48:
+            case 49:
+            case 50:
+            case 51:
+            case 52:
+            case 53:
+            case 54:
+#endif
+                return (IMXRT_GPIO_t* const)IMXRT_GPIO9_ADDRESS;
+            default:
+                return (IMXRT_GPIO_t* const)IMXRT_GPIO6_ADDRESS;
+        }
+    }
+    return (IMXRT_GPIO_t* const)digital_pin_to_info_PGM[(pin)].reg;
+}
+
+// Returns the start of the slow GPIO register block for this pin.
+// This will be one of GPIO1, GPIO2, GPIO3 or GPIO4
+// Use getGPIO() if you can. The IO will be much faster.
+static inline IMXRT_GPIO_t* getSlowGPIO(uint8_t pin) {
+    auto address = (uint32_t)getGPIO(pin) - (IMXRT_GPIO6_ADDRESS - IMXRT_GPIO1_ADDRESS);
+    return (IMXRT_GPIO_t* const)address;
+}
+
 // Write the correct bitmask to the returned port to set or clear the digital pin.
 // This is slightly faster than digitalWriteFast() but is rarely worth the bother.
 static inline volatile uint32_t* getDigitalWritePort(uint8_t pin, bool set) {
@@ -199,4 +262,23 @@ static inline uint32_t getPortBitmask(uint8_t pin) {
 #endif
     }
     return digitalPinToBitMask(pin);
+}
+
+// Returns the IRQ to use with the SLOW gpio port for this pin.
+// You probably don't want to use this unless the normal high
+// speed GPIO is unsuitable for some reason.
+static inline IRQ_NUMBER_t getSlowIRQ(uint8_t pin) {
+    IRQ_NUMBER_t irq;
+    bool low_bit = __builtin_ctz(getPortBitmask(pin)) < 16;
+    auto gpio = (uint32_t)getSlowGPIO(pin);
+    if(gpio == IMXRT_GPIO1_ADDRESS) {
+        irq = low_bit ? IRQ_GPIO1_0_15 : IRQ_GPIO1_16_31;
+    } else if (gpio == IMXRT_GPIO2_ADDRESS) {
+        irq = low_bit ? IRQ_GPIO2_0_15 : IRQ_GPIO2_16_31;
+    } else if (gpio == IMXRT_GPIO3_ADDRESS) {
+        irq = low_bit ? IRQ_GPIO3_0_15 : IRQ_GPIO3_16_31;
+    } else {
+        irq = low_bit ? IRQ_GPIO4_0_15 : IRQ_GPIO4_16_31;
+    }
+    return irq;
 }

@@ -13,9 +13,11 @@
 #include "unit/bus_trace/bus_recorder_a_test.h"
 #include "unit/bus_trace/bus_trace_builder_test.h"
 #include "unit/bus_trace/bus_trace_test.h"
+#include "e2e/common/hal/teensy/super_fast_io_test.h"
 
 // End to End Tests
 #include "e2e/bus_trace/bus_recorder_a_e2e_test.h"
+#include "e2e/bus_trace/bus_recorder_e2e_test.h"
 #include "e2e/common/hal/arduino/arduino_pin_test.h"
 #include "e2e/common/hal/teensy/teensy_pin_test.h"
 #include "e2e/common/hal/teensy/teensy_timer_test.h"
@@ -51,12 +53,14 @@ void run_all_tests() {
     test(new bus_trace::BusRecorderATest);
     test(new bus_trace::BusTraceBuilderTest);
     test(new bus_trace::BusTraceTest);
+    test(new common::hal::SuperFastIoTest);
 
     // Full Stack Tests
     // These tests require working hardware
     Serial.println("Run Full Stack Tests");
     Serial.println("--------------------");
     test(new bus_trace::BusRecorderAE2ETest);
+    test(new bus_trace::BusRecorderE2ETest);
     test(new common::hal::ArduinoPinTest);
     test(new common::hal::TeensyClockTest);
     test(new common::hal::TeensyPinTest);

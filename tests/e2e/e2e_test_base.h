@@ -15,12 +15,12 @@ public:
     // WARNING: Changing pins can affect the order of edges.
     // SDA on pin 23 and SCL on pin 22 works Ok.
     // SDA on pin 21 and SCL on pin 20 works Ok.
-    const static uint32_t PIN_SNIFF_SDA = 21;   // GPIO1 and GPIO6 bit 27
-    const static uint32_t PIN_SNIFF_SCL = 20;   // GPIO1 and GPIO6 bit 26
+    constexpr static uint32_t PIN_SNIFF_SDA = 21;   // GPIO1 and GPIO6 bit 27
+    constexpr static uint32_t PIN_SNIFF_SCL = 20;   // GPIO1 and GPIO6 bit 26
 
     // Use these pins to drive the SNIFF pins
-    const static uint32_t PIN_DRIVE_SDA = 18;   // I2C Port 0
-    const static uint32_t PIN_DRIVE_SCL = 19;   // I2C Port 0
+    constexpr static uint32_t PIN_DRIVE_SDA = 18;   // I2C Port 0
+    constexpr static uint32_t PIN_DRIVE_SCL = 19;   // I2C Port 0
 
     explicit E2ETestBase(const char* test_file_name)
             : TestSuite(test_file_name) {
@@ -29,6 +29,8 @@ public:
     void setUp() override {
         pinMode(PIN_SNIFF_SDA, INPUT);
         pinMode(PIN_SNIFF_SCL, INPUT);
+        pinMode(PIN_DRIVE_SDA, OUTPUT);
+        pinMode(PIN_DRIVE_SCL, OUTPUT);
     }
 
     void tearDown() override {
@@ -36,6 +38,13 @@ public:
         pinMode(PIN_SNIFF_SCL, INPUT_DISABLE);
         pinMode(PIN_DRIVE_SDA, INPUT_DISABLE);
         pinMode(PIN_DRIVE_SCL, INPUT_DISABLE);
+    }
+
+    static void print_trace(const bus_trace::BusTrace& busTrace) {
+        // Remove comments to see trace timings.
+        for (size_t i = 0; i < busTrace.event_count(); ++i) {
+            Serial.printf("Index %d: delta %d ns\n", i, common::hal::TeensyTimestamp::ticks_to_nanos(busTrace.event(i)->delta_t_in_ticks));
+        }
     }
 };
 }
