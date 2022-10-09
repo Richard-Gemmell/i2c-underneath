@@ -25,9 +25,9 @@ bool BusRecorder::start(BusTrace& trace) {
     current_trace = &trace;
     noInterrupts()
     attach_gpio_interrupt(this->scl_isr);
-    auto pin_states = gpio->PSR;
-    line_states = update_from_bool(line_states, pin_states & sda_mask, BusEventFlagBits::SDA_LINE_STATE_BIT);
-    line_states = update_from_bool(line_states, pin_states & scl_mask, BusEventFlagBits::SCL_LINE_STATE_BIT);
+    previous_pin_states = fastGpio->PSR;
+    line_states = update_from_bool(line_states, previous_pin_states & sda_mask, BusEventFlagBits::SDA_LINE_STATE_BIT);
+    line_states = update_from_bool(line_states, previous_pin_states & scl_mask, BusEventFlagBits::SCL_LINE_STATE_BIT);
     current_trace->reset();
     trace.add_event(line_states);
     interrupts()

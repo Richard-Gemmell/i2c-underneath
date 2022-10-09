@@ -134,7 +134,7 @@ public:
         TEST_ASSERT_EQUAL(5, trace.event_count());
         BusEvent expected_trace[5] = {
                 BusEvent(8, SDA_LINE_STATE | SCL_LINE_STATE),
-                BusEvent(255 * .6, SCL_LINE_STATE | SDA_LINE_CHANGED),
+                BusEvent(210 * .6, SCL_LINE_STATE | SDA_LINE_CHANGED),
                 BusEvent(560 * .6, SCL_LINE_CHANGED),
                 BusEvent(1020 * .6, SDA_LINE_STATE | SDA_LINE_CHANGED),
                 BusEvent(820 * .6, SDA_LINE_STATE | SCL_LINE_STATE | SCL_LINE_CHANGED),
@@ -175,7 +175,7 @@ public:
         // THEN the events and deltas are recorded correctly
         BusEvent expected_trace[2] = {
                 BusEvent(8, SCL_LINE_STATE | SDA_LINE_STATE),
-                BusEvent(130, SCL_LINE_CHANGED | SDA_LINE_STATE),
+                BusEvent(99, SCL_LINE_CHANGED | SDA_LINE_STATE),
         };
         TEST_ASSERT_EQUAL(2, trace2.event_count());
         TEST_ASSERT_EQUAL(expected_trace[0].flags, trace2.event(0)->flags);
@@ -227,8 +227,8 @@ public:
         uint32_t duration_with_interrupts = nanos_til_end(trace, start_index);
         uint32_t num_interrupts = (trace.event_count() - start_index);
         double nanos_per_call = ((double)duration_with_interrupts) / num_interrupts;
-//        Serial.printf("%.0f nanos per interrupt for single pin\n", nanos_per_call);
-        const uint32_t expected = 209; // Confirmed with scope
+        Serial.printf("%.0f nanos per interrupt for single pin\n", nanos_per_call);
+        const uint32_t expected = 134; // Confirmed with scope
         TEST_ASSERT_UINT32_WITHIN(20, expected, nanos_per_call);
     }
 
@@ -266,8 +266,8 @@ public:
         uint32_t duration_with_interrupts = nanos_til_end(trace, start_index);
         uint32_t num_interrupts = (trace.event_count() - start_index) / 2;
         double nanos_per_call = ((double)duration_with_interrupts) / num_interrupts;
-//        Serial.printf("%.0f nanos per interrupt for both pins\n", nanos_per_call);
-        const uint32_t expected = 233; // Confirmed with scope
+        Serial.printf("%.0f nanos per interrupt for both pins\n", nanos_per_call);
+        const uint32_t expected = 164; // Confirmed with scope
         TEST_ASSERT_UINT32_WITHIN(20, expected, nanos_per_call);
     }
 
@@ -334,9 +334,9 @@ public:
         recorder.stop();
 
         // THEN the number of edges is incorrect
-        TEST_ASSERT_EQUAL_UINT32(3, trace.event_count());
+        TEST_ASSERT_EQUAL_UINT32(2, trace.event_count());
         // AND the final line state is HIGH
-        TEST_ASSERT_EQUAL(SCL_LINE_CHANGED | SCL_LINE_STATE, trace.event(2)->flags);
+        TEST_ASSERT_EQUAL(SCL_LINE_CHANGED | SCL_LINE_STATE, trace.event(1)->flags);
     }
 
     // Include all the tests here
