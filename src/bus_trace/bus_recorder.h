@@ -10,6 +10,40 @@
 
 namespace bus_trace {
 
+// Records the electrical activity on an I2C bus.
+// The recorder is driven by interrupts. It will continue
+// recording while the processor performs other work.
+// It may affect other tasks if they're time sensitive.
+//
+// CONFIGURATION
+// This version of BusRecorder requires that you pass a matched
+// pair of pins to the constructor. The pins are valid if:
+//   getSlowIRQ(pin_sda) == getSlowIRQ(pin_scl)
+// start() will return an error code if the combination is not valid.
+// You can take any pair of pins from one of these lists:
+//   (0, 1, 24, 25)
+//   (14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26, 27, 38, 39, 40, 41)
+//   (6, 9, 10, 11, 12, 13, 32)
+//   (7, 8, 34, 35, 36, 37)
+//   (42, 43, 44, 45)
+//   (28, 30, 31, 46, 47)
+//   (2, 3, 4, 5, 33)
+//   (29, 48, 49, 50, 51, 52, 53, 54)
+//
+// WARNING
+// The BusRecorder records edges when a GPIO interrupts fires.
+// The interrupt service routine takes about 150 nanoseconds
+// to record each edge.
+//
+// The main consequence of this is that if a line changes value more
+// than once in the time it takes the ISR to finish then only one or
+// two edges will be recorded. There's no way for the system to detect
+// 5 rapid line changes in a row for example.
+//
+// WARNING 2
+// If both lines change in the same ISR cycle then the recorder can't tell
+// which one changed first. It just assumes that SCL changed before SDA
+// as this common in a working I2C.
 class BusRecorder {
 public:
     BusRecorder(uint8_t pin_sda, uint8_t pin_scl)
