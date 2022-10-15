@@ -109,6 +109,7 @@ public:
     static void records_edges() {
         sda.set();
         scl.set();
+        delayMicroseconds(1);
         // WHEN both pins transition from HIGH->LOW->HIGH
         recorder.start(trace);
         delayNanoseconds(20);
@@ -121,16 +122,17 @@ public:
         scl.toggle();
         delayNanoseconds(WAIT_FOR_FINAL_EDGE);
         recorder.stop();
+//        Serial.println(trace);
 //        print_trace(trace);
 
         // THEN the trace contains events for all 4 edges
         TEST_ASSERT_EQUAL(5, trace.event_count());
         BusEvent expected_trace[5] = {
-                BusEvent(8, SDA_LINE_STATE | SCL_LINE_STATE),
-                BusEvent(210 * .6, SCL_LINE_STATE | SDA_LINE_CHANGED),
-                BusEvent(560 * .6, SCL_LINE_CHANGED),
-                BusEvent(1020 * .6, SDA_LINE_STATE | SDA_LINE_CHANGED),
-                BusEvent(820 * .6, SDA_LINE_STATE | SCL_LINE_STATE | SCL_LINE_CHANGED),
+                BusEvent(13, SDA_LINE_STATE | SCL_LINE_STATE),
+                BusEvent(180 * .6, SCL_LINE_STATE | SDA_LINE_CHANGED),
+                BusEvent(515 * .6, SCL_LINE_CHANGED),
+                BusEvent(1015 * .6, SDA_LINE_STATE | SDA_LINE_CHANGED),
+                BusEvent(830 * .6, SDA_LINE_STATE | SCL_LINE_STATE | SCL_LINE_CHANGED),
         };
         TEST_ASSERT_EQUAL(expected_trace[0].flags, trace.event(0)->flags);
         TEST_ASSERT_EQUAL(expected_trace[1].flags, trace.event(1)->flags);
@@ -168,7 +170,7 @@ public:
         // THEN the events and deltas are recorded correctly
         BusEvent expected_trace[2] = {
                 BusEvent(8, SCL_LINE_STATE | SDA_LINE_STATE),
-                BusEvent(99, SCL_LINE_CHANGED | SDA_LINE_STATE),
+                BusEvent(70, SCL_LINE_CHANGED | SDA_LINE_STATE),
         };
         TEST_ASSERT_EQUAL(2, trace2.event_count());
         TEST_ASSERT_EQUAL(expected_trace[0].flags, trace2.event(0)->flags);
@@ -216,12 +218,12 @@ public:
         TEST_ASSERT_EQUAL(expected_num_events, trace.event_count());
 
         // AND we can estimate the time to handle the interrupt
-        size_t start_index = 3; // The timings are a little erratic for the first few cycles.
+        size_t start_index = 1; // The timings are a little erratic for the first few cycles.
         uint32_t duration_with_interrupts = nanos_til_end(trace, start_index);
         uint32_t num_interrupts = (trace.event_count() - start_index);
         double nanos_per_call = ((double)duration_with_interrupts) / num_interrupts;
-        Serial.printf("%.0f nanos per interrupt for single pin\n", nanos_per_call);
-        const uint32_t expected = 134; // Confirmed with scope
+//        Serial.printf("%.0f nanos per interrupt for single pin\n", nanos_per_call);
+        const uint32_t expected = 130; // Confirmed with scope
         TEST_ASSERT_UINT32_WITHIN(20, expected, nanos_per_call);
     }
 
@@ -251,16 +253,16 @@ public:
 //        print_trace(trace);
 
         // THEN we recorded one event per edge
-        uint32_t expected_num_events = 1 + (2 * (repeats * 2));
+        uint32_t expected_num_events = 1 + (repeats * 2);
         TEST_ASSERT_EQUAL(expected_num_events, trace.event_count());
 
         // AND we can estimate the time to handle the interrupt
-        size_t start_index = 5; // The timings are a little erratic for the first few cycles.
+        size_t start_index = 1; // The timings are a little erratic for the first few cycles.
         uint32_t duration_with_interrupts = nanos_til_end(trace, start_index);
-        uint32_t num_interrupts = (trace.event_count() - start_index) / 2;
+        uint32_t num_interrupts = (trace.event_count() - start_index);
         double nanos_per_call = ((double)duration_with_interrupts) / num_interrupts;
-        Serial.printf("%.0f nanos per interrupt for both pins\n", nanos_per_call);
-        const uint32_t expected = 164; // Confirmed with scope
+//        Serial.printf("%.0f nanos per interrupt for both pins\n", nanos_per_call);
+        const uint32_t expected = 130; // Confirmed with scope
         TEST_ASSERT_UINT32_WITHIN(20, expected, nanos_per_call);
     }
 

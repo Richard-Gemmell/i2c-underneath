@@ -5,6 +5,8 @@
 
 namespace bus_trace {
 
+#define DEFAULT_IRQ_PRIORITY 128
+
 void bus_trace::BusRecorder::set_callback(void (*on_change)()) {
     this->isr = on_change;
 }
@@ -27,9 +29,7 @@ bool BusRecorder::start(BusTrace& trace) {
 
     noInterrupts()
     attach_gpio_interrupt();
-    previous_pin_states = fastGpio->PSR;
-    line_states = update_from_bool(line_states, previous_pin_states & sda_mask, BusEventFlagBits::SDA_LINE_STATE_BIT);
-    line_states = update_from_bool(line_states, previous_pin_states & scl_mask, BusEventFlagBits::SCL_LINE_STATE_BIT);
+    setLineStates(fastGpio->PSR);
     current_trace->reset();
     trace.add_event(line_states);
     interrupts()
@@ -49,23 +49,26 @@ bool BusRecorder::is_recording() const {
 }
 
 void BusRecorder::attach_gpio_interrupt() {
-    uint32_t mask = sda_mask | scl_mask;
-    gpio->IMR &= ~(mask);	// disable interrupts while we fiddle with them
+    gpio->IMR &= ~(masks);	// disable interrupts while we fiddle with them
 
     // Wire up the interrupt service routine
     attachInterruptVector(irq, isr);
     NVIC_ENABLE_IRQ(irq);
+    // Make this IRQ 1 step higher priority than I2C.
+    // Assumes the I2C priorities are still at the default value.
+    NVIC_SET_PRIORITY(irq, DEFAULT_IRQ_PRIORITY - 16);
 
     // Configure interrupts for these pins
-    gpio->EDGE_SEL |= mask; // Either edge will trigger the interrupts
-    gpio->ISR = mask;       // Clear the pending interrupts if there are any
-    gpio->IMR |= mask;      // Enable the interrupts
+    gpio->ISR = masks;      // Clear pending interrupts
+    gpio->EDGE_SEL |= masks;// Either edge will trigger the interrupts
+    gpio->IMR = masks;      // Enable the interrupts
 }
 
 void BusRecorder::detach_gpio_interrupt() {
     uint32_t mask = sda_mask | scl_mask;
     gpio->IMR &= ~mask;
     NVIC_DISABLE_IRQ(irq);
+    NVIC_SET_PRIORITY(irq, DEFAULT_IRQ_PRIORITY);
 }
 
 } // bus_trace

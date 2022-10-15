@@ -31,23 +31,25 @@ namespace bus_trace {
 //   (29, 48, 49, 50, 51, 52, 53, 54)
 //
 // WARNING
-// The BusRecorder records edges when a GPIO interrupts fires.
-// The interrupt service routine takes about 150 nanoseconds
-// to record each edge.
+// The BusRecorder records edges when a GPIO interrupt fires.
+// It takes about 130 nanoseconds to handle the interrupt.
+// Let us call this time T.
+// The BusRecorder will record edges reliably as long as gap
+// between them is greater than T.
 //
-// The main consequence of this is that if a line changes value more
-// than once in the time it takes the ISR to finish then only one or
-// two edges will be recorded. There's no way for the system to detect
-// 5 rapid line changes in a row for example.
+// If both lines change state with T nanos then they may be
+// recorded as if they happened simultaneously.
+// At most 2 edges will be recorded for a single line in this
+// time. If a line toggles repeatedly and returns to its initial
+// state then there might be no record of the change.
 //
-// WARNING 2
-// If both lines change in the same ISR cycle then the recorder can't tell
-// which one changed first. It just assumes that SCL changed before SDA
-// as this common in a working I2C.
+// Recording a 1 MHz I2C transaction will take roughly 1/2 of
+// the Teensy's clock cycles.
 class BusRecorder {
 public:
     BusRecorder(uint8_t pin_sda, uint8_t pin_scl)
         : sda_mask(getPortBitmask(pin_sda)), scl_mask(getPortBitmask(pin_scl)),
+          masks(sda_mask | scl_mask),
           gpio(getSlowGPIO(pin_sda)), fastGpio(getGPIO(pin_sda)),
           irq(getSlowIRQ(pin_sda)), irq_scl(getSlowIRQ(pin_scl)) {
     }
@@ -82,50 +84,41 @@ public:
         const uint32_t pin_states = fastGpio->PSR;
 
         // Clear the interrupt flags
-        gpio->ISR = sda_mask | scl_mask;
+        gpio->ISR = masks;
 
-        // If both pins have changed then we don't know what order they happened.
-        // In I2C it's common for SDA to fall immediately after SCL, so assume SCL
-        // changed first.
-        // TODO: If we don't know the order then raise 1 event instead of 2
+        // If both pins have changed then report them in a single event.
+        // We don't know which one happened first anyway.
 
-        // Handle SCL interrupt
-        const uint32_t changed_pins = pin_states ^ previous_pin_states;
-        if(changed_pins & scl_mask) {
-            if(pin_states & scl_mask) {
-                line_states = line_states | bus_trace::BusEventFlags::SCL_LINE_STATE;
-            } else {
-                line_states = line_states & bus_trace::BusEventFlags::SDA_LINE_STATE;
-            }
-            current_trace->add_event(line_states | bus_trace::BusEventFlags::SCL_LINE_CHANGED);
-        }
-
-        // Handle SDA interrupt
-        if(changed_pins & sda_mask) {
-            if(pin_states & sda_mask) {
-                line_states = line_states | bus_trace::BusEventFlags::SDA_LINE_STATE;
-            } else {
-                line_states = line_states & bus_trace::BusEventFlags::SCL_LINE_STATE;
-            }
-            current_trace->add_event(line_states | bus_trace::BusEventFlags::SDA_LINE_CHANGED);
-        }
-        previous_pin_states = pin_states;
+        // WARNING: If the ISR takes less than about 125 nanos then it'll fire twice.
+        // This implementation is already close to that limit.
+        BusEventFlags previous_line_states = line_states;
+        setLineStates(pin_states);
+        auto changed_flags = (BusEventFlags)((line_states ^ previous_line_states) << 2);
+        current_trace->add_event(changed_flags | line_states);
     }
 
 private:
     const uint32_t sda_mask;
     const uint32_t scl_mask;
+    const uint32_t masks;
     IMXRT_GPIO_t* const gpio;
     IMXRT_GPIO_t* const fastGpio;
     const IRQ_NUMBER_t irq;
     const IRQ_NUMBER_t irq_scl;
     void (*isr)() = nullptr;
     BusTrace* current_trace = nullptr;
-    uint32_t previous_pin_states = 0;
     BusEventFlags line_states = BusEventFlags::BOTH_LOW_AND_UNCHANGED;
 
     void attach_gpio_interrupt();
     void detach_gpio_interrupt();
+
+    inline void setLineStates(uint32_t pin_states) {
+        // Ensure the code takes the same time to execute irrespective of which line is set
+        // This reduces jitter in the bus timings.
+        auto sda = (pin_states & sda_mask) ? BusEventFlags::SDA_LINE_STATE : BusEventFlags::BOTH_LOW_AND_UNCHANGED;
+        auto scl = (pin_states & scl_mask) ? BusEventFlags::SCL_LINE_STATE : BusEventFlags::BOTH_LOW_AND_UNCHANGED;
+        line_states = sda | scl;
+    }
 };
 
 } // bus_trace
