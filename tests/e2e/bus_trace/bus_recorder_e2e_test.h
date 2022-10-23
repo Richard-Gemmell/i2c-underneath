@@ -106,6 +106,23 @@ public:
         TEST_ASSERT_EQUAL(0, failedTrace.event_count());
     }
 
+    static void ignores_edges_when_not_recording() {
+        // GIVEN edges before the recording
+        sda.toggle();
+        scl.toggle();
+
+        // WHEN we make a recording
+        recorder.start(trace);
+        recorder.stop();
+
+        // AND there are edges after we've stopped recording
+        sda.toggle();
+        scl.toggle();
+
+        // THEN the trace contains just the initial line states
+        TEST_ASSERT_EQUAL(1, trace.event_count());
+    }
+
     static void records_edges() {
         sda.set();
         scl.set();
@@ -266,32 +283,80 @@ public:
         TEST_ASSERT_UINT32_WITHIN(20, expected, nanos_per_call);
     }
 
-    // If both lines are changed in quick succession
-    // then the BusRecorder gets the order of SDA and SCL wrong.
-    // This is because they end up getting handled by the same
-    // interrupt service routine call and the pins are handled
-    // in a fixed order, not the order the events occurred.
-    // Note: I wasn't able to make edges disappear entirely with this trick.
-    static void test_reorder_events() {
+    // This isn't really a test.
+    // It's a convenient place to measure the timeline for the an ISR call
+    static void measure_ISR_time_line() {
+        static volatile uint32_t isr_started = 0;
+        static volatile uint32_t isr_ended = 0;
+        recorder.set_callback([]() {
+            isr_started = ARM_DWT_CYCCNT;
+            recorder.add_event();
+            isr_ended = ARM_DWT_CYCCNT;
+        });
+
+        sda.set();
+        scl.clear();
+        recorder.start(trace);
+
+        sda.toggle();
+        uint32_t after_set = ARM_DWT_CYCCNT;
+        volatile uint32_t before_isr;
+        for (int i = 0; i < 3; ++i) {
+            asm("nop");
+            before_isr = ARM_DWT_CYCCNT;
+        }
+        asm("nop");
+        asm("nop");
+        asm("nop");
+        asm("nop");
+        asm("nop");
+        // The NOPs above ensure that after_isr is set after the ISR returns
+        volatile uint32_t after_isr = ARM_DWT_CYCCNT;
+        delayNanoseconds(WAIT_FOR_FINAL_EDGE);
+        recorder.stop();
+
+        uint32_t pre_interrupt_duration = common::hal::TeensyTimestamp::nanos_between(after_set, before_isr);
+        Serial.printf("Main interrupted after : %d\n", pre_interrupt_duration);
+        uint32_t isr_latency = common::hal::TeensyTimestamp::nanos_between(after_set, isr_started);
+        Serial.printf("ISR latency: %d\n", isr_latency);
+        uint32_t isr_function_duration = common::hal::TeensyTimestamp::nanos_between(isr_started, isr_ended);
+        Serial.printf("ISR function duration: %d\n", isr_function_duration);
+        uint32_t isr_end_duration = common::hal::TeensyTimestamp::nanos_between(isr_ended, after_isr);
+        Serial.printf("ISR exit duration: %d\n", isr_end_duration);
+        uint32_t interrupt_duration = common::hal::TeensyTimestamp::nanos_between(after_set, after_isr);
+        Serial.printf("Total interrupt time: %d\n", interrupt_duration);
+        TEST_ASSERT_EQUAL(2, trace.event_count());
+        TEST_ASSERT_EQUAL(SDA_LINE_CHANGED, trace.event(1)->flags);
+    }
+
+    // If two events are handled by the same ISR call then they are
+    // considered to have happened simultaneously.
+    // I believe there's no reliable method to work out which happened
+    // first.
+    static void close_events_are_considered_to_be_simultaneous() {
         scl.set();
         sda.set();
-
-        int interval = 0;  // Edges are <10 ns apart. BusRecorder flips the order of the pins.
-//        int interval = 1;  // Edges are further apart. BusRecorder gets pin order correct.
 
         // WHEN we record 2 edges in quick succession
         recorder.start(trace);
         sda.clear();
-        delayNanoseconds(interval);
+        delayNanoseconds(0);
         scl.clear();
-        delayNanoseconds(100);
+        delayNanoseconds(WAIT_FOR_FINAL_EDGE);
         recorder.stop();
 
-        // THEN the BusRecorder gets the order of SDA and SCL wrong.
-//        trace.printTo(Serial);
-        TEST_ASSERT_EQUAL_UINT32(3, trace.event_count());
+        // THEN the BusRecorder considers them to have happened simultaneously.
+        TEST_ASSERT_EQUAL_UINT32(2, trace.event_count());
         TEST_ASSERT_EQUAL(SDA_LINE_STATE | SCL_LINE_STATE, trace.event(0)->flags);
-        TEST_ASSERT_NOT_EQUAL(SDA_LINE_CHANGED | SCL_LINE_STATE, trace.event(1)->flags);
+        TEST_ASSERT_EQUAL(SDA_LINE_CHANGED | SCL_LINE_CHANGED, trace.event(1)->flags);
+    }
+
+    // Other BusRecorder implementations get the order of events
+    // wrong if both lines are changed in quick succession.
+    // This implementation records as simultaneous events instead.
+    static void test_does_not_reorder_events() {
+        // Can't happen with this implementation of BusRecorder
+        TEST_ASSERT_TRUE(1);
     }
 
     static void test_lost_events() {
@@ -327,27 +392,30 @@ public:
         scl.set();
         delayNanoseconds(WAIT_FOR_FINAL_EDGE);
         recorder.stop();
+//        trace.printTo(Serial);
 
         // THEN the number of edges is incorrect
-        TEST_ASSERT_EQUAL_UINT32(2, trace.event_count());
+        TEST_ASSERT_EQUAL_UINT32(3, trace.event_count());
         // AND the final line state is HIGH
         TEST_ASSERT_EQUAL(SCL_LINE_CHANGED | SCL_LINE_STATE, trace.event(1)->flags);
     }
 
     // Include all the tests here
     void test() final {
-        // TODO: Check for glitch (very short pulse)
+//        // TODO: Check for glitch (very short pulse)
         RUN_TEST(lines_are_low_to_start_with);
         RUN_TEST(is_recording);
         RUN_TEST(records_initial_line_states);
         RUN_TEST(will_not_start_unless_callbacks_are_set);
         RUN_TEST(will_not_start_unless_pins_share_the_same_GPIO_block);
-//        RUN_TEST(ignores_edges_when_not_recording);
+        RUN_TEST(ignores_edges_when_not_recording);
         RUN_TEST(records_edges);
         RUN_TEST(creates_another_recording_correctly);
         RUN_TEST(test_interrupt_duration_single_line);
         RUN_TEST(test_interrupt_duration_both_lines);
-        RUN_TEST(test_reorder_events);
+//        RUN_TEST(measure_ISR_time_line);
+        RUN_TEST(close_events_are_considered_to_be_simultaneous);
+        RUN_TEST(test_does_not_reorder_events);
         RUN_TEST(test_lost_events);
         RUN_TEST(test_does_not_lose_sync);
     }
