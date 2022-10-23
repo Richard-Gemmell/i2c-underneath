@@ -146,7 +146,7 @@ public:
         TEST_ASSERT_EQUAL(5, trace.event_count());
         BusEvent expected_trace[5] = {
                 BusEvent(13, SDA_LINE_STATE | SCL_LINE_STATE),
-                BusEvent(180 * .6, SCL_LINE_STATE | SDA_LINE_CHANGED),
+                BusEvent(140 * .6, SCL_LINE_STATE | SDA_LINE_CHANGED),
                 BusEvent(515 * .6, SCL_LINE_CHANGED),
                 BusEvent(1015 * .6, SDA_LINE_STATE | SDA_LINE_CHANGED),
                 BusEvent(830 * .6, SDA_LINE_STATE | SCL_LINE_STATE | SCL_LINE_CHANGED),
@@ -187,7 +187,7 @@ public:
         // THEN the events and deltas are recorded correctly
         BusEvent expected_trace[2] = {
                 BusEvent(8, SCL_LINE_STATE | SDA_LINE_STATE),
-                BusEvent(70, SCL_LINE_CHANGED | SDA_LINE_STATE),
+                BusEvent(56, SCL_LINE_CHANGED | SDA_LINE_STATE),
         };
         TEST_ASSERT_EQUAL(2, trace2.event_count());
         TEST_ASSERT_EQUAL(expected_trace[0].flags, trace2.event(0)->flags);

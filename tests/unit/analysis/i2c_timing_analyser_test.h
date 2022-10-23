@@ -49,104 +49,108 @@ public:
         Serial.println(actual);
     }
 
+    static void add_event(bus_trace::BusTrace& trace, uint32_t delta_t_in_ticks, bus_trace::BusEventFlags flags) {
+        trace.add_event(bus_trace::BusEvent(delta_t_in_ticks, flags));
+    }
+
     static void add_start(bus_trace::BusTrace& trace) {
         // Adds a start bit
         const uint32_t tf = 110/nanos_per_tick; // Fall time
-        trace.add_event(tf, SDA_LINE_CHANGED | SCL_LINE_STATE);
+        add_event(trace, tf, SDA_LINE_CHANGED | SCL_LINE_STATE);
         uint32_t tHD_STA = (4'000 + 120)/nanos_per_tick;
-        trace.add_event(tHD_STA, SCL_LINE_CHANGED);
+        add_event(trace, tHD_STA, SCL_LINE_CHANGED);
     }
 
     static void add_address_byte(bus_trace::BusTrace& trace) {
         // 7 bit Address - 101 0011
         // 1 (0->1)
-        trace.add_event(tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
-        trace.add_event(tLOW+4, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
-        trace.add_event(tHIGH+5, SCL_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tLOW+4, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
+        add_event(trace, tHIGH+5, SCL_LINE_CHANGED | SDA_LINE_STATE);
         // 0 (1->0)
-        trace.add_event(tHD_DAT, SDA_LINE_CHANGED);
-        trace.add_event(tLOW+7, SCL_LINE_CHANGED | SCL_LINE_STATE);
-        trace.add_event(tHIGH+8, SCL_LINE_CHANGED);
+        add_event(trace, tHD_DAT, SDA_LINE_CHANGED);
+        add_event(trace, tLOW+7, SCL_LINE_CHANGED | SCL_LINE_STATE);
+        add_event(trace, tHIGH+8, SCL_LINE_CHANGED);
         // 1 (0->1)
-        trace.add_event(tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
-        trace.add_event(tLOW+10, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
-        trace.add_event(tHIGH+11, SCL_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tLOW+10, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
+        add_event(trace, tHIGH+11, SCL_LINE_CHANGED | SDA_LINE_STATE);
         // 0 (1->0)
-        trace.add_event(tHD_DAT, SDA_LINE_CHANGED);
-        trace.add_event(tLOW+13, SCL_LINE_CHANGED | SCL_LINE_STATE);
-        trace.add_event(tHIGH+14, SCL_LINE_CHANGED);
+        add_event(trace, tHD_DAT, SDA_LINE_CHANGED);
+        add_event(trace, tLOW+13, SCL_LINE_CHANGED | SCL_LINE_STATE);
+        add_event(trace, tHIGH+14, SCL_LINE_CHANGED);
         // 0 (0->0)
-        trace.add_event(tLOW+15, SCL_LINE_CHANGED | SCL_LINE_STATE);
-        trace.add_event(tHIGH+16, SCL_LINE_CHANGED);
+        add_event(trace, tLOW+15, SCL_LINE_CHANGED | SCL_LINE_STATE);
+        add_event(trace, tHIGH+16, SCL_LINE_CHANGED);
         // 1 (0->1)
-        trace.add_event(tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
-        trace.add_event(tLOW+18, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
-        trace.add_event(tHIGH+19, SCL_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tLOW+18, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
+        add_event(trace, tHIGH+19, SCL_LINE_CHANGED | SDA_LINE_STATE);
         // 1 (1->1)
-        trace.add_event(tLOW+20, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
-        trace.add_event(tHIGH+21, SCL_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tLOW+20, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
+        add_event(trace, tHIGH+21, SCL_LINE_CHANGED | SDA_LINE_STATE);
 
         // READ/WRITE Bit
         // 1 (1->1)
-        trace.add_event(tLOW+22, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
-        trace.add_event(tHIGH+23, SCL_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tLOW+22, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
+        add_event(trace, tHIGH+23, SCL_LINE_CHANGED | SDA_LINE_STATE);
 
         // ACK address - by slave
         // 0 (1->0)
-        trace.add_event(tHD_DAT, SDA_LINE_CHANGED);
-        trace.add_event(tLOW+25, SCL_LINE_CHANGED | SCL_LINE_STATE);
-        trace.add_event(tHIGH+26, SCL_LINE_CHANGED);
+        add_event(trace, tHD_DAT, SDA_LINE_CHANGED);
+        add_event(trace, tLOW+25, SCL_LINE_CHANGED | SCL_LINE_STATE);
+        add_event(trace, tHIGH+26, SCL_LINE_CHANGED);
     }
 
     static void add_data_byte(bus_trace::BusTrace& trace) {
         // Data Byte - 0101 1000
         // 0 (0->0)
-        trace.add_event(tLOW+27, SCL_LINE_CHANGED | SCL_LINE_STATE);
-        trace.add_event(tHIGH+28, SCL_LINE_CHANGED);
+        add_event(trace, tLOW+27, SCL_LINE_CHANGED | SCL_LINE_STATE);
+        add_event(trace, tHIGH+28, SCL_LINE_CHANGED);
         // 1 (0->1)
-        trace.add_event(tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
-        trace.add_event(tLOW+30, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
-        trace.add_event(tHIGH+31, SCL_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tLOW+30, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
+        add_event(trace, tHIGH+31, SCL_LINE_CHANGED | SDA_LINE_STATE);
         // 0 (1->0)
-        trace.add_event(tHD_DAT, SDA_LINE_CHANGED);
-        trace.add_event(tLOW+33, SCL_LINE_CHANGED | SCL_LINE_STATE);
-        trace.add_event(tHIGH+34, SCL_LINE_CHANGED);
+        add_event(trace, tHD_DAT, SDA_LINE_CHANGED);
+        add_event(trace, tLOW+33, SCL_LINE_CHANGED | SCL_LINE_STATE);
+        add_event(trace, tHIGH+34, SCL_LINE_CHANGED);
         // 1 (0->1)
-        trace.add_event(tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
-        trace.add_event(tLOW+36, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
-        trace.add_event(tHIGH+37, SCL_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tLOW+36, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
+        add_event(trace, tHIGH+37, SCL_LINE_CHANGED | SDA_LINE_STATE);
 
         // 1 (1->1)
-        trace.add_event(tLOW+38, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
-        trace.add_event(tHIGH+39, SCL_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tLOW+38, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
+        add_event(trace, tHIGH+39, SCL_LINE_CHANGED | SDA_LINE_STATE);
         // 0 (1->0)
-        trace.add_event(tHD_DAT, SDA_LINE_CHANGED);
-        trace.add_event(tLOW+41, SCL_LINE_CHANGED | SCL_LINE_STATE);
-        trace.add_event(tHIGH+42, SCL_LINE_CHANGED);
+        add_event(trace, tHD_DAT, SDA_LINE_CHANGED);
+        add_event(trace, tLOW+41, SCL_LINE_CHANGED | SCL_LINE_STATE);
+        add_event(trace, tHIGH+42, SCL_LINE_CHANGED);
         // 0 (0->0)
-        trace.add_event(tLOW+43, SCL_LINE_CHANGED | SCL_LINE_STATE);
-        trace.add_event(tHIGH+44, SCL_LINE_CHANGED);
+        add_event(trace, tLOW+43, SCL_LINE_CHANGED | SCL_LINE_STATE);
+        add_event(trace, tHIGH+44, SCL_LINE_CHANGED);
         // 0 (0->0)
-        trace.add_event(tLOW+45, SCL_LINE_CHANGED | SCL_LINE_STATE);
-        trace.add_event(tHIGH+46, SCL_LINE_CHANGED);
+        add_event(trace, tLOW+45, SCL_LINE_CHANGED | SCL_LINE_STATE);
+        add_event(trace, tHIGH+46, SCL_LINE_CHANGED);
 
         // NACK data byte - master NACKS final byte to say it's done
         // 1 (0->1)
-        trace.add_event(tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
-        trace.add_event(tLOW+48, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
-        trace.add_event(tHIGH+49, SCL_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tLOW+48, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
+        add_event(trace, tHIGH+49, SCL_LINE_CHANGED | SDA_LINE_STATE);
     }
 
     static void add_stop(bus_trace::BusTrace& trace) {
-        trace.add_event(tHD_DAT, SDA_LINE_CHANGED);
-        trace.add_event(tLOW+51, SCL_LINE_CHANGED | SCL_LINE_STATE);
+        add_event(trace, tHD_DAT, SDA_LINE_CHANGED);
+        add_event(trace, tLOW+51, SCL_LINE_CHANGED | SCL_LINE_STATE);
         uint32_t tSU_STO = 4'000/nanos_per_tick;
-        trace.add_event(tSU_STO+1, SDA_LINE_CHANGED | SDA_LINE_STATE | SCL_LINE_STATE);
+        add_event(trace, tSU_STO+1, SDA_LINE_CHANGED | SDA_LINE_STATE | SCL_LINE_STATE);
     }
 
     static void given_a_valid_trace(bus_trace::BusTrace& trace) {
         // BUS is idle to start with
-        trace.add_event(0, SDA_LINE_STATE | SCL_LINE_STATE);
+        add_event(trace, 0, SDA_LINE_STATE | SCL_LINE_STATE);
 
         // START
         add_start(trace);
@@ -166,7 +170,7 @@ public:
 
     static void given_2_messages_separated_by_a_repeated_start(bus_trace::BusTrace& trace) {
         // BUS is idle to start with
-        trace.add_event(0, SDA_LINE_STATE | SCL_LINE_STATE);
+        add_event(trace, 0, SDA_LINE_STATE | SCL_LINE_STATE);
 
         // First Message
         add_start(trace);
@@ -176,10 +180,10 @@ public:
         // Repeated Start
         // SCL rises as if we're about to write a 1.
         // Assume SDA is already high because the last byte was NACKed
-        trace.add_event(tLOW+53, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
+        add_event(trace, tLOW+53, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
         // SDA falls while SCL is still high
         uint32_t tSU_STA = 4'700/nanos_per_tick;
-        trace.add_event(tSU_STA+1, SDA_LINE_CHANGED | SCL_LINE_STATE);
+        add_event(trace, tSU_STA+1, SDA_LINE_CHANGED | SCL_LINE_STATE);
 
         // Second Message
         add_address_byte(trace);

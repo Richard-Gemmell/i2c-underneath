@@ -32,7 +32,7 @@ namespace bus_trace {
 //
 // WARNING
 // The BusRecorder records edges when a GPIO interrupt fires.
-// It takes about 130 nanoseconds to handle the interrupt.
+// It takes about 125 nanoseconds to handle the interrupt.
 // Let us call this time T.
 // The BusRecorder will record edges reliably as long as gap
 // between them is greater than T.
@@ -78,7 +78,10 @@ public:
     // Use set_callbacks() to fire it automatically when the pins
     // detect a rising or falling edge.
     inline void add_event() {
-        if(!current_trace) return;
+        // Get the timestamp as soon as possible
+        // The edge that triggered this interrupt happened about 44 nanos before this
+        // unless it occurred during the previous interrupt.
+        uint32_t timestamp = ARM_DWT_CYCCNT;
 
         // It's much faster to use the fast GPIO port to read the pins.
         const uint32_t pin_states = fastGpio->PSR;
@@ -86,15 +89,17 @@ public:
         // Clear the interrupt flags
         gpio->ISR = masks;
 
+        // We don't want to record this event.
+        if(!current_trace) return;
+
         // If both pins have changed then report them in a single event.
         // We don't know which one happened first anyway.
-
-        // WARNING: If the ISR takes less than about 125 nanos then it'll fire twice.
-        // This implementation is already close to that limit.
         BusEventFlags previous_line_states = line_states;
         setLineStates(pin_states);
         auto changed_flags = (BusEventFlags)((line_states ^ previous_line_states) << 2);
-        current_trace->add_event(changed_flags | line_states);
+        current_trace->add_event(timestamp, changed_flags | line_states);
+
+        // WARNING: If the ISR takes less than about 125 nanos then it'll fire twice.
     }
 
 private:

@@ -78,6 +78,18 @@ public:
         TEST_ASSERT_TRUE(*actual == BusEvent(123, BusEventFlags::SDA_LINE_STATE));
     }
 
+    static void add_event_override_calculates_delta() {
+        BusTrace trace(MAX_EVENTS);
+
+        // WHEN we add an event with the override
+        trace.add_event(123, BusEventFlags::SDA_LINE_STATE);
+        trace.add_event(130, BusEventFlags::SDA_LINE_STATE);
+
+        // THEN we can retrieve the new event
+        TEST_ASSERT_TRUE(*trace.event(0) == BusEvent(123, BusEventFlags::SDA_LINE_STATE));
+        TEST_ASSERT_TRUE(*trace.event(1) == BusEvent(7, BusEventFlags::SDA_LINE_STATE));
+    }
+
     static void add_event_gets_system_tick_directly_on_teensy4() {
 #ifdef ARDUINO_TEENSY40
         BusTrace trace(MAX_EVENTS);
@@ -494,8 +506,8 @@ public:
         // GIVEN a trace with some events and a clock
         common::hal::FakeClock clock;
         BusTrace trace(&clock, MAX_EVENTS);
-        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
-        trace.add_event(200, BusEventFlags::SCL_LINE_CHANGED);
+        trace.add_event(BusEvent(100, BusEventFlags::SDA_LINE_CHANGED));
+        trace.add_event(BusEvent(200, BusEventFlags::SCL_LINE_CHANGED));
 
         // WHEN we get the duration between 2 existing events
         uint32_t actual = trace.nanos_to_previous(1);
@@ -563,9 +575,9 @@ public:
         // GIVEN a trace with some events
         common::hal::FakeClock clock;
         BusTrace trace(&clock, MAX_EVENTS);
-        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
-        trace.add_event(200, BusEventFlags::SDA_LINE_CHANGED);
-        trace.add_event(300, BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(BusEvent(100, BusEventFlags::SDA_LINE_CHANGED));
+        trace.add_event(BusEvent(200, BusEventFlags::SDA_LINE_CHANGED));
+        trace.add_event(BusEvent(300, BusEventFlags::SDA_LINE_CHANGED));
 
         // WHEN we try to get the duration between all events
         uint32_t actual = trace.nanos_between(2, 0);
@@ -578,10 +590,10 @@ public:
         // GIVEN a trace with some events
         common::hal::FakeClock clock;
         BusTrace trace(&clock, MAX_EVENTS);
-        trace.add_event(100, BusEventFlags::SDA_LINE_CHANGED);
-        trace.add_event(200, BusEventFlags::SDA_LINE_CHANGED);
-        trace.add_event(50, BusEventFlags::SDA_LINE_CHANGED);
-        trace.add_event(300, BusEventFlags::SDA_LINE_CHANGED);
+        trace.add_event(BusEvent(100, BusEventFlags::SDA_LINE_CHANGED));
+        trace.add_event(BusEvent(200, BusEventFlags::SDA_LINE_CHANGED));
+        trace.add_event(BusEvent(50, BusEventFlags::SDA_LINE_CHANGED));
+        trace.add_event(BusEvent(300, BusEventFlags::SDA_LINE_CHANGED));
 
         // WHEN we try to get the duration between events which
         // are neither at the beginning nor the end of the trace
@@ -600,6 +612,7 @@ public:
         RUN_TEST(cannot_get_event_that_has_not_been_added);
         RUN_TEST(add_event_with_bus_event_object);
         RUN_TEST(add_event_override);
+        RUN_TEST(add_event_override_calculates_delta);
         RUN_TEST(add_event_gets_system_tick_directly_on_teensy4);
         RUN_TEST(add_event_is_fast_enough_on_a_teensy4);
         RUN_TEST(add_event_gets_system_tick_from_clock);

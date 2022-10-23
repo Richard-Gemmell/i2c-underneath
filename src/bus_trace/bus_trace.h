@@ -79,9 +79,9 @@ public:
         current_event_count++;
     }
 
-    inline void add_event(uint32_t delta_t_in_ticks, BusEventFlags flags) {
-        // This looks crazy but it makes BusRecorder very slightly faster
-        add_event(BusEvent(delta_t_in_ticks, flags));
+    inline void add_event(uint32_t current_tick_count, BusEventFlags flags) {
+        add_event(BusEvent(current_tick_count - ticks_start, flags));
+        ticks_start = current_tick_count;
     }
 
     inline void add_event(BusEventFlags flags) {
