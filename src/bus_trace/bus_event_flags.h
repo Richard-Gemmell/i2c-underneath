@@ -2,6 +2,7 @@
 // Released under the MIT License. See license.txt. (https://opensource.org/licenses/MIT)
 
 #pragma once
+
 #include <cstdint>
 #include <cstddef>
 
@@ -43,29 +44,32 @@ inline BusEventFlags update_from_bool(BusEventFlags flags, bool value, BusEventF
     return BusEventFlags((flags & ~(1 << bit)) | (value << bit));
 }
 
+// Bitwise OR
 inline BusEventFlags operator|(BusEventFlags lhs, BusEventFlags rhs) {
     return static_cast<BusEventFlags>(
             static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs)
     );
 }
 
-inline BusEventFlags& operator |=(BusEventFlags& lhs, BusEventFlags rhs)
-{
+inline BusEventFlags& operator|=(BusEventFlags& lhs, BusEventFlags rhs) {
     return lhs = lhs | rhs;
 }
 
+// Bitwise AND
 inline BusEventFlags operator&(BusEventFlags lhs, BusEventFlags rhs) {
     return static_cast<BusEventFlags>(
             static_cast<uint8_t>(lhs) & static_cast<uint8_t>(rhs)
     );
 }
 
+// Bitwise XOR
 inline BusEventFlags operator^(BusEventFlags lhs, BusEventFlags rhs) {
     return static_cast<BusEventFlags>(
             static_cast<uint8_t>(lhs) ^ static_cast<uint8_t>(rhs)
     );
 }
 
+// Bitwise NOT
 inline BusEventFlags operator~(BusEventFlags flags) {
     return static_cast<BusEventFlags>(
             ~static_cast<uint8_t>(flags)

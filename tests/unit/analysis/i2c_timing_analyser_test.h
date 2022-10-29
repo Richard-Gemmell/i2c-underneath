@@ -45,8 +45,8 @@ public:
     }
 
     static void log_value(const char* msg, const analysis::DurationStatistics& actual) {
-        Serial.printf("%s ", msg);
-        Serial.println(actual);
+//        Serial.printf("%s ", msg);
+//        Serial.println(actual);
     }
 
     static void add_event(bus_trace::BusTrace& trace, uint32_t delta_t_in_ticks, bus_trace::BusEventFlags flags) {

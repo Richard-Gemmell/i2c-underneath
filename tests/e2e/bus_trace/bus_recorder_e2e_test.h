@@ -37,6 +37,14 @@ public:
         E2ETestBase::tearDown();
     }
 
+    // Toggle SDA to make it easy to find the trace with an oscilloscope
+    // Set the scope to trigger on SDA rising edge
+    static void mark_test_with_sda_toggle() {
+        sda.set();
+        delayNanoseconds(100);
+        sda.clear();
+    }
+
     static void lines_are_low_to_start_with() {
         // This is the opposite way round to a normal I2C setup,
         // but we're using OUTPUT here not pullups
@@ -220,6 +228,7 @@ public:
     // Estimates the time taken to record an edge.
     // Most of this time is taken detecting the edge and firing the interrupt.
     static void test_interrupt_duration_single_line() {
+        mark_test_with_sda_toggle(); // makes it easy to find trace on a scope
         scl.set();
 
         // WHEN we record the events
@@ -235,13 +244,14 @@ public:
         TEST_ASSERT_EQUAL(expected_num_events, trace.event_count());
 
         // AND we can estimate the time to handle the interrupt
-        size_t start_index = 1; // The timings are a little erratic for the first few cycles.
+        size_t start_index = 2; // The timings are a little erratic for the first few cycles.
         uint32_t duration_with_interrupts = nanos_til_end(trace, start_index);
         uint32_t num_interrupts = (trace.event_count() - start_index);
         double nanos_per_call = ((double)duration_with_interrupts) / num_interrupts;
 //        Serial.printf("%.0f nanos per interrupt for single pin\n", nanos_per_call);
-        const uint32_t expected = 130; // Confirmed with scope
-        TEST_ASSERT_UINT32_WITHIN(20, expected, nanos_per_call);
+        // Note that the time includes 16 nanos after the pin is set and before the interrupt begins
+        const uint32_t expected = 114 + 16; // Confirmed with scope at 130 nanos
+        TEST_ASSERT_UINT32_WITHIN(3, expected, nanos_per_call);
     }
 
     static void toggle_both_pins_repeatedly(int repeats) {
@@ -258,7 +268,7 @@ public:
     // Estimates the time taken to record an edge.
     // Most of this time is taken detecting the edge and firing the interrupt.
     static void test_interrupt_duration_both_lines() {
-        sda.set();
+        mark_test_with_sda_toggle(); // makes it easy to find trace on a scope
         scl.set();
 
         // WHEN we record the events
@@ -274,17 +284,18 @@ public:
         TEST_ASSERT_EQUAL(expected_num_events, trace.event_count());
 
         // AND we can estimate the time to handle the interrupt
-        size_t start_index = 1; // The timings are a little erratic for the first few cycles.
+        size_t start_index = 4; // The timings are a little erratic for the first few cycles.
         uint32_t duration_with_interrupts = nanos_til_end(trace, start_index);
         uint32_t num_interrupts = (trace.event_count() - start_index);
         double nanos_per_call = ((double)duration_with_interrupts) / num_interrupts;
 //        Serial.printf("%.0f nanos per interrupt for both pins\n", nanos_per_call);
-        const uint32_t expected = 130; // Confirmed with scope
-        TEST_ASSERT_UINT32_WITHIN(20, expected, nanos_per_call);
+        // Note that the time includes 16 nanos after the pin is set and before the interrupt begins
+        const uint32_t expected = 116 + 16; // Confirmed with scope at 132 nanos
+        TEST_ASSERT_UINT32_WITHIN(3, expected, nanos_per_call);
     }
 
     // This isn't really a test.
-    // It's a convenient place to measure the timeline for the an ISR call
+    // It's a convenient place to measure the timeline for the ISR call
     static void measure_ISR_time_line() {
         static volatile uint32_t isr_started = 0;
         static volatile uint32_t isr_ended = 0;
@@ -307,9 +318,6 @@ public:
         }
         asm("nop");
         asm("nop");
-        asm("nop");
-        asm("nop");
-        asm("nop");
         // The NOPs above ensure that after_isr is set after the ISR returns
         volatile uint32_t after_isr = ARM_DWT_CYCCNT;
         delayNanoseconds(WAIT_FOR_FINAL_EDGE);
@@ -320,7 +328,7 @@ public:
         uint32_t isr_latency = common::hal::TeensyTimestamp::nanos_between(after_set, isr_started);
         Serial.printf("ISR latency: %d\n", isr_latency);
         uint32_t isr_function_duration = common::hal::TeensyTimestamp::nanos_between(isr_started, isr_ended);
-        Serial.printf("ISR function duration: %d\n", isr_function_duration);
+        Serial.printf("ISR function duration (probably 30 nanos too high) : %d\n", isr_function_duration);
         uint32_t isr_end_duration = common::hal::TeensyTimestamp::nanos_between(isr_ended, after_isr);
         Serial.printf("ISR exit duration: %d\n", isr_end_duration);
         uint32_t interrupt_duration = common::hal::TeensyTimestamp::nanos_between(after_set, after_isr);
@@ -354,12 +362,13 @@ public:
     // Other BusRecorder implementations get the order of events
     // wrong if both lines are changed in quick succession.
     // This implementation records as simultaneous events instead.
-    static void test_does_not_reorder_events() {
+    static void does_not_reorder_events() {
         // Can't happen with this implementation of BusRecorder
         TEST_ASSERT_TRUE(1);
     }
 
-    static void test_lost_events() {
+    static void loses_events() {
+        mark_test_with_sda_toggle(); // makes it easy to find trace on a scope
         scl.set();
 
         // WHEN we record a lot of edges in quick succession
@@ -377,17 +386,17 @@ public:
         TEST_ASSERT_EQUAL_UINT32(2, trace.event_count());
     }
 
-    static void test_does_not_lose_sync() {
+    static void does_not_lose_sync() {
+        mark_test_with_sda_toggle(); // makes it easy to find trace on a scope
         scl.clear();
-        sda.set();  // Trigger of SDA to find the trace with an oscilloscope
-        delayNanoseconds(100);
-        sda.clear();
 
         // GIVEN the recorder lost edges because they happened too quickly
         recorder.start(trace);
         scl.set();
-        delayNanoseconds(1);
+        asm("nop");
+        delayNanoseconds(0);
         scl.clear();
+        asm("nop");
         delayNanoseconds(0);
         scl.set();
         delayNanoseconds(WAIT_FOR_FINAL_EDGE);
@@ -395,14 +404,203 @@ public:
 //        trace.printTo(Serial);
 
         // THEN the number of edges is incorrect
-        TEST_ASSERT_EQUAL_UINT32(3, trace.event_count());
+        TEST_ASSERT_EQUAL_UINT32(2, trace.event_count());
         // AND the final line state is HIGH
         TEST_ASSERT_EQUAL(SCL_LINE_CHANGED | SCL_LINE_STATE, trace.event(1)->flags);
     }
 
+    static void captures_low_to_high_glitch_on_single_line() {
+        mark_test_with_sda_toggle(); // makes it easy to find trace on a scope
+        scl.clear();
+
+        // GIVEN a line toggles from LOW to HIGH before the recorder can react
+        recorder.start(trace);
+        scl.set();
+        delayNanoseconds(0);
+        scl.clear();
+        delayNanoseconds(WAIT_FOR_FINAL_EDGE);
+        recorder.stop();
+//        trace.printTo(Serial);
+
+        // THEN the trace shows that SCL glitched from LOW->HIGH->LOW
+        BusEvent expected_trace[3] = {
+                BusEvent(8, BOTH_LOW_AND_UNCHANGED),
+                BusEvent(55, SCL_LINE_CHANGED | SCL_LINE_STATE),
+                BusEvent(0, SCL_LINE_CHANGED)
+        };
+        TEST_ASSERT_EQUAL_UINT32(3, trace.event_count());
+        TEST_ASSERT_EQUAL(expected_trace[0].flags, trace.event(0)->flags);
+        TEST_ASSERT_EQUAL(expected_trace[1].flags, trace.event(1)->flags);
+        TEST_ASSERT_EQUAL(expected_trace[2].flags, trace.event(2)->flags);
+        TEST_ASSERT_UINT32_WITHIN(15, expected_trace[1].delta_t_in_ticks, trace.event(1)->delta_t_in_ticks);
+        // AND there's no delta is reported as 0
+        TEST_ASSERT_EQUAL_UINT32(0, trace.event(2)->delta_t_in_ticks);
+    }
+
+    static void captures_high_to_low_glitch_on_single_line() {
+        mark_test_with_sda_toggle(); // makes it easy to find trace on a scope
+        scl.set();
+
+        // GIVEN a line toggles from HIGH to LOW before the recorder can react
+        recorder.start(trace);
+        scl.clear();
+        delayNanoseconds(0);
+        scl.set();
+        delayNanoseconds(WAIT_FOR_FINAL_EDGE);
+        recorder.stop();
+//        trace.printTo(Serial);
+
+        // THEN the trace shows that SCL glitched from HIGH->LOW->HIGH
+        BusEvent expected_trace[3] = {
+                BusEvent(8, SCL_LINE_STATE),
+                BusEvent(55, SCL_LINE_CHANGED),
+                BusEvent(0, SCL_LINE_CHANGED | SCL_LINE_STATE)
+        };
+        TEST_ASSERT_EQUAL_UINT32(3, trace.event_count());
+        TEST_ASSERT_EQUAL(expected_trace[0].flags, trace.event(0)->flags);
+        TEST_ASSERT_EQUAL(expected_trace[1].flags, trace.event(1)->flags);
+        TEST_ASSERT_EQUAL(expected_trace[2].flags, trace.event(2)->flags);
+        TEST_ASSERT_UINT32_WITHIN(15, expected_trace[1].delta_t_in_ticks, trace.event(1)->delta_t_in_ticks);
+        // AND there's no delta is reported as 0
+        TEST_ASSERT_EQUAL_UINT32(0, trace.event(2)->delta_t_in_ticks);
+    }
+
+    static void captures_simultaneous_glitches_on_both_lines() {
+        sda.set();
+        scl.set();
+
+        // GIVEN both lines toggle from HIGH to LOW before the recorder can react
+        recorder.start(trace);
+        sda.clear();
+        scl.clear();
+        delayNanoseconds(0);
+        sda.set();
+        scl.set();
+        delayNanoseconds(WAIT_FOR_FINAL_EDGE);
+        recorder.stop();
+//        trace.printTo(Serial);
+
+        // THEN the trace shows that both lines glitched from HIGH->LOW->HIGH
+        BusEvent expected_trace[3] = {
+                BusEvent(8, SDA_LINE_STATE | SCL_LINE_STATE),
+                BusEvent(56, SDA_LINE_CHANGED | SCL_LINE_CHANGED),
+                BusEvent(0, SDA_LINE_CHANGED | SCL_LINE_CHANGED | SDA_LINE_STATE | SCL_LINE_STATE)
+        };
+        TEST_ASSERT_EQUAL_UINT32(3, trace.event_count());
+        TEST_ASSERT_EQUAL(expected_trace[0].flags, trace.event(0)->flags);
+        TEST_ASSERT_EQUAL(expected_trace[1].flags, trace.event(1)->flags);
+        TEST_ASSERT_EQUAL(expected_trace[2].flags, trace.event(2)->flags);
+        TEST_ASSERT_UINT32_WITHIN(10, expected_trace[1].delta_t_in_ticks, trace.event(1)->delta_t_in_ticks);
+        // AND there's no delta is reported as 0
+        TEST_ASSERT_EQUAL_UINT32(0, trace.event(2)->delta_t_in_ticks);
+    }
+
+    static void loses_glitch_if_other_line_changes() {
+        sda.set();
+        scl.set();
+
+        // GIVEN one line changes and the other toggles before the recorder can react
+        recorder.start(trace);
+        sda.clear();
+        scl.clear();
+        delayNanoseconds(0);
+        scl.set();
+        delayNanoseconds(WAIT_FOR_FINAL_EDGE);
+        recorder.stop();
+//        trace.printTo(Serial);
+
+        // THEN the trace does not include the glitch
+        BusEvent expected_trace[2] = {
+                BusEvent(8, SDA_LINE_STATE | SCL_LINE_STATE),
+                BusEvent(56, SDA_LINE_CHANGED | SCL_LINE_STATE)
+        };
+        TEST_ASSERT_EQUAL_UINT32(2, trace.event_count());
+        TEST_ASSERT_EQUAL(expected_trace[0].flags, trace.event(0)->flags);
+        TEST_ASSERT_EQUAL(expected_trace[1].flags, trace.event(1)->flags);
+        TEST_ASSERT_UINT32_WITHIN(10, expected_trace[1].delta_t_in_ticks, trace.event(1)->delta_t_in_ticks);
+    }
+
+    static void glitch_pin_repeatedly(int repeats, common::hal::TeensyPin& pin) {
+        for (int i = 0; i < repeats; ++i) {
+            pin.toggle();
+            delayNanoseconds(0);
+            pin.toggle();
+            delayNanoseconds(10);
+        }
+    }
+
+    // Estimates the time taken to record a single glitch.
+    // Most of this time is taken detecting the edge and firing the interrupt.
+    static void test_interrupt_duration_single_line_glitch() {
+        mark_test_with_sda_toggle(); // makes it easy to find trace on a scope
+        scl.set();
+
+        // WHEN we record the events
+        recorder.start(trace);
+        int repeats = 10;
+        glitch_pin_repeatedly(repeats, scl);
+        delayNanoseconds(WAIT_FOR_FINAL_EDGE);
+        recorder.stop();
+//        print_trace(trace);
+
+        // THEN we recorded one event per edge
+        uint32_t expected_num_events = 1 + (repeats * 2);
+        TEST_ASSERT_EQUAL(expected_num_events, trace.event_count());
+
+        // AND we can estimate the time to handle the interrupt
+        size_t start_index = 5; // The timings are a little erratic for the first few cycles.
+        uint32_t duration_with_interrupts = nanos_til_end(trace, start_index);
+        uint32_t num_interrupts = (trace.event_count() - start_index) / 2;
+        double nanos_per_call = ((double)duration_with_interrupts) / num_interrupts;
+//        Serial.printf("%.0f nanos per interrupt for single pin glitch\n", nanos_per_call);
+        // Note that the time includes 16 nanos after the pin is set and before the interrupt begins
+        const uint32_t expected = 184 + 16; // Confirmed with scope at 200 nanos
+        TEST_ASSERT_UINT32_WITHIN(5, expected, nanos_per_call);
+    }
+
+
+    static void glitch_both_pins_repeatedly(int repeats) {
+        for (int i = 0; i < repeats; ++i) {
+            scl.toggle();
+            sda.toggle();
+            delayNanoseconds(0);
+            scl.toggle();
+            sda.toggle();
+            delayNanoseconds(10);
+        }
+    }
+
+    // Estimates the time taken to record glitches on both lines.
+    // Most of this time is taken detecting the edge and firing the interrupt.
+    static void test_interrupt_duration_glitches_on_both_lines() {
+        mark_test_with_sda_toggle(); // makes it easy to find trace on a scope
+        scl.set();
+
+        // WHEN we record the events
+        recorder.start(trace);
+        int repeats = 10;
+        glitch_both_pins_repeatedly(repeats);
+        delayNanoseconds(WAIT_FOR_FINAL_EDGE);
+        recorder.stop();
+//        print_trace(trace);
+
+        // THEN we recorded one event per edge
+        uint32_t expected_num_events = 1 + (repeats * 2);
+        TEST_ASSERT_EQUAL(expected_num_events, trace.event_count());
+
+        // AND we can estimate the time to handle the interrupt
+        size_t start_index = 4; // The timings are a little erratic for the first few cycles.
+        uint32_t duration_with_interrupts = nanos_til_end(trace, start_index);
+        uint32_t num_interrupts = (trace.event_count() - start_index) / 2;
+        double nanos_per_call = ((double)duration_with_interrupts) / num_interrupts;
+//        Serial.printf("%.0f nanos per interrupt for glitches on both pins\n", nanos_per_call);
+        // Note that the time includes 16 nanos after the pin is set and before the interrupt begins
+        const uint32_t expected = 184 + 16; // Confirmed with scope at 200 nanos
+        TEST_ASSERT_UINT32_WITHIN(3, expected, nanos_per_call);
+    }
+
     // Include all the tests here
     void test() final {
-//        // TODO: Check for glitch (very short pulse)
         RUN_TEST(lines_are_low_to_start_with);
         RUN_TEST(is_recording);
         RUN_TEST(records_initial_line_states);
@@ -413,11 +611,18 @@ public:
         RUN_TEST(creates_another_recording_correctly);
         RUN_TEST(test_interrupt_duration_single_line);
         RUN_TEST(test_interrupt_duration_both_lines);
-//        RUN_TEST(measure_ISR_time_line);
         RUN_TEST(close_events_are_considered_to_be_simultaneous);
-        RUN_TEST(test_does_not_reorder_events);
-        RUN_TEST(test_lost_events);
-        RUN_TEST(test_does_not_lose_sync);
+        RUN_TEST(does_not_reorder_events);
+        RUN_TEST(loses_events);
+        RUN_TEST(does_not_lose_sync);
+        RUN_TEST(captures_low_to_high_glitch_on_single_line);
+        RUN_TEST(captures_high_to_low_glitch_on_single_line);
+        RUN_TEST(captures_simultaneous_glitches_on_both_lines);
+        RUN_TEST(loses_glitch_if_other_line_changes);
+        RUN_TEST(test_interrupt_duration_single_line_glitch);
+        RUN_TEST(test_interrupt_duration_glitches_on_both_lines);
+
+//        RUN_TEST(measure_ISR_time_line);
     }
 
     BusRecorderE2ETest() : E2ETestBase(__FILE__) {};

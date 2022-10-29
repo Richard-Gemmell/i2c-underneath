@@ -152,7 +152,7 @@ public:
 
         // THEN the time to record all 4 transitions is reasonable
         uint32_t average_duration = real_clock.nanos_between(start, stop) / (trace.event_count()-1);
-        Serial.printf("Average: %d\n", average_duration);
+//        Serial.printf("Average: %d\n", average_duration);
 //        for (int i = 0; i < trace.event_count(); ++i) {
 //            Serial.printf("Index %d: delta %d\n", i, trace.event(i)->delta_t_in_ticks);
 //        }

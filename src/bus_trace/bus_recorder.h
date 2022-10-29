@@ -32,16 +32,23 @@ namespace bus_trace {
 //
 // WARNING
 // The BusRecorder records edges when a GPIO interrupt fires.
-// It takes about 125 nanoseconds to handle the interrupt.
+// It takes about 130 nanoseconds to handle the interrupt.
 // Let us call this time T.
 // The BusRecorder will record edges reliably as long as gap
 // between them is greater than T.
 //
-// If both lines change state with T nanos then they may be
+// If both lines change state within T nanos then they may be
 // recorded as if they happened simultaneously.
 // At most 2 edges will be recorded for a single line in this
-// time. If a line toggles repeatedly and returns to its initial
-// state then there might be no record of the change.
+// time. If a line toggles repeatedly before settling on a new
+// state then the extra edges are lost.
+//
+// The recorder can record glitches: short pulses taking less than
+// T nanos. It can record simultaneous glitches on both lines.
+// It won't detect a glitch on one line if it's recording a single
+// transition on the other line. This is for performance reasons.
+// Recording glitches takes 200 nanoseconds. 70 nanos longer than it
+// take to record a transition.
 //
 // Recording a 1 MHz I2C transaction will take roughly 1/2 of
 // the Teensy's clock cycles.
@@ -61,8 +68,9 @@ public:
     void set_callback(void (*on_change)());
 
     // Stops any recording that's in progress and then starts a new recording.
-    // Bus events are added to 'trace'.
-    // The recording stops automatically when the trace is full.
+    // Bus events are added to 'trace' as long as there's room. Events are
+    // dropped silently when 'trace' is full.
+    //
     // Returns false if the recorder can't start. This only happens if the
     // BusRecorder has been configured incorrectly. The failure reason is
     // printed to Serial.
@@ -87,19 +95,42 @@ public:
         const uint32_t pin_states = fastGpio->PSR;
 
         // Clear the interrupt flags
-        gpio->ISR = masks;
+        if(previous_pin_states != pin_states) {
+            // Assume there wasn't a glitch on either line
 
-        // We don't want to record this event.
-        if(!current_trace) return;
+            // Clear the interrupt
+            gpio->ISR = masks;
 
-        // If both pins have changed then report them in a single event.
-        // We don't know which one happened first anyway.
-        BusEventFlags previous_line_states = line_states;
-        setLineStates(pin_states);
-        auto changed_flags = (BusEventFlags)((line_states ^ previous_line_states) << 2);
-        current_trace->add_event(timestamp, changed_flags | line_states);
+            // We don't want to record this event.
+            if(!current_trace) return;
 
-        // WARNING: If the ISR takes less than about 125 nanos then it'll fire twice.
+            // If both pins have changed then report them in a single event.
+            // We don't know which one happened first anyway.
+            BusEventFlags previous_line_states = line_states;
+            setLineStates(pin_states);
+            auto changed_flags = (BusEventFlags)((line_states ^ previous_line_states) << 2);
+            current_trace->add_event(timestamp, changed_flags | line_states);
+        } else {
+            // A line has glitched. i.e. changed state and then change back
+            // Can be caused by noise or by the master handing control to the slave
+            // ISR tells us which line triggered the interrupt
+            uint32_t interrupt_pins = gpio->ISR;
+
+            // Clear the interrupt
+            gpio->ISR = masks;
+
+            // We don't want to record this event.
+            if(!current_trace) return;
+
+            const BusEventFlags glitch_lines = pin_states_to_line_states(interrupt_pins);
+            const BusEventFlags glitch_line_states = glitch_lines ^ line_states;
+            auto changed_flags = (BusEventFlags)(glitch_lines << 2);
+            current_trace->add_event(timestamp, changed_flags | glitch_line_states);
+            current_trace->add_event(timestamp, changed_flags | line_states);
+        }
+        previous_pin_states = pin_states;
+
+        // WARNING: If the ISR exits too soon after clearing gpio->ISR then it'll fire again immediately
     }
 
 private:
@@ -112,17 +143,22 @@ private:
     const IRQ_NUMBER_t irq_scl;
     void (*isr)() = nullptr;
     BusTrace* current_trace = nullptr;
-    BusEventFlags line_states = BusEventFlags::BOTH_LOW_AND_UNCHANGED;
+    BusEventFlags line_states = BOTH_LOW_AND_UNCHANGED;
+    uint32_t previous_pin_states;
 
     void attach_gpio_interrupt();
     void detach_gpio_interrupt();
 
     inline void setLineStates(uint32_t pin_states) {
+        line_states = pin_states_to_line_states(pin_states);
+    }
+
+    inline BusEventFlags pin_states_to_line_states(uint32_t pin_states) const {
         // Ensure the code takes the same time to execute irrespective of which line is set
         // This reduces jitter in the bus timings.
-        auto sda = (pin_states & sda_mask) ? BusEventFlags::SDA_LINE_STATE : BusEventFlags::BOTH_LOW_AND_UNCHANGED;
-        auto scl = (pin_states & scl_mask) ? BusEventFlags::SCL_LINE_STATE : BusEventFlags::BOTH_LOW_AND_UNCHANGED;
-        line_states = sda | scl;
+        BusEventFlags sda = (pin_states & sda_mask) ? SDA_LINE_STATE : BOTH_LOW_AND_UNCHANGED;
+        BusEventFlags scl = (pin_states & scl_mask) ? SCL_LINE_STATE : BOTH_LOW_AND_UNCHANGED;
+        return sda | scl;
     }
 };
 

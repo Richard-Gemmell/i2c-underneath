@@ -24,8 +24,25 @@ Here are some [instructions for downloading or cloning](documentation/installati
 this library. The page also explains how to download a different branch.
 
 # Tools
+## Bus Recorder
+The [BusRecorder](documentation/tools/bus_recorder/bus_recorder.md) records electrical
+activity on an I2C bus. It's a bit like having an oscilloscope.
+
+It creates a trace which shows each transition from HIGH to LOW and back
+again for both SDA and SCL. It also records the interval between these events.
+
+You can use it to:
+* record I2C traffic
+* measure the bus clock speed
+* check for I2C logic errors
+* verify that an I2C device conforms to the I2C specification
+* detect glitches which may be caused by electrical noise
+
+See [Analysing BusRecorder Traces](documentation/tools/bus_recorder/analysing_traces.md)
+for more information about analysing traces.
+
 ## Bus Monitor
-The BusMonitor watches an I2C bus and reports whether it's idle, busy
+The `BusMonitor` watches an I2C bus and reports whether it's idle, busy
 or stuck. Nothing can use the bus once it becomes stuck. You can free
 a stuck bus by sending a set of clock pulses or with a hardware reset.
 The [Stuck Bus Example](https://github.com/Richard-Gemmell/i2c-underneath/blob/main/examples/bus_monitor/stuck_bus/stuck_bus.ino)
