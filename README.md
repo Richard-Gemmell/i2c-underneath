@@ -23,7 +23,21 @@ If you're wondering how to get code out of GitHub then you're not alone!
 Here are some [instructions for downloading or cloning](documentation/installation/github_help.md)
 this library. The page also explains how to download a different branch.
 
+# I2C Guides
+The [Pullup Resistors and Rise Times](documentation/i2c_setup/pull_up_resistors.md)
+page describes how to set and tune your pullups.
+
+There are [links to other I2C resources](#other-i2c-documentation) at the bottom of the page.
+
 # Tools
+## Line Tester
+Slow rise times are one of the most common problems with I2C.
+You can use the [LineTester](src/line_test/line_tester.h) class instead
+of an oscilloscope to measure the rise times directly
+
+The [Pullup Resistors and Rise Times](documentation/i2c_setup/pull_up_resistors.md)
+page describes how to set and tune your pullups in detail.
+
 ## Bus Recorder
 The [BusRecorder](documentation/tools/bus_recorder/bus_recorder.md) records electrical
 activity on an I2C bus. It's a bit like having an oscilloscope.
@@ -52,13 +66,15 @@ contains code to recover a stuck bus. See:
 * [The Examples](https://github.com/Richard-Gemmell/i2c-underneath/tree/main/examples/bus_monitor)
 * [Bus Monitor Class](https://github.com/Richard-Gemmell/i2c-underneath/tree/main/examples/bus_monitor)
 
-# I2C Documentation
+# Other I2C Documentation
 ## Introductions to the I2C Protocol
+* [i2c-bus.org](https://www.i2c-bus.org/)
 * [Seed Studio Intro to I2C](https://www.seeedstudio.com/blog/2019/09/26/i2c-communication-interface-and-protocol-with-diagrams/)
 
 ## Specifications
 * [I2C Specification](https://www.nxp.com/docs/en/user-guide/UM10204.pdf)
 
 ## Miscellaneous
+* [Hackaday Articles](https://hackaday.com/tag/i2c-bus/)
 * [Issues with the I2C Bus and How to Solve Them](https://www.digikey.com/en/articles/issues-with-the-i2c-bus-and-how-to-solve-them)
 * [Demystifying Microcontroller GPIO Settings](https://embeddedartistry.com/blog/2018/06/04/demystifying-microcontroller-gpio-settings/)
