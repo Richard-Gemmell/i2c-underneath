@@ -24,11 +24,13 @@ hardware often runs at 5 V.
 
 I2C devices pull the line LOW by shorting the line to GND. This is really
 fast; 5 to 10 nanoseconds is fairly typical. This time is known as the
-"fall time".
+"fall time". It's different for each device on the bus because it depends
+on how much current the device can sink.
 
 The "rise time" is the time taken for the line to climb from LOW to HIGH.
 It's usually much, much longer than the fall time; anything up to 1000
-nanoseconds.
+nanoseconds. It's the same for every device on the bus because it depends
+on the amount of current the pullups provide.
 
 This oscilloscope trace shows 3 pulses on SCL. Note the way that the voltage
 rises slowly but drops vertically. The white measurement lines on the last
@@ -186,7 +188,16 @@ one is very fast and the other is very long even if both are within
 the specified limits. e.g. 20 nanoseconds on one line and 200 nanos
 on the other.
 
-The fall time of a lines is controlled by the pin's "drive strength".
+Avoid long fall times. They're more likely to trigger a bug in the I2C
+implementation of one of your devices. I recommend keeping the fall
+time to less than 1/2 the allowed maximum value.
+
+Remember that the fall times are different for every device on the bus.
+It's quite possible for one device to be too slow when the others
+are really fast.
+
+The fall time of a line is controlled by the "drive strength" of
+the device which is pulling the line down.
 A weaker drive strength will increase the fall time. This helps to reduce
 electrical switching noise.
 
