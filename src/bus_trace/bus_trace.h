@@ -10,6 +10,7 @@
 #include <bus_trace/bus_event.h>
 #include <bus_trace/bus_event_flags.h>
 #include <common/hal/clock.h>
+#include <functional>
 
 namespace bus_trace {
 
@@ -71,7 +72,7 @@ public:
     // Adds an event to the trace as long as there is space for it.
     // Discards the event if there's no more space
     inline void add_event(const BusEvent& event) {
-        if(current_event_count == max_event_count) {
+        if (current_event_count == max_event_count) {
             // We can't take another event. Discard it.
             return;
         }
@@ -90,20 +91,42 @@ public:
         add_event(BusEvent(ticks_start - past, flags));
     }
 
-    // Creates a copy of this message without any spurious changes in SDA
-    // that occur while SCL is LOW. These don't affect the meaning of the
-    // message.
-    BusTrace to_message() const;
-
-    // Traces are equivalent if they have the same meaning in I2C
-    // terms. Ignores the timing between each event and pin values.
-    // Ignores spurious changes in SDA that can occur while SCL is LOW.
-    // For example, it's quite common to see SDA pulse from 0->1->0
-    // before an ACK. Whether this happens or not is an implementation
-    // detail.
+    // Normalises a trace by hiding irrelevant edges and splitting merged edges.
+    // This is useful if you've recorded a trace for a real I2C message
+    // and want to compare it to the ideal version.
     //
+    // Removes spurious changes in SDA that occur while SCL is LOW. These
+    // don't affect the meaning of the message.
+    //
+    // It's possible for a trace to record edges on both lines with a single
+    // BusEvent instead of with 2 separate events. We can't tell which edge
+    // happened first when this happens. This function assumes that the edges
+    // happened in the correct order for a data bit and splits them accordingly.
+    // Specifically, SDA changes before SCL when SCL rises and after SCL when
+    // SCL falls. This is the wrong way round for START and STOP bits, but
+    // START and STOP bits should never be recorded with a single event.
+    // WARNING if the events actually happened in the wrong order then this
+    // will disguise an I2C logic error. Setting 'split_events' to false to
+    // disable splitting.
+    BusTrace to_message(bool split_events = true) const;
+
     // Returns the index of the first BusEvent that doesn't match
     // or SIZE_MAX if the traces are equivalent.
+    //
+    // Traces are equivalent if they have the same meaning in I2C terms.
+    // The comparison ignores the timing between each event and the pin
+    // values. It only compares the line states and edges.
+    //
+    // The comparison ignores spurious changes in SDA that can occur
+    // while SCL is LOW. For example, it's quite common to see SDA pulse
+    // from 0->1->0 before an ACK. Whether this happens or not is an
+    // implementation detail.
+    //
+    // It's possible for a trace to record changes to both lines in a single
+    // BusEvent instead of with 2 separate events. The traces are considered
+    // to be equivalent if merging 2 events in one trace creates a match to
+    // the other trace. The order of the 2 merged edges is ignored.
+    //
     size_t compare_messages(const BusTrace& other) const;
 
     // Traces are equivalent if their line states and edges match exactly.
@@ -112,6 +135,10 @@ public:
     // Returns the index of the first BusEvent that doesn't match
     // or SIZE_MAX if the traces are equivalent.
     size_t compare_edges(const BusTrace& other) const;
+
+    // Returns SIZE_MAX if the BusEvents in both traces are identical in every
+    // respect.
+    size_t is_identical_to(const BusTrace& other) const;
 
     // Prints the trace
     size_t printTo(Print& p) const override;
@@ -138,6 +165,8 @@ private:
         }
 #endif
     }
+
+    size_t compare_bus_events(const BusTrace& other, const std::function<bool(size_t index)>&) const;
 };
 
 }

@@ -33,8 +33,7 @@ bool run_subset() {
     return true;
 //    test(new analysis::I2CDesignParametersTest);
 //    test(new analysis::I2CTimingAnalyserTest);
-    test(new bus_trace::BusRecorderATest);
-    test(new bus_trace::BusRecorderAE2ETest);
+    test(new bus_trace::BusRecorderE2ETest);
     return false;
 }
 
