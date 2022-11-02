@@ -29,7 +29,7 @@ bool BusRecorder::start(BusTrace& trace) {
 
     noInterrupts()
     attach_gpio_interrupt();
-    previous_pin_states = fastGpio->PSR;
+    previous_pin_states = fastGpio->PSR & masks;
     setLineStates(previous_pin_states);
     current_trace->reset();
     trace.add_event(line_states);

@@ -15,6 +15,7 @@ namespace bus_trace {
 // for this test, so we're using OUTPUT mode.
 class BusRecorderE2ETest : public e2e::E2ETestBase {
 public:
+    constexpr static uint8_t PIN_SCL_1 = 16;
     constexpr static size_t MAX_EVENTS = 100;
     constexpr static size_t WAIT_FOR_FINAL_EDGE = 500;
     static BusTrace trace;
@@ -35,6 +36,7 @@ public:
         scl.clear();
         sda.clear();
         E2ETestBase::tearDown();
+        pinMode(PIN_SCL_1, INPUT_DISABLE);
     }
 
     // Toggle SDA to make it easy to find the trace with an oscilloscope
@@ -250,7 +252,7 @@ public:
         double nanos_per_call = ((double)duration_with_interrupts) / num_interrupts;
 //        Serial.printf("%.0f nanos per interrupt for single pin\n", nanos_per_call);
         // Note that the time includes 16 nanos after the pin is set and before the interrupt begins
-        const uint32_t expected = 114 + 16; // Confirmed with scope at 130 nanos
+        const uint32_t expected = 117 + 16; // Confirmed with scope at 133 nanos
         TEST_ASSERT_UINT32_WITHIN(3, expected, nanos_per_call);
     }
 
@@ -290,7 +292,7 @@ public:
         double nanos_per_call = ((double)duration_with_interrupts) / num_interrupts;
 //        Serial.printf("%.0f nanos per interrupt for both pins\n", nanos_per_call);
         // Note that the time includes 16 nanos after the pin is set and before the interrupt begins
-        const uint32_t expected = 116 + 16; // Confirmed with scope at 132 nanos
+        const uint32_t expected = 117 + 16; // Confirmed with scope at 133 nanos
         TEST_ASSERT_UINT32_WITHIN(3, expected, nanos_per_call);
     }
 
@@ -316,6 +318,7 @@ public:
             asm("nop");
             before_isr = ARM_DWT_CYCCNT;
         }
+        asm("nop");
         asm("nop");
         asm("nop");
         // The NOPs above ensure that after_isr is set after the ISR returns
@@ -520,6 +523,32 @@ public:
         TEST_ASSERT_UINT32_WITHIN(10, expected_trace[1].delta_t_in_ticks, trace.event(1)->delta_t_in_ticks);
     }
 
+    // This is a regression test for a bug which caused a glitch to be
+    // recorded as an event with no edges.
+    static void records_glitch_even_if_another_pin_changes() {
+        common::hal::TeensyPin unrelated_pin(PIN_SCL_1, OUTPUT);
+        mark_test_with_sda_toggle(); // makes it easy to find trace on a scope
+        scl.set();
+
+        // GIVEN an unrelated pin changes state during a glitch
+        recorder.start(trace);
+        unrelated_pin.toggle();
+        scl.clear();
+        delayNanoseconds(0);
+        scl.set();
+        delayNanoseconds(WAIT_FOR_FINAL_EDGE);
+        recorder.stop();
+//        trace.printTo(Serial);
+
+        // THEN the trace records the glitch
+        BusTrace expected_trace(3);
+        expected_trace.add_event(BusEvent(8, SCL_LINE_STATE));
+        expected_trace.add_event(BusEvent(55, SCL_LINE_CHANGED));
+        expected_trace.add_event(BusEvent(0, SCL_LINE_CHANGED | SCL_LINE_STATE));
+        size_t equivalent = expected_trace.compare_edges(trace);
+        TEST_ASSERT_EQUAL_UINT32(SIZE_MAX, equivalent);
+    }
+
     static void glitch_pin_repeatedly(int repeats, common::hal::TeensyPin& pin) {
         for (int i = 0; i < repeats; ++i) {
             pin.toggle();
@@ -558,7 +587,6 @@ public:
         TEST_ASSERT_UINT32_WITHIN(5, expected, nanos_per_call);
     }
 
-
     static void glitch_both_pins_repeatedly(int repeats) {
         for (int i = 0; i < repeats; ++i) {
             scl.toggle();
@@ -595,8 +623,8 @@ public:
         double nanos_per_call = ((double)duration_with_interrupts) / num_interrupts;
 //        Serial.printf("%.0f nanos per interrupt for glitches on both pins\n", nanos_per_call);
         // Note that the time includes 16 nanos after the pin is set and before the interrupt begins
-        const uint32_t expected = 184 + 16; // Confirmed with scope at 200 nanos
-        TEST_ASSERT_UINT32_WITHIN(3, expected, nanos_per_call);
+        const uint32_t expected = 190 + 16; // Confirmed with scope at 206 nanos
+        TEST_ASSERT_UINT32_WITHIN(10, expected, nanos_per_call);
     }
 
     // Include all the tests here
@@ -619,6 +647,7 @@ public:
         RUN_TEST(captures_high_to_low_glitch_on_single_line);
         RUN_TEST(captures_simultaneous_glitches_on_both_lines);
         RUN_TEST(loses_glitch_if_other_line_changes);
+        RUN_TEST(records_glitch_even_if_another_pin_changes);
         RUN_TEST(test_interrupt_duration_single_line_glitch);
         RUN_TEST(test_interrupt_duration_glitches_on_both_lines);
 

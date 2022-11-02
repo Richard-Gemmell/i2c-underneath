@@ -65,7 +65,7 @@ public:
     // The easiest way to do this is to create a static BusRecorder called
     // 'recorder'. This line of code will then set up the callbacks correctly.
     // recorder.set_callback([]() { recorder.add_event(); });
-    void set_callback(void (*on_change)());
+    void set_callback(void (* on_change)());
 
     // Stops any recording that's in progress and then starts a new recording.
     // Bus events are added to 'trace' as long as there's room. Events are
@@ -92,17 +92,17 @@ public:
         uint32_t timestamp = ARM_DWT_CYCCNT;
 
         // It's much faster to use the fast GPIO port to read the pins.
-        const uint32_t pin_states = fastGpio->PSR;
+        const uint32_t pin_states = fastGpio->PSR & masks;
 
         // Clear the interrupt flags
-        if(previous_pin_states != pin_states) {
+        if (pin_states != previous_pin_states) {
             // Assume there wasn't a glitch on either line
 
             // Clear the interrupt
             gpio->ISR = masks;
 
             // We don't want to record this event.
-            if(!current_trace) return;
+            if (!current_trace) return;
 
             // If both pins have changed then report them in a single event.
             // We don't know which one happened first anyway.
@@ -120,7 +120,7 @@ public:
             gpio->ISR = masks;
 
             // We don't want to record this event.
-            if(!current_trace) return;
+            if (!current_trace) return;
 
             const BusEventFlags glitch_lines = pin_states_to_line_states(interrupt_pins);
             const BusEventFlags glitch_line_states = glitch_lines ^ line_states;
@@ -129,7 +129,6 @@ public:
             current_trace->add_event(timestamp, changed_flags | line_states);
         }
         previous_pin_states = pin_states;
-
         // WARNING: If the ISR exits too soon after clearing gpio->ISR then it'll fire again immediately
     }
 
@@ -141,12 +140,15 @@ private:
     IMXRT_GPIO_t* const fastGpio;
     const IRQ_NUMBER_t irq;
     const IRQ_NUMBER_t irq_scl;
-    void (*isr)() = nullptr;
+
+    void (* isr)() = nullptr;
+
     BusTrace* current_trace = nullptr;
     BusEventFlags line_states = BOTH_LOW_AND_UNCHANGED;
-    uint32_t previous_pin_states;
+    uint32_t previous_pin_states = 0;
 
     void attach_gpio_interrupt();
+
     void detach_gpio_interrupt();
 
     inline void setLineStates(uint32_t pin_states) {
