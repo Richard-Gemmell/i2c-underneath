@@ -5,7 +5,7 @@ The [BusRecorder](../../../src/bus_trace/bus_recorder.h) class records activity
 on the I2C bus lines; SDA and SCL. This record forms a
 [BusTrace](../../../src/bus_trace/bus_trace.h).
 
-See [BusRecorder](../bus_recorder) for information about the `BusRecorder`.
+See [BusRecorder](bus_recorder.md) for information about the `BusRecorder`.
 This document discusses how to analyse a trace once you've got one.
 
 ## BusTrace
