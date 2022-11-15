@@ -44,13 +44,13 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
                 previous_scl_rise_event = current_edge;
                 latest_clock_low = trace.nanos_between(current_edge, previous_scl_fall_event);
 //                Serial.printf("Index %d LOW time %d\n", current_edge, latest_clock_low);
-                scl_low_time_stats.include(latest_clock_low);
+                scl_low_time_stats.include(adjust_clock_low_time(latest_clock_low, scl_fall_time, scl_rise_time));
             } else {
                 // SCL HIGH -> LOW
                 previous_scl_fall_event = current_edge;
                 auto clock_high = trace.nanos_between(current_edge, previous_scl_rise_event);
 //                Serial.printf("Index %d HIGH time %d\n", current_edge, clock_high);
-                scl_high_time_stats.include(clock_high);
+                scl_high_time_stats.include(adjust_clock_high_time(clock_high, scl_rise_time, scl_fall_time));
 
                 // Calculate frequency for the last clock cycle
                 auto period = clock_high + latest_clock_low;
@@ -90,23 +90,37 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
 
 // The Teensy triggers too soon when SCL rises and too late when SDA rises.
 uint32_t I2CTimingAnalyser::adjust_setup_stop_time(uint32_t raw_time, uint16_t sda_rise_time, uint16_t scl_rise_time) {
-        uint32_t adjusted =  raw_time - (scl_rise_time * RISE_TRIGGER_to_V0_7) - (sda_rise_time * RISE_V0_3_to_TRIGGER);
-//        Serial.printf("Setup stop time (tSU;STO) raw: %d adjusted %d\n", raw_time, adjusted);
-        return adjusted;
+    auto adjusted =  (uint32_t)(raw_time - (scl_rise_time * RISE_TRIGGER_to_V0_7) - (sda_rise_time * RISE_V0_3_to_TRIGGER));
+//    Serial.printf("Setup stop time (tSU;STO) raw: %d adjusted %d\n", raw_time, adjusted);
+    return adjusted;
 }
 
 // The Teensy triggers too soon when SCL rises and too late when SDA falls.
 uint32_t I2CTimingAnalyser::adjust_setup_start_time(uint32_t raw_time, uint16_t sda_fall_time, uint16_t scl_rise_time) {
-    uint32_t adjusted = raw_time - (scl_rise_time * RISE_TRIGGER_to_V0_7) - (sda_fall_time * FALL_V0_7_to_TRIGGER);
+    auto adjusted = (uint32_t)(raw_time - (scl_rise_time * RISE_TRIGGER_to_V0_7) - (sda_fall_time * FALL_V0_7_to_TRIGGER));
 //    Serial.printf("Setup time for repeated start (tSU;STA) raw: %d adjusted %d\n", raw_time, adjusted);
     return adjusted;
 }
 
 // Adjusts for the fact that the Teensy triggers too soon when SDA falls and too late when SCL falls.
 uint32_t I2CTimingAnalyser::adjust_start_hold_time(uint32_t raw_time, uint16_t sda_fall_time, uint16_t scl_fall_time) {
-        uint32_t adjusted = raw_time - (sda_fall_time * FALL_TRIGGER_to_V0_3) - (scl_fall_time * FALL_V0_7_to_TRIGGER);
-//        Serial.printf("Start hold (tHD;STA) raw: %d adjusted %d\n", raw_time, adjusted);
-        return adjusted;
+    auto adjusted = (uint32_t)(raw_time - (sda_fall_time * FALL_TRIGGER_to_V0_3) - (scl_fall_time * FALL_V0_7_to_TRIGGER));
+//    Serial.printf("Start hold (tHD;STA) raw: %d adjusted %d\n", raw_time, adjusted);
+    return adjusted;
+}
+
+// Adjusts for the fact that the Teensy triggers at 0.5 Vdd
+uint32_t I2CTimingAnalyser::adjust_clock_low_time(uint32_t raw_time, uint16_t scl_fall_time, uint16_t scl_rise_time) {
+    auto adjusted = (uint32_t)(raw_time - (scl_fall_time * FALL_TRIGGER_to_V0_3) - (scl_rise_time * RISE_V0_3_to_TRIGGER));
+//    Serial.printf("Clock low (tLOW) raw: %d adjusted %d\n", raw_time, adjusted);
+    return adjusted;
+}
+
+// Adjusts for the fact that the Teensy triggers at 0.5 Vdd
+uint32_t I2CTimingAnalyser::adjust_clock_high_time(uint32_t raw_time, uint16_t scl_rise_time, uint16_t scl_fall_time) {
+    auto adjusted = (uint32_t)(raw_time - (scl_rise_time * RISE_TRIGGER_to_V0_7) - (scl_fall_time * FALL_V0_7_to_TRIGGER));
+//    Serial.printf("Clock high (tHIGH) raw: %d adjusted %d\n", raw_time, adjusted);
+    return adjusted;
 }
 
 } // analysis

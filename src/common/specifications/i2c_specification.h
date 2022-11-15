@@ -33,7 +33,7 @@ struct Times {
     TimeRange data_hold_time;       // tHD;DAT - time during which SDA holds its value after a clock pulse
     TimeRange data_setup_time;      // tSU;DAT - data setup time
     TimeRange rise_time;            // tr - rise time of both SDA and SCL signals
-    TimeRange fall_time;            // tr - fall time of both SDA and SCL signals
+    TimeRange fall_time;            // tf - fall time of both SDA and SCL signals
     TimeRange stop_setup_time;      // tSU;STO - setup time for STOP condition
     TimeRange bus_free_time;        // tBUF - minimum bus free time between a STOP and START condition
     // tVD;DAT - time before SDA changes state after a clock pulse.
