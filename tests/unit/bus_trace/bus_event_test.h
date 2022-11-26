@@ -14,13 +14,13 @@ namespace bus_trace {
 class BusEventTest : public TestSuite {
 
 public:
-    static void test_create_bus_event() {
+    static void create_bus_event() {
         BusEvent event(123, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE);
         TEST_ASSERT_EQUAL(BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE, event.flags);
         TEST_ASSERT_EQUAL(123, event.delta_t_in_ticks);
     }
 
-    static void test_copy() {
+    static void copy() {
         BusEvent event(123, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE);
         BusEvent actual = event;
         TEST_ASSERT_EQUAL(BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE, actual.flags);
@@ -46,10 +46,42 @@ public:
         TEST_ASSERT_TRUE(a != c);
     }
 
+    static void scl_rose() {
+        TEST_ASSERT_FALSE(BusEvent(123, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SCL_LINE_STATE).scl_rose());
+        TEST_ASSERT_FALSE(BusEvent(123, BusEventFlags::SCL_LINE_CHANGED).scl_rose());
+        TEST_ASSERT_TRUE(BusEvent(123, BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SCL_LINE_STATE).scl_rose());
+        TEST_ASSERT_TRUE(BusEvent(123, BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SCL_LINE_STATE | BusEventFlags::SDA_LINE_CHANGED).scl_rose());
+    }
+
+    static void scl_fell() {
+        TEST_ASSERT_FALSE(BusEvent(123, BusEventFlags::SDA_LINE_CHANGED).scl_fell());
+        TEST_ASSERT_FALSE(BusEvent(123, BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SCL_LINE_STATE).scl_fell());
+        TEST_ASSERT_TRUE(BusEvent(123, BusEventFlags::SCL_LINE_CHANGED).scl_fell());
+        TEST_ASSERT_TRUE(BusEvent(123, BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SDA_LINE_CHANGED).scl_fell());
+    }
+
+    static void sda_rose() {
+        TEST_ASSERT_FALSE(BusEvent(123, BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE).sda_rose());
+        TEST_ASSERT_FALSE(BusEvent(123, BusEventFlags::SDA_LINE_CHANGED).sda_rose());
+        TEST_ASSERT_TRUE(BusEvent(123, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE).sda_rose());
+        TEST_ASSERT_TRUE(BusEvent(123, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE | BusEventFlags::SCL_LINE_CHANGED).sda_rose());
+    }
+
+    static void sda_fell() {
+        TEST_ASSERT_FALSE(BusEvent(123, BusEventFlags::SCL_LINE_CHANGED).sda_fell());
+        TEST_ASSERT_FALSE(BusEvent(123, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE).sda_fell());
+        TEST_ASSERT_TRUE(BusEvent(123, BusEventFlags::SDA_LINE_CHANGED).sda_fell());
+        TEST_ASSERT_TRUE(BusEvent(123, BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SCL_LINE_CHANGED).scl_fell());
+    }
+
     void test() final {
-        RUN_TEST(test_create_bus_event);
-        RUN_TEST(test_copy);
+        RUN_TEST(create_bus_event);
+        RUN_TEST(copy);
         RUN_TEST(comparison_operators);
+        RUN_TEST(scl_rose);
+        RUN_TEST(scl_fell);
+        RUN_TEST(sda_rose);
+        RUN_TEST(sda_fell);
     }
 
     BusEventTest() : TestSuite(__FILE__) {};

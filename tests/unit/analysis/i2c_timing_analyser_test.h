@@ -191,6 +191,23 @@ public:
         add_stop(trace);
     }
 
+    static void given_2_messages_separated_by_stop(bus_trace::BusTrace& trace) {
+        // BUS is idle to start with
+        add_event(trace, 0, SDA_LINE_STATE | SCL_LINE_STATE);
+
+        // First Message
+        add_start(trace);
+        add_address_byte(trace);
+        add_data_byte(trace);
+        add_stop(trace);
+
+        // Second Message
+        add_start(trace);
+        add_address_byte(trace);
+        add_data_byte(trace);
+        add_stop(trace);
+    }
+
     static bool trace_matches_expected(const bus_trace::BusTrace& trace) {
         // Create an I2C message. The master reads 2 bytes from the slave.
         bus_trace::BusTrace expected_trace(MAX_EVENTS);
@@ -242,6 +259,19 @@ public:
         TEST_ASSERT_EQUAL_UINT32(3'910, analysis.start_hold_time.average());
     }
 
+    static void analysis_records_start_hold_between_messages() {
+        // GIVEN 2 messages separated by a STOP
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_2_messages_separated_by_stop(trace);
+
+        // WHEN we analyse the trace
+        auto analysis = I2CTimingAnalyser::analyse(trace, 0, 0, 0, 0);
+
+        // THEN we capture 2 start hold times; one for each message
+        TEST_ASSERT_EQUAL_UINT32(2, analysis.start_hold_time.count());
+        TEST_ASSERT_EQUAL_UINT32(4'120, analysis.start_hold_time.average());
+    }
+
     static void analysis_records_raw_clock_high_time() {
         // GIVEN a trace
         bus_trace::BusTrace trace(&clock, MAX_EVENTS);
@@ -281,6 +311,9 @@ public:
 
         // THEN the clock low time is measured correctly
         log_value("Clock LOW", actual);
+        // WARNING: Extra LOW
+        // Treat the period before SCL goes HIGH in the STOP bit as a LOW period.
+        // The spec doesn't say whether it should or should not but doesn't give it another name.
         TEST_ASSERT_EQUAL_UINT32(19, actual.count());
         TEST_ASSERT_EQUAL_UINT32(4'730, actual.min());
         TEST_ASSERT_EQUAL_UINT32(6'802, actual.max());
@@ -309,7 +342,7 @@ public:
         auto actual = I2CTimingAnalyser::analyse(trace, SDA_RISE, SCL_RISE, SDA_FALL, SCL_FALL).clock_frequency;
 
         // THEN the SCL clock frequency is measured correctly
-//        log_value("SCL clock frequency", actual);
+        log_value("SCL clock frequency", actual);
         TEST_ASSERT_EQUAL_UINT32(18, actual.count());
         TEST_ASSERT_EQUAL_UINT32(91'793, actual.min());
         TEST_ASSERT_EQUAL_UINT32(114'129, actual.max());
@@ -375,10 +408,43 @@ public:
         TEST_ASSERT_EQUAL_UINT32(4'039, actual.max());
     }
 
+    static void setup_start_is_not_set_after_stop() {
+        // GIVEN a 2 messages separated by a STOP and START
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_2_messages_separated_by_stop(trace);
+
+        // WHEN we analyse the trace
+        auto actual = I2CTimingAnalyser::analyse(trace, 0, 0, 0, 0).start_setup_time;
+
+        // THEN the repeated start setup time (tSU;STA) is not defined
+        // as this isn't a repeated start
+        log_value("Setup start", actual);
+        TEST_ASSERT_EQUAL_UINT32(0, actual.count());
+    }
+
+    static void analysis_records_raw_bus_free_time() {
+        // GIVEN a trace
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_2_messages_separated_by_stop(trace);
+
+        // WHEN we analyse the trace with zero rise and fall times
+        auto analysis = I2CTimingAnalyser::analyse(trace, 0, 0, 0, 0);
+        auto actual = analysis.bus_free_time;
+
+        // THEN the bus free time (tBUF) is the recorded time
+        log_value("Bus free time", actual);
+        log_value("Start hold", analysis.start_hold_time);
+        log_value("Setup start", analysis.start_setup_time);
+        TEST_ASSERT_EQUAL_UINT32(1, actual.count());
+        TEST_ASSERT_EQUAL_UINT32(4'120, actual.min());
+        TEST_ASSERT_EQUAL_UINT32(4'120, actual.max());
+    }
+
     void test() final {
         RUN_TEST(test_trace_is_valid);
         RUN_TEST(analysis_records_raw_start_hold_time);
         RUN_TEST(analysis_adjusts_start_hold_time);
+        RUN_TEST(analysis_records_start_hold_between_messages);
 //         TODO: Test SCL clock for traces of broken I2C transfer
         RUN_TEST(analysis_records_raw_clock_high_time);
         RUN_TEST(analysis_adjusts_clock_high_time);
@@ -389,6 +455,8 @@ public:
         RUN_TEST(analysis_adjusts_setup_stop_time);
         RUN_TEST(analysis_records_raw_setup_start_time);
         RUN_TEST(analysis_adjusts_setup_start_time);
+        RUN_TEST(setup_start_is_not_set_after_stop);
+//        RUN_TEST(analysis_records_raw_bus_free_time);
     }
 
     I2CTimingAnalyserTest() : TestSuite(__FILE__) {};

@@ -32,6 +32,31 @@ public:
     BusEventFlags flags;
 
 //    uint8_t unused; // Pack byte.
+
+    bool scl_fell() const {
+        return includes_flags(BusEventFlags::SCL_LINE_CHANGED) && excludes_flags(BusEventFlags::SCL_LINE_STATE);
+    }
+
+    bool scl_rose() const {
+        return includes_flags(BusEventFlags::SCL_LINE_CHANGED | BusEventFlags::SCL_LINE_STATE);
+    }
+
+    bool sda_fell() const {
+        return includes_flags(BusEventFlags::SDA_LINE_CHANGED) && excludes_flags(BusEventFlags::SDA_LINE_STATE);
+    }
+
+    bool sda_rose() const {
+        return includes_flags(BusEventFlags::SDA_LINE_CHANGED | BusEventFlags::SDA_LINE_STATE);
+    }
+
+private:
+    bool includes_flags(const BusEventFlags& requiredFlags) const {
+        return (flags & requiredFlags) == requiredFlags;
+    }
+
+    bool excludes_flags(const BusEventFlags& requiredFlags) const {
+        return !(flags & requiredFlags);
+    }
 };
 
 inline bool operator==(const BusEvent& lhs, const BusEvent& rhs) {
