@@ -79,7 +79,8 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
                         start_setup_time_stats.include(setup_start_time);
                     } else if (previous_event->sda_rose()) {
                         // This is START following a STOP
-                        // TODO: The time interval is tBUF
+                        uint32_t bus_free_time = adjust_bus_free_time(trace.nanos_to_previous(current_edge), sda_rise_time, sda_fall_time);
+                        bus_free_time_stats.include(bus_free_time);
                     } else if (previous_event->flags == (bus_trace::BusEventFlags::SDA_LINE_STATE | bus_trace::BusEventFlags::SCL_LINE_STATE)) {
                         // This is START at the beginning of a trace
                         // There are no I2C requirements for the interval so ignore it.
@@ -139,6 +140,12 @@ uint32_t I2CTimingAnalyser::adjust_clock_low_time(uint32_t raw_time, uint16_t sc
 uint32_t I2CTimingAnalyser::adjust_clock_high_time(uint32_t raw_time, uint16_t scl_rise_time, uint16_t scl_fall_time) {
     auto adjusted = (uint32_t)(raw_time - (scl_rise_time * RISE_TRIGGER_to_V0_7) - (scl_fall_time * FALL_V0_7_to_TRIGGER));
 //    Serial.printf("Clock high (tHIGH) raw: %d adjusted %d\n", raw_time, adjusted);
+    return adjusted;
+}
+
+uint32_t I2CTimingAnalyser::adjust_bus_free_time(uint32_t raw_time, uint16_t sda_rise_time, uint16_t sda_fall_time) {
+    auto adjusted = (uint32_t)(raw_time - (sda_rise_time * RISE_TRIGGER_to_V0_7) - (sda_fall_time * FALL_V0_7_to_TRIGGER));
+//    Serial.printf("Bus Free Time (tBUF) raw: %d adjusted %d\n", raw_time, adjusted);
     return adjusted;
 }
 

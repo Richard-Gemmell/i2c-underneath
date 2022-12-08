@@ -55,9 +55,9 @@ public:
 
     static void add_start(bus_trace::BusTrace& trace) {
         // Adds a start bit
-        const uint32_t tf = 110/nanos_per_tick; // Fall time
-        add_event(trace, tf, SDA_LINE_CHANGED | SCL_LINE_STATE);
-        uint32_t tHD_STA = (4'000 + 120)/nanos_per_tick;
+        const uint32_t tBUF = 4'846 / nanos_per_tick; // Bus Free Time
+        add_event(trace, tBUF, SDA_LINE_CHANGED | SCL_LINE_STATE);
+        uint32_t tHD_STA = (4'000 + 120) / nanos_per_tick;
         add_event(trace, tHD_STA, SCL_LINE_CHANGED);
     }
 
@@ -428,16 +428,27 @@ public:
         given_2_messages_separated_by_stop(trace);
 
         // WHEN we analyse the trace with zero rise and fall times
-        auto analysis = I2CTimingAnalyser::analyse(trace, 0, 0, 0, 0);
-        auto actual = analysis.bus_free_time;
+        auto actual = I2CTimingAnalyser::analyse(trace, 0, 0, 0, 0).bus_free_time;
 
         // THEN the bus free time (tBUF) is the recorded time
         log_value("Bus free time", actual);
-        log_value("Start hold", analysis.start_hold_time);
-        log_value("Setup start", analysis.start_setup_time);
         TEST_ASSERT_EQUAL_UINT32(1, actual.count());
-        TEST_ASSERT_EQUAL_UINT32(4'120, actual.min());
-        TEST_ASSERT_EQUAL_UINT32(4'120, actual.max());
+        TEST_ASSERT_EQUAL_UINT32(4'846, actual.min());
+        TEST_ASSERT_EQUAL_UINT32(4'846, actual.max());
+    }
+
+    static void analysis_adjusts_bus_free_time() {
+        // GIVEN a trace
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_2_messages_separated_by_stop(trace);
+
+        // WHEN we analyse the trace with zero rise and fall times
+        auto actual = I2CTimingAnalyser::analyse(trace, SDA_RISE, SCL_RISE, SDA_FALL, SCL_FALL).bus_free_time;
+
+        // THEN the bus free time (tBUF) is the recorded time
+        log_value("Bus free time", actual);
+        TEST_ASSERT_EQUAL_UINT32(4'846 - 302 - 60, actual.min());
+        TEST_ASSERT_EQUAL_UINT32(4'846 - 302 - 60, actual.max());
     }
 
     void test() final {
@@ -456,7 +467,8 @@ public:
         RUN_TEST(analysis_records_raw_setup_start_time);
         RUN_TEST(analysis_adjusts_setup_start_time);
         RUN_TEST(setup_start_is_not_set_after_stop);
-//        RUN_TEST(analysis_records_raw_bus_free_time);
+        RUN_TEST(analysis_records_raw_bus_free_time);
+        RUN_TEST(analysis_adjusts_bus_free_time);
     }
 
     I2CTimingAnalyserTest() : TestSuite(__FILE__) {};
