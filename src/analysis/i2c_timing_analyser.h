@@ -42,6 +42,7 @@ private:
     static uint32_t adjust_clock_low_time(uint32_t raw_time, uint16_t scl_fall_time, uint16_t scl_rise_time);
     static uint32_t adjust_clock_high_time(uint32_t raw_time, uint16_t scl_rise_time, uint16_t scl_fall_time);
     static uint32_t adjust_bus_free_time(uint32_t raw_time, uint16_t sda_rise_time, uint16_t sda_fall_time);
+    static uint32_t adjust_data_setup_time(uint32_t raw_time, bool sda_rose, uint16_t sda_rise_time, uint16_t sda_fall_time, uint16_t scl_rise_time);
 };
 
 } // analysis

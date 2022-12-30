@@ -398,7 +398,7 @@ public:
         bus_trace::BusTrace trace(&clock, MAX_EVENTS);
         given_2_messages_separated_by_a_repeated_start(trace);
 
-        // WHEN we analyse the trace with zero rise and fall times
+        // WHEN we analyse the trace with actual rise times
         auto actual = I2CTimingAnalyser::analyse(trace, SDA_RISE, SCL_RISE, SDA_FALL, SCL_FALL).start_setup_time;
 
         // THEN the repeated start setup time (tSU;STA) is the recorded time
@@ -442,13 +442,42 @@ public:
         bus_trace::BusTrace trace(&clock, MAX_EVENTS);
         given_2_messages_separated_by_stop(trace);
 
-        // WHEN we analyse the trace with zero rise and fall times
+        // WHEN we analyse the trace with actual rise times
         auto actual = I2CTimingAnalyser::analyse(trace, SDA_RISE, SCL_RISE, SDA_FALL, SCL_FALL).bus_free_time;
 
         // THEN the bus free time (tBUF) is the recorded time
         log_value("Bus free time", actual);
         TEST_ASSERT_EQUAL_UINT32(4'846 - 302 - 60, actual.min());
         TEST_ASSERT_EQUAL_UINT32(4'846 - 302 - 60, actual.max());
+    }
+
+    static void analysis_records_raw_data_setup_time() {
+        // GIVEN a trace
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_a_valid_trace(trace);
+
+        // WHEN we analyse the trace with zero rise and fall times
+        auto actual = I2CTimingAnalyser::analyse(trace, 0, 0, 0, 0).data_setup_time;
+
+        // THEN the setup data time (tSU;DAT) is the recorded time
+        log_value("Setup data time", actual);
+        TEST_ASSERT_EQUAL_UINT32(12, actual.count());
+        TEST_ASSERT_EQUAL_UINT32(4'708, actual.min());
+        TEST_ASSERT_EQUAL_UINT32(4'802, actual.max());
+    }
+
+    static void analysis_adjusts_data_setup_time() {
+        // GIVEN a trace
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_a_valid_trace(trace);
+
+        // WHEN we analyse the trace with actual rise times
+        auto actual = I2CTimingAnalyser::analyse(trace, SDA_RISE, SCL_RISE, SDA_FALL, SCL_FALL).data_setup_time;
+
+        // THEN the setup data time (tSU;DAT) compensates for rise and fall times
+        log_value("Setup data time", actual);
+        TEST_ASSERT_EQUAL_UINT32(4'708 - 302 - 397, actual.min());  // SDA rose
+        TEST_ASSERT_EQUAL_UINT32(4'802 - 91 - 397, actual.max());  // SDA fell
     }
 
     void test() final {
@@ -469,6 +498,8 @@ public:
         RUN_TEST(setup_start_is_not_set_after_stop);
         RUN_TEST(analysis_records_raw_bus_free_time);
         RUN_TEST(analysis_adjusts_bus_free_time);
+        RUN_TEST(analysis_records_raw_data_setup_time);
+        RUN_TEST(analysis_adjusts_data_setup_time);
     }
 
     I2CTimingAnalyserTest() : TestSuite(__FILE__) {};

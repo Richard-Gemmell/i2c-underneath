@@ -27,6 +27,7 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
     size_t previous_scl_rise_event = 0;
     size_t previous_scl_fall_event = current_edge;
     size_t latest_clock_low = 0;
+    bool data_changed = false;
     for (++current_edge; current_edge < trace.event_count(); ++current_edge) {
         auto previous_event = trace.event(current_edge - 1);
         auto current_event = trace.event(current_edge);
@@ -39,6 +40,11 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
                 latest_clock_low = trace.nanos_between(current_edge, previous_scl_fall_event);
 //                Serial.printf("Index %d LOW time %d\n", current_edge, latest_clock_low);
                 scl_low_time_stats.include(adjust_clock_low_time(latest_clock_low, scl_fall_time, scl_rise_time));
+                if (data_changed) {
+                    size_t raw_setup_data_time = trace.nanos_to_previous(current_edge);
+                    data_setup_time_stats.include(adjust_data_setup_time(raw_setup_data_time, previous_event->sda_rose(), sda_rise_time, sda_fall_time, scl_rise_time));
+                    data_changed = false;
+                }
             } else {
                 // SCL HIGH -> LOW
                 previous_scl_fall_event = current_edge;
@@ -90,6 +96,9 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
                         Serial.println("Invalid Trace: Found 2 falling edges on SDA in a row.");
                     }
                 }
+            } else {
+                // SDA changed while SCL is LOW. This is the setup for a data bit or an ACK
+                data_changed = true;
             }
         }
     }
@@ -147,6 +156,19 @@ uint32_t I2CTimingAnalyser::adjust_bus_free_time(uint32_t raw_time, uint16_t sda
     auto adjusted = (uint32_t)(raw_time - (sda_rise_time * RISE_TRIGGER_to_V0_7) - (sda_fall_time * FALL_V0_7_to_TRIGGER));
 //    Serial.printf("Bus Free Time (tBUF) raw: %d adjusted %d\n", raw_time, adjusted);
     return adjusted;
+}
+
+uint32_t I2CTimingAnalyser::adjust_data_setup_time(uint32_t raw_time, bool sda_rose, uint16_t sda_rise_time,
+                                                   uint16_t sda_fall_time, uint16_t scl_rise_time) {
+    auto adjusted = raw_time - (scl_rise_time * RISE_V0_3_to_TRIGGER);
+    if(sda_rose) {
+        adjusted = adjusted - (sda_rise_time * RISE_TRIGGER_to_V0_7);
+    } else {
+        adjusted = adjusted - (sda_fall_time * FALL_TRIGGER_to_V0_3);
+    }
+    auto result = (uint32_t)adjusted;
+//    Serial.printf("Data Setup Time (tSU;DAT) raw: %d adjusted %d\n", raw_time, result);
+    return result;
 }
 
 } // analysis
