@@ -98,6 +98,8 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
             } else {
                 // SDA changed while SCL is LOW. This is the setup for a data bit or an ACK
                 data_changed = true;
+                uint32_t data_hold_time = trace.nanos_to_previous(current_edge);
+                data_hold_time_stats.include(adjust.data_hold_time(data_hold_time, current_event->sda_rose()));
             }
         }
     }
@@ -174,6 +176,18 @@ uint32_t I2CTimingAnalyser::Adjuster::data_setup_time(uint32_t raw_time, bool sd
     }
     auto result = (uint32_t)adjusted;
 //    Serial.printf("Data Setup Time (tSU;DAT) raw: %d adjusted %d\n", raw_time, result);
+    return result;
+}
+
+uint32_t I2CTimingAnalyser::Adjuster::data_hold_time(uint32_t raw_time, bool sda_rose) const {
+    auto adjusted = raw_time - scl_fall_trigger_to_V0_3();
+    if (sda_rose) {
+        adjusted = adjusted - sda_rise_V0_3_to_trigger();
+    } else {
+        adjusted = adjusted - sda_fall_V0_7_to_trigger();
+    }
+    auto result = (uint32_t)adjusted;
+//    Serial.printf("Data Hold Time (tHD;DAT) raw: %d adjusted %d\n", raw_time, result);
     return result;
 }
 

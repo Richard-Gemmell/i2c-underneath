@@ -36,6 +36,7 @@ private:
         uint32_t clock_high_time(uint32_t raw_time) const;
         uint32_t bus_free_time(uint32_t raw_time) const;
         uint32_t data_setup_time(uint32_t raw_time, bool sda_rose) const;
+        uint32_t data_hold_time(uint32_t raw_time, bool sda_rose) const;
 
     private:
         // Time to rise from GND to 0.3 Vdd as a proportion of the rise time

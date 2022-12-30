@@ -72,7 +72,7 @@ public:
         add_event(trace, tLOW+7, SCL_LINE_CHANGED | SCL_LINE_STATE);
         add_event(trace, tHIGH+8, SCL_LINE_CHANGED);
         // 1 (0->1)
-        add_event(trace, tHD_DAT, SDA_LINE_CHANGED | SDA_LINE_STATE);
+        add_event(trace, tHD_DAT-3, SDA_LINE_CHANGED | SDA_LINE_STATE);
         add_event(trace, tLOW+10, SCL_LINE_CHANGED | SCL_LINE_STATE | SDA_LINE_STATE);
         add_event(trace, tHIGH+11, SCL_LINE_CHANGED | SDA_LINE_STATE);
         // 0 (1->0)
@@ -97,7 +97,7 @@ public:
 
         // ACK address - by slave
         // 0 (1->0)
-        add_event(trace, tHD_DAT, SDA_LINE_CHANGED);
+        add_event(trace, tHD_DAT+1, SDA_LINE_CHANGED);
         add_event(trace, tLOW+25, SCL_LINE_CHANGED | SCL_LINE_STATE);
         add_event(trace, tHIGH+26, SCL_LINE_CHANGED);
     }
@@ -480,6 +480,35 @@ public:
         TEST_ASSERT_EQUAL_UINT32(4'802 - 91 - 397, actual.max());  // SDA fell
     }
 
+    static void analysis_records_raw_data_hold_time() {
+        // GIVEN a trace
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_a_valid_trace(trace);
+
+        // WHEN we analyse the trace with zero rise and fall times
+        auto actual = I2CTimingAnalyser::analyse(trace, 0, 0, 0, 0).data_hold_time;
+
+        // THEN the data hold time (tHD;DAT) is the recorded time
+        log_value("Data hold time", actual);
+        TEST_ASSERT_EQUAL_UINT32(12, actual.count());
+        TEST_ASSERT_EQUAL_UINT32(1'994, actual.min());
+        TEST_ASSERT_EQUAL_UINT32(2'002, actual.max());
+    }
+
+    static void analysis_adjusts_data_hold_time() {
+        // GIVEN a trace
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_a_valid_trace(trace);
+
+        // WHEN we analyse the trace with actual rise times
+        auto actual = I2CTimingAnalyser::analyse(trace, SDA_RISE, SCL_RISE, SDA_FALL, SCL_FALL).data_hold_time;
+
+        // THEN the data hold time (tHD;DAT) compensates for rise and fall times
+        log_value("Setup data time", actual);
+        TEST_ASSERT_EQUAL_UINT32(1'994 - 199 - 181, actual.min());  // SDA rose
+        TEST_ASSERT_EQUAL_UINT32(2'002 - 60 - 181, actual.max());  // SDA fell
+    }
+
     void test() final {
         RUN_TEST(test_trace_is_valid);
         RUN_TEST(analysis_records_raw_start_hold_time);
@@ -500,6 +529,8 @@ public:
         RUN_TEST(analysis_adjusts_bus_free_time);
         RUN_TEST(analysis_records_raw_data_setup_time);
         RUN_TEST(analysis_adjusts_data_setup_time);
+        RUN_TEST(analysis_records_raw_data_hold_time);
+        RUN_TEST(analysis_adjusts_data_hold_time);
     }
 
     I2CTimingAnalyserTest() : TestSuite(__FILE__) {};
