@@ -22,6 +22,7 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
     DurationStatistics data_setup_time_stats;
     DurationStatistics stop_setup_time_stats;
     DurationStatistics bus_free_time_stats;
+    DurationStatistics data_valid_time_stats;
 
     // Edge zero should be both lines high. Ignore it.
     size_t current_edge = 0;
@@ -98,8 +99,13 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
             } else {
                 // SDA changed while SCL is LOW. This is the setup for a data bit or an ACK
                 data_changed = true;
+                // TODO: data hold and valid apply only if the previous event was SCL falling
                 uint32_t data_hold_time = trace.nanos_to_previous(current_edge);
-                data_hold_time_stats.include(adjust.data_hold_time(data_hold_time, current_event->sda_rose()));
+                bool sda_rose = current_event->sda_rose();
+                uint32_t adjusted_data_hold_time = adjust.data_hold_time(data_hold_time, sda_rose);
+                data_hold_time_stats.include(adjusted_data_hold_time);
+                uint32_t data_valid_time = adjusted_data_hold_time + (sda_rose ? sda_rise_time : sda_fall_time);
+                data_valid_time_stats.include(data_valid_time);
             }
         }
     }
@@ -115,6 +121,7 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
         .data_setup_time = data_setup_time_stats,
         .stop_setup_time = stop_setup_time_stats,
         .bus_free_time = bus_free_time_stats,
+        .data_valid_time = data_valid_time_stats,
     };
 }
 

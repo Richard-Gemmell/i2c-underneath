@@ -36,12 +36,9 @@ struct Times {
     TimeRange fall_time;            // tf - fall time of both SDA and SCL signals
     TimeRange stop_setup_time;      // tSU;STO - setup time for STOP condition
     TimeRange bus_free_time;        // tBUF - minimum bus free time between a STOP and START condition
-    // tVD;DAT - time before SDA changes state after a clock pulse.
-    //           Valid time is equal to hold time + tf or tr depending on whether SDA is falling or rising.
-    //           This is the value that we can actually measure with BusRecorder.
-    //           As tHD:DAT has no max value and tVD;DAT has no min value I've merged them
-    //           together into data_hold_time.
-    // tVD;ACK - data valid time for an ACK
+    TimeRange data_valid_time;      // tVD;DAT - time before SDA changes state after a clock pulse.
+                                    // Equal to hold time + tf or tr depending on whether SDA is falling or rising.
+    // tVD;ACK - data valid time for an ACK. Included in data_valid_time as it has the same requirements.
 };
 
 struct I2CParameters {
@@ -57,12 +54,13 @@ const I2CParameters StandardMode = {
                 .scl_low_time = {.min = 4'700, .max = UINT32_MAX},
                 .scl_high_time = {.min = 4'000, .max = UINT32_MAX},
                 .start_setup_time = {.min = 4'700, .max = UINT32_MAX},
-                .data_hold_time = {.min = 300, .max = 3'450},
+                .data_hold_time = {.min = 0, .max = UINT32_MAX},
                 .data_setup_time = {.min = 250, .max = UINT32_MAX},
                 .rise_time = {.min = 0, .max = 1'000},
                 .fall_time = {.min = 0, .max = 300},
                 .stop_setup_time = {.min = 4'000, .max = UINT32_MAX},
                 .bus_free_time = {.min = 4'700, .max = UINT32_MAX},
+                .data_valid_time = {.min = 0, .max = 3'450},
         }
 };
 
@@ -75,12 +73,13 @@ const I2CParameters FastMode = {
                 .scl_low_time = {.min = 1'300, .max = UINT32_MAX},
                 .scl_high_time = {.min = 600, .max = UINT32_MAX},
                 .start_setup_time = {.min = 600, .max = UINT32_MAX},
-                .data_hold_time = {.min = 300, .max = 950},
+                .data_hold_time = {.min = 0, .max = UINT32_MAX},
                 .data_setup_time = {.min = 100, .max = UINT32_MAX},
                 .rise_time = {.min = 0, .max = 300},
                 .fall_time = {.min = 12, .max = 300},
                 .stop_setup_time = {.min = 600, .max = UINT32_MAX},
                 .bus_free_time = {.min = 1'300, .max = UINT32_MAX},
+                .data_valid_time = {.min = 0, .max = 900},
         }
 };
 
@@ -93,12 +92,13 @@ const I2CParameters FastModePlus = {
                 .scl_low_time = {.min = 500, .max = UINT32_MAX},
                 .scl_high_time = {.min = 260, .max = UINT32_MAX},
                 .start_setup_time = {.min = 260, .max = UINT32_MAX},
-                .data_hold_time = {.min = 0, .max = 450},
+                .data_hold_time = {.min = 0, .max = UINT32_MAX},
                 .data_setup_time = {.min = 50, .max = UINT32_MAX},
                 .rise_time = {.min = 0, .max = 120},
                 .fall_time = {.min = 12, .max = 120},
                 .stop_setup_time = {.min = 260, .max = UINT32_MAX},
                 .bus_free_time = {.min = 500, .max = UINT32_MAX},
+                .data_valid_time = {.min = 0, .max = 450},
         }
 };
 

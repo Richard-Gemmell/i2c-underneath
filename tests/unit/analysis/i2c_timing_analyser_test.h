@@ -509,6 +509,36 @@ public:
         TEST_ASSERT_EQUAL_UINT32(2'002 - 60 - 181, actual.max());  // SDA fell
     }
 
+    static void analysis_records_raw_data_valid_time() {
+        // GIVEN a trace
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_a_valid_trace(trace);
+
+        // WHEN we analyse the trace with zero rise and fall times
+        auto actual = I2CTimingAnalyser::analyse(trace, 0, 0, 0, 0).data_valid_time;
+
+        // THEN the data valid time (tVD;DAT) is the recorded time
+        log_value("Data valid time", actual);
+        TEST_ASSERT_EQUAL_UINT32(12, actual.count());
+        TEST_ASSERT_EQUAL_UINT32(1'994, actual.min());
+        TEST_ASSERT_EQUAL_UINT32(2'002, actual.max());
+    }
+
+    static void analysis_adjusts_data_valid_time() {
+        // GIVEN a trace
+        bus_trace::BusTrace trace(&clock, MAX_EVENTS);
+        given_a_valid_trace(trace);
+
+        // WHEN we analyse the trace with actual rise times
+        auto analysis = I2CTimingAnalyser::analyse(trace, SDA_RISE, SCL_RISE, SDA_FALL, SCL_FALL);
+        auto actual = analysis.data_valid_time;
+
+        // THEN the data valid time (tVD;DAT) compensates for rise and fall times
+        log_value("Setup valid time", actual);
+        TEST_ASSERT_EQUAL_UINT32(1909, actual.min());
+        TEST_ASSERT_EQUAL_UINT32(2120, actual.max());
+    }
+
     void test() final {
         RUN_TEST(test_trace_is_valid);
         RUN_TEST(analysis_records_raw_start_hold_time);
@@ -531,6 +561,8 @@ public:
         RUN_TEST(analysis_adjusts_data_setup_time);
         RUN_TEST(analysis_records_raw_data_hold_time);
         RUN_TEST(analysis_adjusts_data_hold_time);
+        RUN_TEST(analysis_records_raw_data_valid_time);
+        RUN_TEST(analysis_adjusts_data_valid_time);
     }
 
     I2CTimingAnalyserTest() : TestSuite(__FILE__) {};

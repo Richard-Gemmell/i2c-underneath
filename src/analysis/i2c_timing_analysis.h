@@ -19,8 +19,8 @@ struct I2CTimingAnalysis {
     DurationStatistics data_setup_time;     // tSU;DAT - data setup time
     DurationStatistics stop_setup_time;     // tSU;STO - setup time for STOP condition
     DurationStatistics bus_free_time;       // tBUF - minimum bus free time between a STOP and START condition
-    // tVD;DAT - time before SDA changes state after a clock pulse. Wrapped into data_hold_time
-    // tVD;ACK - data valid acknowledge time. Wrapped into data_hold_time
+    DurationStatistics data_valid_time;     // tVD;DAT - time before SDA changes state after a clock pulse. Equals tHD;DAT + rise or fall time.
+    // tVD;ACK - data valid acknowledge time. Included in data_valid_time
 };
 
 } // analysis
