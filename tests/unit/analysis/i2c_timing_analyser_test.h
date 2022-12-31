@@ -489,7 +489,6 @@ public:
         // GIVEN a trace
         bus_trace::BusTrace trace(&clock, MAX_EVENTS);
         given_a_valid_trace(trace);
-        trace.printTo(Serial);
 
         // WHEN we analyse the trace with zero rise and fall times
         auto actual = I2CTimingAnalyser::analyse(trace, 0, 0, 0, 0).data_hold_time;

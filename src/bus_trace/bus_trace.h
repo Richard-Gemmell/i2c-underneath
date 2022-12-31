@@ -96,7 +96,9 @@ public:
     // and want to compare it to the ideal version.
     //
     // Removes spurious changes in SDA that occur while SCL is LOW. These
-    // don't affect the meaning of the message.
+    // don't affect the meaning of the message. Set 'merge_sda_edges' to false
+    // to keep spurious edges. This is recommended if you want to analyse the
+    // exact timings of events.
     //
     // It's possible for a trace to record edges on both lines with a single
     // BusEvent instead of with 2 separate events. We can't tell which edge
@@ -106,9 +108,9 @@ public:
     // SCL falls. This is the wrong way round for START and STOP bits, but
     // START and STOP bits should never be recorded with a single event.
     // WARNING if the events actually happened in the wrong order then this
-    // will disguise an I2C logic error. Setting 'split_events' to false to
-    // disable splitting.
-    BusTrace to_message(bool split_events = true) const;
+    // will disguise an I2C logic error. Set 'split_events' to false to disable
+    // splitting.
+    BusTrace to_message(bool merge_sda_edges = true, bool split_events = true) const;
 
     // Returns the index of the first BusEvent that doesn't match
     // or SIZE_MAX if the traces are equivalent.

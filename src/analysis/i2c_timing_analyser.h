@@ -12,12 +12,17 @@ class I2CTimingAnalyser {
 public:
     static const uint16_t DEFAULT_FALL_TIME = 8;
 
-    // Analyses an I2C transaction and checks it for compliance
-    // with the I2C Specification.
-    // Can give misleading results unless the rise times are set correctly.
+    // Analyses the timings in an I2C transaction. The resulting times can be
+    // compared to the I2C Specification
+    //
+    // Gives misleading results unless the rise and fall times are set correctly.
     // (e.g. reporting that the setup stop time, tSU;STO, is valid when it's not.
     // You can measure the rise and fall times with LineTester::TestLine()
     // or an oscilloscope.
+    //
+    // Will not record all times if 'trace' contains any events in which SDA and
+    // SCL changed at the same time. You can use BusTrace::to_message() to split
+    // merged events.
     static I2CTimingAnalysis analyse(const bus_trace::BusTrace& trace,
                                      uint16_t sda_rise_time,
                                      uint16_t scl_rise_time,

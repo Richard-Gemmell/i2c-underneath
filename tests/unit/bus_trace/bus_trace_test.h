@@ -370,6 +370,28 @@ public:
         TEST_ASSERT_EQUAL(SIZE_MAX, edge_comparable);
     }
 
+    static void to_message_does_not_strip_out_spurious_SDA_changes_when_instructed() {
+        // GIVEN a trace containing spurious pulses
+        BusTrace trace(MAX_EVENTS);
+        BusTraceBuilder builder(trace, BusTraceBuilder::TimingStrategy::Min, common::i2c_specification::StandardMode);
+        builder.start_bit()
+                .address_byte(0xF0, false);
+        // Add a spurious SDA pulse in the ACK cycle
+        trace.add_event(50, SDA_LINE_CHANGED | SDA_LINE_STATE);
+        trace.add_event(50, SDA_LINE_CHANGED);
+        builder.ack()
+                .data_byte(0xFF)
+                .ack()
+                .stop_bit();
+
+        // WHEN we convert it to a message and request that the spurious pulses are retained
+        BusTrace message = trace.to_message(false);
+
+        // THEN the spurious edges are NOT removed
+        auto edge_comparable = trace.compare_edges(message);
+        TEST_ASSERT_EQUAL(SIZE_MAX, edge_comparable);
+    }
+
     static void given_a_trace_with_merged_events(BusTrace& trace) {
         // GIVEN a trace containing a data bit
         // WHERE the edges for SDA and SCL have been merged in every case
@@ -413,7 +435,7 @@ public:
         given_a_trace_with_merged_events(trace);
 
         // WHEN we convert it to a message
-        BusTrace message = trace.to_message(false);
+        BusTrace message = trace.to_message(true, false);
 
         // THEN the message should be identical to the original trace
         auto edge_comparable = trace.compare_edges(message);
@@ -440,6 +462,22 @@ public:
                 .address_byte(0xF0, false);
         auto edge_comparable = expected.compare_edges(message);
         TEST_ASSERT_EQUAL(SIZE_MAX, edge_comparable);
+    }
+
+    static void to_message_copies_clock() {
+        // GIVEN a trace with some events and a clock
+        common::hal::FakeClock clock;
+        BusTrace trace(&clock, MAX_EVENTS);
+        trace.add_event(BusEvent(100, BusEventFlags::SDA_LINE_CHANGED));
+        trace.add_event(BusEvent(200, BusEventFlags::SCL_LINE_CHANGED));
+
+        // WHEN we convert the trace into a message
+        BusTrace message = trace.to_message();
+
+        // THEN the message can calculate times correctly
+        uint32_t expected = trace.nanos_to_previous(1);
+        uint32_t actual = message.nanos_to_previous(1);
+        TEST_ASSERT_EQUAL_UINT32(expected, actual);
     }
 
     static void empty_traces_are_message_comparable() {
@@ -767,9 +805,11 @@ public:
         RUN_TEST(to_message_converts_empty_trace_to_empty_message);
         RUN_TEST(to_message_can_remove_last_event);
         RUN_TEST(to_message_strips_out_spurious_SDA_changes);
+        RUN_TEST(to_message_does_not_strip_out_spurious_SDA_changes_when_instructed);
         RUN_TEST(to_message_splits_events_with_2_edges);
         RUN_TEST(to_message_does_not_split_events_when_instructed);
         RUN_TEST(empty_traces_are_message_comparable);
+        RUN_TEST(to_message_copies_clock);
 
         RUN_TEST(traces_are_message_comparable_if_they_are_edge_comparable);
         RUN_TEST(traces_are_message_comparable_even_if_spurious_SDA_changes_are_different);

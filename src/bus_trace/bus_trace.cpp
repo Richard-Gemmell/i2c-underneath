@@ -125,7 +125,7 @@ private:
     }
 };
 
-BusTrace BusTrace::to_message(bool split_events) const {
+BusTrace BusTrace::to_message(bool merge_sda_edges, bool split_events) const {
     auto sda_changed_while_scl_low = [](BusEventFlags flags) {
         bool scl_low = (flags & BusEventFlags::SCL_LINE_STATE) != BusEventFlags::SCL_LINE_STATE;
         bool sda_changed = (flags & BusEventFlags::SDA_LINE_CHANGED) == BusEventFlags::SDA_LINE_CHANGED;
@@ -136,7 +136,7 @@ BusTrace BusTrace::to_message(bool split_events) const {
         return (previous | sda_flags) == (next | sda_flags);
     };
     BusTraceIterator iter(*this, split_events);
-    BusTrace message(iter.event_count());
+    BusTrace message(clock, iter.event_count());
     if (current_event_count > 0) {
         BusEvent previous = iter.next();
         bool has_previous = true;
@@ -144,7 +144,7 @@ BusTrace BusTrace::to_message(bool split_events) const {
             const BusEvent next = iter.next();
             bool previous_may_be_spurious = sda_changed_while_scl_low(previous.flags);
             bool next_may_be_spurious = sda_changed_while_scl_low(next.flags);
-            if (previous_may_be_spurious && next_may_be_spurious && only_sda_changed(previous.flags, next.flags)) {
+            if (merge_sda_edges && previous_may_be_spurious && next_may_be_spurious && only_sda_changed(previous.flags, next.flags)) {
                 // The two events cancel out. Throw them away.
                 if (iter.has_next()) {
                     previous = iter.next();

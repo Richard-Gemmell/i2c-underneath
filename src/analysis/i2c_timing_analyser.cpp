@@ -107,6 +107,7 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
                     data_hold_time_stats.include(adjusted_data_hold_time);
 
                     uint32_t data_valid_time = adjusted_data_hold_time + (sda_rose ? sda_rise_time : sda_fall_time);
+//                    Serial.printf("Data Valid Time (tVD;DAT) hold: %d valid %d\n", adjusted_data_hold_time, data_valid_time);
                     data_valid_time_stats.include(data_valid_time);
                 }
                 // else SDA changed more than once while SCL is LOW. Ignore it.
