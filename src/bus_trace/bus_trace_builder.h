@@ -39,6 +39,7 @@ public:
     BusTraceBuilder& data_byte(uint8_t value);
 
 private:
+    const uint32_t data_hold_offset = 300;
     BusTrace& trace;
     TimingStrategy timing_strategy;
     const common::i2c_specification::I2CParameters& params;

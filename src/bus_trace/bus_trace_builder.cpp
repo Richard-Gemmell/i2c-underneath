@@ -28,7 +28,7 @@ BusTraceBuilder& BusTraceBuilder::stop_bit() {
     uint32_t tLOW = get_time(params.times.scl_low_time);
     uint32_t dt = 0;
     if(sda_was_high()) {
-        uint32_t tHD_DAT = get_time(params.times.data_hold_time);
+        uint32_t tHD_DAT = get_time(params.times.data_hold_time) + data_hold_offset;
         dt = tHD_DAT + tf;
         trace.add_event(BusEvent(dt, BusEventFlags::SDA_LINE_CHANGED));
     }
@@ -46,7 +46,7 @@ BusTraceBuilder& BusTraceBuilder::data_bit(bool one) {
     uint32_t dt = 0;    // Time for first event if it's required
     BusEventFlags sda_state = one ? BusEventFlags::SDA_LINE_STATE : BusEventFlags::BOTH_LOW_AND_UNCHANGED;
     if(sda_was_high() != one) {
-        uint32_t tHD_DAT = get_time(params.times.data_hold_time);
+        uint32_t tHD_DAT = get_time(params.times.data_hold_time) + data_hold_offset;
         dt = tHD_DAT + (one ? tr : tf);
         trace.add_event(BusEvent(dt, BusEventFlags::SDA_LINE_CHANGED | sda_state));
     }
@@ -103,6 +103,5 @@ uint32_t BusTraceBuilder::get_time(const common::i2c_specification::TimeRange& t
     }
     return time_range.max;
 }
-
 
 } // bus_trace
