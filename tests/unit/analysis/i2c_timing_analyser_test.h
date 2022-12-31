@@ -103,6 +103,11 @@ public:
     }
 
     static void add_data_byte(bus_trace::BusTrace& trace) {
+        // Include a short SDA spike. These are common when the transmitter releases SDA
+        // before the receiver sends ACK
+        add_event(trace, tHD_DAT, SDA_LINE_CHANGED);
+        add_event(trace, 20, SDA_LINE_CHANGED | SDA_LINE_STATE);
+
         // Data Byte - 0101 1000
         // 0 (0->0)
         add_event(trace, tLOW+27, SCL_LINE_CHANGED | SCL_LINE_STATE);
@@ -230,7 +235,7 @@ public:
         given_a_valid_trace(trace);
 
         // THEN the test trace represents the expected I2C message
-        TEST_ASSERT_TRUE(trace_matches_expected(trace));
+        TEST_ASSERT_TRUE(trace_matches_expected(trace.to_message()));
     }
 
     static void analysis_records_raw_start_hold_time() {
@@ -461,7 +466,7 @@ public:
 
         // THEN the setup data time (tSU;DAT) is the recorded time
         log_value("Setup data time", actual);
-        TEST_ASSERT_EQUAL_UINT32(12, actual.count());
+        TEST_ASSERT_EQUAL_UINT32(13, actual.count());
         TEST_ASSERT_EQUAL_UINT32(4'708, actual.min());
         TEST_ASSERT_EQUAL_UINT32(4'802, actual.max());
     }
@@ -484,13 +489,14 @@ public:
         // GIVEN a trace
         bus_trace::BusTrace trace(&clock, MAX_EVENTS);
         given_a_valid_trace(trace);
+        trace.printTo(Serial);
 
         // WHEN we analyse the trace with zero rise and fall times
         auto actual = I2CTimingAnalyser::analyse(trace, 0, 0, 0, 0).data_hold_time;
 
         // THEN the data hold time (tHD;DAT) is the recorded time
         log_value("Data hold time", actual);
-        TEST_ASSERT_EQUAL_UINT32(12, actual.count());
+        TEST_ASSERT_EQUAL_UINT32(13, actual.count());
         TEST_ASSERT_EQUAL_UINT32(1'994, actual.min());
         TEST_ASSERT_EQUAL_UINT32(2'002, actual.max());
     }
@@ -519,7 +525,7 @@ public:
 
         // THEN the data valid time (tVD;DAT) is the recorded time
         log_value("Data valid time", actual);
-        TEST_ASSERT_EQUAL_UINT32(12, actual.count());
+        TEST_ASSERT_EQUAL_UINT32(13, actual.count());
         TEST_ASSERT_EQUAL_UINT32(1'994, actual.min());
         TEST_ASSERT_EQUAL_UINT32(2'002, actual.max());
     }

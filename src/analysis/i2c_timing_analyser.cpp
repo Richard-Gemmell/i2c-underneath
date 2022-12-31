@@ -99,13 +99,17 @@ I2CTimingAnalysis I2CTimingAnalyser::analyse(const bus_trace::BusTrace& trace,
             } else {
                 // SDA changed while SCL is LOW. This is the setup for a data bit or an ACK
                 data_changed = true;
-                // TODO: data hold and valid apply only if the previous event was SCL falling
-                uint32_t data_hold_time = trace.nanos_to_previous(current_edge);
-                bool sda_rose = current_event->sda_rose();
-                uint32_t adjusted_data_hold_time = adjust.data_hold_time(data_hold_time, sda_rose);
-                data_hold_time_stats.include(adjusted_data_hold_time);
-                uint32_t data_valid_time = adjusted_data_hold_time + (sda_rose ? sda_rise_time : sda_fall_time);
-                data_valid_time_stats.include(data_valid_time);
+                if(previous_event->scl_fell()) {
+                    // SDA changed after SCL fell.
+                    uint32_t data_hold_time = trace.nanos_to_previous(current_edge);
+                    bool sda_rose = current_event->sda_rose();
+                    uint32_t adjusted_data_hold_time = adjust.data_hold_time(data_hold_time, sda_rose);
+                    data_hold_time_stats.include(adjusted_data_hold_time);
+
+                    uint32_t data_valid_time = adjusted_data_hold_time + (sda_rose ? sda_rise_time : sda_fall_time);
+                    data_valid_time_stats.include(data_valid_time);
+                }
+                // else SDA changed more than once while SCL is LOW. Ignore it.
             }
         }
     }
